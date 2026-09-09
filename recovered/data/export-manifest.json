@@ -1,0 +1,17 @@
+{
+  "exported_at": "2026-09-09T06:54:14.422978+00:00",
+  "tables": [
+    {
+      "table": "fate_accounts",
+      "rows": 0
+    },
+    {
+      "table": "fate_connections",
+      "rows": 0
+    },
+    {
+      "table": "fate_request_limits",
+      "rows": 10
+    }
+  ]
+}

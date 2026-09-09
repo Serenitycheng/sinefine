@@ -1,0 +1,19 @@
+{
+  "exported_at": "2026-09-09T13:52:58.638Z",
+  "tables": [
+    {
+      "table": "fate_connections",
+      "rows": 0
+    },
+    {
+      "table": "fate_request_limits",
+      "rows": 10
+    },
+    {
+      "table": "fate_accounts",
+      "rows": 0
+    }
+  ],
+  "storage_bucket_count": 0,
+  "game_save_excluded_because_nonexistent": true
+}

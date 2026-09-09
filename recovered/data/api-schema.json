@@ -1,0 +1,808 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "",
+    "title": "standard public schema",
+    "version": "14.5"
+  },
+  "host": "ubscwyzfvyelxutakgrj.supabase.co:443",
+  "basePath": "/",
+  "schemes": [
+    "https"
+  ],
+  "consumes": [
+    "application/json",
+    "application/vnd.pgrst.object+json;nulls=stripped",
+    "application/vnd.pgrst.object+json",
+    "text/csv"
+  ],
+  "produces": [
+    "application/json",
+    "application/vnd.pgrst.object+json;nulls=stripped",
+    "application/vnd.pgrst.object+json",
+    "text/csv"
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "produces": [
+          "application/openapi+json",
+          "application/json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "summary": "OpenAPI description (this document)",
+        "tags": [
+          "Introspection"
+        ]
+      }
+    },
+    "/fate_connections": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.encrypted_key"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.model"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.updated_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/fate_connections"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "fate_connections"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.fate_connections"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "fate_connections"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.encrypted_key"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.model"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.updated_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "fate_connections"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.encrypted_key"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.model"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_connections.updated_at"
+          },
+          {
+            "$ref": "#/parameters/body.fate_connections"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "fate_connections"
+        ]
+      }
+    },
+    "/fate_request_limits": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.scope"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.identity_hash"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.bucket"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.count"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.expires_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/fate_request_limits"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "fate_request_limits"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.fate_request_limits"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "fate_request_limits"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.scope"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.identity_hash"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.bucket"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.count"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.expires_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "fate_request_limits"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.scope"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.identity_hash"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.bucket"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.count"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_request_limits.expires_at"
+          },
+          {
+            "$ref": "#/parameters/body.fate_request_limits"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "fate_request_limits"
+        ]
+      }
+    },
+    "/fate_accounts": {
+      "get": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.username"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.recovery_hash"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.created_at"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/order"
+          },
+          {
+            "$ref": "#/parameters/range"
+          },
+          {
+            "$ref": "#/parameters/rangeUnit"
+          },
+          {
+            "$ref": "#/parameters/offset"
+          },
+          {
+            "$ref": "#/parameters/limit"
+          },
+          {
+            "$ref": "#/parameters/preferCount"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "items": {
+                "$ref": "#/definitions/fate_accounts"
+              },
+              "type": "array"
+            }
+          },
+          "206": {
+            "description": "Partial Content"
+          }
+        },
+        "tags": [
+          "fate_accounts"
+        ]
+      },
+      "post": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/body.fate_accounts"
+          },
+          {
+            "$ref": "#/parameters/select"
+          },
+          {
+            "$ref": "#/parameters/preferPost"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        },
+        "tags": [
+          "fate_accounts"
+        ]
+      },
+      "delete": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.username"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.recovery_hash"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.created_at"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "fate_accounts"
+        ]
+      },
+      "patch": {
+        "parameters": [
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.user_id"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.username"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.recovery_hash"
+          },
+          {
+            "$ref": "#/parameters/rowFilter.fate_accounts.created_at"
+          },
+          {
+            "$ref": "#/parameters/body.fate_accounts"
+          },
+          {
+            "$ref": "#/parameters/preferReturn"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "tags": [
+          "fate_accounts"
+        ]
+      }
+    },
+    "/rpc/fate_take_quota": {
+      "post": {
+        "parameters": [
+          {
+            "in": "body",
+            "name": "args",
+            "required": true,
+            "schema": {
+              "properties": {
+                "p_identity": {
+                  "format": "text",
+                  "type": "string"
+                },
+                "p_limit": {
+                  "format": "integer",
+                  "type": "integer"
+                },
+                "p_scope": {
+                  "format": "text",
+                  "type": "string"
+                },
+                "p_seconds": {
+                  "format": "integer",
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "p_scope",
+                "p_identity",
+                "p_seconds",
+                "p_limit"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "$ref": "#/parameters/preferParams"
+          }
+        ],
+        "produces": [
+          "application/json",
+          "application/vnd.pgrst.object+json;nulls=stripped",
+          "application/vnd.pgrst.object+json"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "(rpc) fate_take_quota"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "fate_connections": {
+      "required": [
+        "user_id",
+        "encrypted_key",
+        "model",
+        "updated_at"
+      ],
+      "properties": {
+        "user_id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>\nThis is a Foreign Key to `fate_accounts.user_id`.<fk table='fate_accounts' column='user_id'/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "encrypted_key": {
+          "format": "text",
+          "type": "string"
+        },
+        "model": {
+          "format": "text",
+          "type": "string"
+        },
+        "updated_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "fate_request_limits": {
+      "required": [
+        "scope",
+        "identity_hash",
+        "bucket",
+        "count",
+        "expires_at"
+      ],
+      "properties": {
+        "scope": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "text",
+          "type": "string"
+        },
+        "identity_hash": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "text",
+          "type": "string"
+        },
+        "bucket": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "bigint",
+          "type": "integer"
+        },
+        "count": {
+          "format": "integer",
+          "type": "integer"
+        },
+        "expires_at": {
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "fate_accounts": {
+      "required": [
+        "user_id",
+        "username",
+        "recovery_hash",
+        "created_at"
+      ],
+      "properties": {
+        "user_id": {
+          "description": "Note:\nThis is a Primary Key.<pk/>",
+          "format": "uuid",
+          "type": "string"
+        },
+        "username": {
+          "format": "text",
+          "type": "string"
+        },
+        "recovery_hash": {
+          "format": "text",
+          "type": "string"
+        },
+        "created_at": {
+          "default": "now()",
+          "format": "timestamp with time zone",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "parameters": {
+    "preferParams": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "in": "header",
+      "type": "string"
+    },
+    "preferReturn": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "return=representation",
+        "return=minimal",
+        "return=none"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "preferCount": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "count=none"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "preferPost": {
+      "name": "Prefer",
+      "description": "Preference",
+      "required": false,
+      "enum": [
+        "return=representation",
+        "return=minimal",
+        "return=none",
+        "resolution=ignore-duplicates",
+        "resolution=merge-duplicates"
+      ],
+      "in": "header",
+      "type": "string"
+    },
+    "select": {
+      "name": "select",
+      "description": "Filtering Columns",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "on_conflict": {
+      "name": "on_conflict",
+      "description": "On Conflict",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "order": {
+      "name": "order",
+      "description": "Ordering",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "range": {
+      "name": "Range",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "header",
+      "type": "string"
+    },
+    "rangeUnit": {
+      "name": "Range-Unit",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "default": "items",
+      "in": "header",
+      "type": "string"
+    },
+    "offset": {
+      "name": "offset",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "limit": {
+      "name": "limit",
+      "description": "Limiting and Pagination",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.fate_connections": {
+      "name": "fate_connections",
+      "description": "fate_connections",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/fate_connections"
+      }
+    },
+    "rowFilter.fate_connections.user_id": {
+      "name": "user_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_connections.encrypted_key": {
+      "name": "encrypted_key",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_connections.model": {
+      "name": "model",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_connections.updated_at": {
+      "name": "updated_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.fate_request_limits": {
+      "name": "fate_request_limits",
+      "description": "fate_request_limits",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/fate_request_limits"
+      }
+    },
+    "rowFilter.fate_request_limits.scope": {
+      "name": "scope",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_request_limits.identity_hash": {
+      "name": "identity_hash",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_request_limits.bucket": {
+      "name": "bucket",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_request_limits.count": {
+      "name": "count",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_request_limits.expires_at": {
+      "name": "expires_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "body.fate_accounts": {
+      "name": "fate_accounts",
+      "description": "fate_accounts",
+      "required": false,
+      "in": "body",
+      "schema": {
+        "$ref": "#/definitions/fate_accounts"
+      }
+    },
+    "rowFilter.fate_accounts.user_id": {
+      "name": "user_id",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_accounts.username": {
+      "name": "username",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_accounts.recovery_hash": {
+      "name": "recovery_hash",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    },
+    "rowFilter.fate_accounts.created_at": {
+      "name": "created_at",
+      "required": false,
+      "in": "query",
+      "type": "string"
+    }
+  },
+  "externalDocs": {
+    "description": "PostgREST Documentation",
+    "url": "https://postgrest.org/en/v14/references/api.html"
+  }
+}

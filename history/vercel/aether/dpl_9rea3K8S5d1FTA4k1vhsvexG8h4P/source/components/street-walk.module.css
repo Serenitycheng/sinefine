@@ -1,0 +1,750 @@
+.shell {
+  height: 100svh;
+  min-height: 570px;
+  display: flex;
+  flex-direction: column;
+  background: #101719;
+  color: #f0f2ed;
+  font-family: Arial, 'Microsoft YaHei', sans-serif;
+  overflow: hidden;
+}
+.header {
+  height: 76px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  gap: 20px;
+  border-bottom: 1px solid #ffffff13;
+  background: #141b1d;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  text-decoration: none;
+  color: inherit;
+}
+.wordmark {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 25px;
+  letter-spacing: 4px;
+}
+.wordmark > span {
+  color: #bd9d61;
+  font-style: italic;
+  letter-spacing: 0;
+}
+.brandChinese {
+  font-size: 13px;
+  letter-spacing: 3px;
+  color: #bfc9c8;
+  border-left: 1px solid #ffffff26;
+  padding-left: 18px;
+}
+.location {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 14px;
+  color: #d7dfdb;
+}
+.location svg {
+  color: #ceb98b;
+}
+.location small {
+  color: #8c9d9e;
+  font-size: 12px;
+  margin-left: 12px;
+}
+.back {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #aebdbc;
+  text-decoration: none;
+  font-size: 13px;
+}
+.back:hover {
+  color: white;
+}
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+.aiButton {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 12px;
+  border: 1px solid #b9a77866;
+  border-radius: 5px;
+  color: #e2cea0;
+  background: #b9a7780c;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.talkButton {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #162522eb;
+  border: 1px solid #d3bd86aa;
+  color: #e9d8ac;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.talkButton kbd {
+  font:
+    11px Arial,
+    sans-serif;
+  color: #a5b8ac;
+  border-left: 1px solid #ffffff30;
+  padding-left: 10px;
+}
+.talkButton:disabled {
+  opacity: 0.65;
+}
+.stageWrap {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  overflow: hidden;
+  background: #151d20;
+}
+.stage {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: crosshair;
+  outline-offset: -3px !important;
+}
+.observing {
+  cursor: grab;
+}
+.observing:active {
+  cursor: grabbing;
+}
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+  user-select: none;
+  pointer-events: none;
+}
+.background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  max-width: none;
+}
+.actor {
+  position: absolute;
+  transform: translate(-50%, -92%);
+  pointer-events: none;
+  will-change: left, top;
+}
+.sprite {
+  height: 100%;
+  width: 100%;
+  background-repeat: no-repeat;
+  transform-origin: 50% 80%;
+  image-rendering: auto;
+}
+.groundShadow {
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  height: 12px;
+  bottom: 6%;
+  border-radius: 50%;
+  background: #171d2490;
+  filter: blur(3px);
+}
+.controlled .groundShadow {
+  outline: 2px solid #fbe4a6b0;
+  outline-offset: 3px;
+  background: #352c207a;
+  filter: blur(1px);
+}
+.actorName {
+  position: absolute;
+  bottom: 1%;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  font-size: 14px;
+  white-space: nowrap;
+  background: #12201ee0;
+  padding: 4px 10px;
+  border: 1px solid #ffffff36;
+  border-radius: 5px;
+  color: #e8ebe2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.controlled .actorName {
+  border-color: #ddc185a0;
+  color: #fff1bf;
+}
+.activeDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f5d98f;
+}
+.destination {
+  display: none;
+  position: absolute;
+  width: 25px;
+  height: 12px;
+  border: 2px solid #fff1bf;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 5px #fff1bf30;
+  z-index: 950;
+}
+.modeBadge {
+  position: absolute;
+  top: 20px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  background: #111b23c9;
+  border: 1px solid #edf1ed2e;
+  backdrop-filter: blur(12px);
+  border-radius: 6px;
+  font-size: 13px;
+  pointer-events: none;
+}
+.liveDot {
+  width: 6px;
+  height: 6px;
+  background: #dabd7d;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #e9d3a073;
+}
+.gamepadStatus {
+  position: absolute;
+  left: 24px;
+  bottom: 18px;
+  max-width: calc(100% - 184px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid #edf1ed26;
+  border-radius: 6px;
+  background: #111b23d9;
+  color: #becac8;
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+}
+.gamepadStatus svg {
+  flex: none;
+}
+.gamepadConnected {
+  color: #e5d5aa;
+  border-color: #ddc18575;
+}
+.preview {
+  color: #9eaaa9;
+  font-size: 12px;
+  margin-left: 8px;
+  border-left: 1px solid #ffffff26;
+  padding-left: 12px;
+}
+.cameraTools {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  border: 1px solid #ffffff30;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #162123d9;
+  backdrop-filter: blur(10px);
+}
+.cameraTools button {
+  width: 40px;
+  height: 39px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
+  color: #e0e6df;
+}
+.cameraTools button + button {
+  border-left: 1px solid #ffffff1d;
+}
+.cameraTools button:hover {
+  background: #ffffff18;
+}
+.sceneCaption {
+  position: absolute;
+  left: 26px;
+  bottom: 20px;
+  font-family: Georgia, serif;
+  font-size: 13px;
+  color: #fffdf1;
+  letter-spacing: 3px;
+  text-shadow: 0 2px 9px #131d22;
+  pointer-events: none;
+}
+.sceneCaption span {
+  font-family: Arial, 'Microsoft YaHei', sans-serif;
+  font-size: 12px;
+  letter-spacing: 1px;
+  margin-left: 18px;
+  color: #f4f2e1cc;
+}
+.footer {
+  position: relative;
+  flex: none;
+  display: grid;
+  grid-template-columns: 160px 1fr auto;
+  gap: 12px 24px;
+  align-items: center;
+  padding: 17px 28px 13px;
+  background: #141c1e;
+  border-top: 1px solid #ffffff1a;
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 2px;
+  color: #b8aa88;
+}
+.controlIntro p {
+  font-size: 16px;
+  margin-top: 8px;
+  color: #e9ebe1;
+}
+.cast {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.castCard {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 165px;
+  height: 70px;
+  padding: 0 14px 0 4px;
+  border: 1px solid #6d81834a;
+  background: #1e292c;
+  border-radius: 6px;
+  color: #d1dbd8;
+  text-align: left;
+}
+.castCard strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.castCard small {
+  display: block;
+  font-size: 12px;
+  color: #91a3a3;
+  margin-top: 5px;
+}
+.castCard > svg {
+  color: #eed79d;
+  margin-left: auto;
+}
+.castCard:hover {
+  background: #2b393b;
+}
+.castCard.selected {
+  border-color: #ceaf7790;
+  background: linear-gradient(120deg, #b18f4130, #203031);
+}
+.selected strong {
+  color: #ffe7ab;
+}
+.portrait {
+  height: 65px;
+  width: 65px;
+  flex: none;
+  display: block;
+  background-repeat: no-repeat;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.observeButton {
+  height: 43px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 15px;
+  border: 1px solid #a3b5b35e;
+  border-radius: 5px;
+  background: #263738;
+  color: #e1e8df;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.resetButton {
+  width: 38px;
+  height: 43px;
+  border: 1px solid #ffffff20;
+  border-radius: 5px;
+  background: transparent;
+  color: #aab8b5;
+  display: grid;
+  place-items: center;
+}
+.instructions {
+  grid-column: 1/-1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid #ffffff0d;
+  padding-top: 11px;
+  color: #a5b6b4;
+  font-size: 12px;
+}
+.help {
+  position: relative;
+  flex: none;
+}
+.help summary {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  cursor: pointer;
+  list-style: none;
+}
+.help summary::-webkit-details-marker {
+  display: none;
+}
+.help[open] > div {
+  position: absolute;
+  right: 0;
+  bottom: 28px;
+  width: 270px;
+  background: #162327fa;
+  border: 1px solid #687a7b;
+  padding: 17px;
+  line-height: 1.8;
+  border-radius: 6px;
+  color: #d7e2dc;
+  box-shadow: 0 12px 50px #0007;
+  font-size: 13px;
+  z-index: 50;
+}
+.help p:last-child {
+  font-size: 12px;
+  color: #9dadad;
+  border-top: 1px solid #ffffff26;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.helpLabel {
+  color: #e5d5aa;
+  border-top: 1px solid #ffffff26;
+  margin-top: 8px;
+  padding-top: 8px;
+}
+.assetState {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  justify-content: center;
+  align-items: center;
+  background: #14202380;
+  backdrop-filter: blur(5px);
+  font-size: 16px;
+}
+.assetState button {
+  padding: 9px 20px;
+  background: #eee2bb;
+  color: #1a2727;
+  border: 0;
+  border-radius: 5px;
+}
+.dpad {
+  position: absolute;
+  bottom: 50px;
+  right: 24px;
+  display: grid;
+  grid-template-columns: repeat(3, 43px);
+  grid-template-rows: repeat(2, 43px);
+  gap: 4px;
+  opacity: 0.85;
+}
+.dpad button {
+  background: #18262bbd;
+  border: 1px solid #dee8dd64;
+  border-radius: 8px;
+  color: #f5f3dd;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  user-select: none;
+}
+.dpad button:active {
+  background: #bba678cc;
+}
+.arrowup {
+  grid-column: 2;
+  grid-row: 1;
+}
+.arrowleft {
+  grid-column: 1;
+  grid-row: 2;
+}
+.arrowdown {
+  grid-column: 2;
+  grid-row: 2;
+}
+.arrowright {
+  grid-column: 3;
+  grid-row: 2;
+}
+@media (min-width: 1100px) and (pointer: fine) {
+  .dpad {
+    opacity: 0.3;
+  }
+  .dpad:hover {
+    opacity: 0.85;
+  }
+}
+@media (max-width: 1100px) {
+  .controlIntro {
+    display: none;
+  }
+  .footer {
+    grid-template-columns: 1fr auto;
+    padding: 14px 20px 10px;
+    gap: 10px;
+  }
+  .cast {
+    justify-content: flex-start;
+  }
+  .castCard {
+    min-width: 145px;
+  }
+  .brandChinese {
+    display: none;
+  }
+  .header {
+    padding: 0 22px;
+  }
+  .location small {
+    display: none;
+  }
+}
+@media (max-width: 730px) {
+  .headerActions {
+    gap: 10px;
+  }
+  .aiButton {
+    padding: 8px;
+  }
+  .aiButton span {
+    display: none;
+  }
+  .talkButton {
+    top: 58px;
+    bottom: auto;
+    left: 13px;
+    transform: none;
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+  .header {
+    height: 59px;
+    padding: 0 16px;
+    gap: 10px;
+  }
+  .wordmark {
+    font-size: 20px;
+    letter-spacing: 2px;
+  }
+  .location {
+    font-size: 12px;
+  }
+  .back span {
+    display: none;
+  }
+  .footer {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+  .cast {
+    width: 100%;
+    gap: 6px;
+  }
+  .castCard {
+    min-width: 0;
+    flex: 1;
+    height: 67px;
+    gap: 3px;
+    padding: 0 6px 0 0;
+  }
+  .castCard strong {
+    font-size: 13px;
+  }
+  .castCard small {
+    font-size: 10px;
+    margin-top: 3px;
+  }
+  .portrait {
+    width: 50px;
+    height: 55px;
+  }
+  .castCard > svg {
+    display: none;
+  }
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .observeButton {
+    height: 34px;
+    font-size: 13px;
+  }
+  .resetButton {
+    height: 34px;
+    width: 34px;
+  }
+  .instructions {
+    flex: 1;
+    position: absolute;
+    bottom: 22px;
+    left: 14px;
+    width: calc(100% - 185px);
+    font-size: 11px;
+    border: 0;
+    padding: 0;
+    display: block;
+  }
+  .instructions > span {
+    display: block;
+    max-width: 240px;
+  }
+  .help {
+    margin-top: 4px;
+  }
+  .help[open] > div {
+    right: auto;
+    left: 0;
+  }
+  .modeBadge {
+    top: 13px;
+    left: 13px;
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+  .gamepadStatus {
+    left: 13px;
+    bottom: 13px;
+    max-width: calc(100% - 164px);
+    font-size: 11px;
+    padding: 7px 9px;
+  }
+  .preview {
+    display: none;
+  }
+  .cameraTools {
+    top: 13px;
+    right: 13px;
+  }
+  .cameraTools button {
+    width: 33px;
+    height: 33px;
+  }
+  .sceneCaption {
+    left: 15px;
+    bottom: 13px;
+    font-size: 11px;
+  }
+  .sceneCaption span {
+    display: none;
+  }
+  .dpad {
+    right: 15px;
+    bottom: 28px;
+    grid-template-columns: repeat(3, 39px);
+    grid-template-rows: repeat(2, 39px);
+  }
+}
+@media (max-height: 570px) and (orientation: landscape) {
+  .shell {
+    min-height: 0;
+  }
+  .header {
+    height: 45px;
+  }
+  .footer {
+    padding: 6px 18px;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  .cast {
+    width: auto;
+  }
+  .castCard {
+    height: 49px;
+    min-width: 122px;
+  }
+  .portrait {
+    height: 46px;
+    width: 46px;
+  }
+  .castCard small,
+  .instructions,
+  .controlIntro,
+  .sceneCaption {
+    display: none;
+  }
+  .stageWrap {
+    min-height: 180px;
+  }
+  .actions {
+    width: auto;
+    margin-left: auto;
+  }
+  .dpad {
+    bottom: 12px;
+  }
+  .modeBadge,
+  .cameraTools {
+    top: 10px;
+  }
+}
+@media (max-width: 430px) {
+  .location {
+    display: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell * {
+    scroll-behavior: auto;
+  }
+}

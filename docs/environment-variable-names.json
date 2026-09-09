@@ -1,0 +1,154 @@
+[
+  {
+    "key": "FATE_VAULT_SECRET",
+    "type": "sensitive",
+    "target": [
+      "production",
+      "preview"
+    ]
+  },
+  {
+    "key": "NEXT_PUBLIC_SUPABASE_URL",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "SUPABASE_JWT_SECRET",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "SUPABASE_SERVICE_ROLE_KEY",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "POSTGRES_URL",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "SUPABASE_URL",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "POSTGRES_PASSWORD",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "SUPABASE_ANON_KEY",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "SUPABASE_PUBLISHABLE_KEY",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "POSTGRES_PRISMA_URL",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "POSTGRES_HOST",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "SUPABASE_SECRET_KEY",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "POSTGRES_URL_NON_POOLING",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "POSTGRES_USER",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "POSTGRES_DATABASE",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  },
+  {
+    "key": "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "type": "encrypted",
+    "target": [
+      "production",
+      "preview",
+      "development"
+    ]
+  }
+]

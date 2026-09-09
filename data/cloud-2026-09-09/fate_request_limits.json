@@ -1,0 +1,72 @@
+[
+  {
+    "scope": "auth-user-signup",
+    "identity_hash": "8dfcdd41656229f2875dfa65f4565298475c248d9c003640fa573f6fe27047be",
+    "bucket": 1987543,
+    "count": 1,
+    "expires_at": "2026-09-07T14:00:00+00:00"
+  },
+  {
+    "scope": "auth-ip-signup",
+    "identity_hash": "e429b97929b19020c999f0ae3b5e7c2e24075dabe632b280369761c2fba3d090",
+    "bucket": 1987543,
+    "count": 2,
+    "expires_at": "2026-09-07T14:00:00+00:00"
+  },
+  {
+    "scope": "auth-user-signup",
+    "identity_hash": "b1b7b7de6c96eabfb031703d6145578a7dcf2dd1760dd85907fd617b4e918686",
+    "bucket": 1987543,
+    "count": 1,
+    "expires_at": "2026-09-07T14:00:00+00:00"
+  },
+  {
+    "scope": "auth-ip-login",
+    "identity_hash": "e429b97929b19020c999f0ae3b5e7c2e24075dabe632b280369761c2fba3d090",
+    "bucket": 1987543,
+    "count": 1,
+    "expires_at": "2026-09-07T14:00:00+00:00"
+  },
+  {
+    "scope": "auth-user-login",
+    "identity_hash": "8dfcdd41656229f2875dfa65f4565298475c248d9c003640fa573f6fe27047be",
+    "bucket": 1987543,
+    "count": 1,
+    "expires_at": "2026-09-07T14:00:00+00:00"
+  },
+  {
+    "scope": "save-key",
+    "identity_hash": "9bf8fe201cfbe79bf5b1c3ece7b3c73dae6bb2c59ef8eb27f1ff81dd7dd0c406",
+    "bucket": 29813152,
+    "count": 1,
+    "expires_at": "2026-09-07T13:53:00+00:00"
+  },
+  {
+    "scope": "auth-ip-recover",
+    "identity_hash": "e429b97929b19020c999f0ae3b5e7c2e24075dabe632b280369761c2fba3d090",
+    "bucket": 1987543,
+    "count": 2,
+    "expires_at": "2026-09-07T14:00:00+00:00"
+  },
+  {
+    "scope": "auth-user-recover",
+    "identity_hash": "8dfcdd41656229f2875dfa65f4565298475c248d9c003640fa573f6fe27047be",
+    "bucket": 1987543,
+    "count": 2,
+    "expires_at": "2026-09-07T14:00:00+00:00"
+  },
+  {
+    "scope": "auth-ip-login",
+    "identity_hash": "17c5eae38cecb004e5302fd7cbd85905f2c8e9ba9d5aecb7750bdf06cac1162f",
+    "bucket": 1987584,
+    "count": 1,
+    "expires_at": "2026-09-08T00:15:00+00:00"
+  },
+  {
+    "scope": "auth-user-login",
+    "identity_hash": "9c192d43505c2511d13357f28df5a852b5248ecbaa1f75a8f27d418e83d1e7f6",
+    "bucket": 1987584,
+    "count": 1,
+    "expires_at": "2026-09-08T00:15:00+00:00"
+  }
+]

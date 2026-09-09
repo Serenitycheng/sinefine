@@ -1,0 +1,12 @@
+.git
+.openai
+.test-build
+.env
+.env.*
+node_modules
+.next
+*.tsbuildinfo
+tests
+scripts
+ASSETS.md
+README.md

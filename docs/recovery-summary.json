@@ -1,0 +1,30 @@
+{
+  "title": "sinefine",
+  "source_files": 176,
+  "source_bytes": 55936457,
+  "production_deployment": "dpl_Ez3vVrgWLZY2wuBpesmxryVVWeab",
+  "vercel_history": [
+    {
+      "project": "aether",
+      "deployments": 20
+    }
+  ],
+  "historical_deployments_total": 20,
+  "attachments": null,
+  "database_tables": [
+    {
+      "table": "fate_connections",
+      "rows": 0
+    },
+    {
+      "table": "fate_request_limits",
+      "rows": 10
+    },
+    {
+      "table": "fate_accounts",
+      "rows": 0
+    }
+  ],
+  "redis_key_count": null,
+  "game_save_excluded": true
+}
