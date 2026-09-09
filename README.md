@@ -8,7 +8,7 @@
 
 ## 数据和附件
 
-数据库最新导出位于 `data/cloud-2026-09-09/`。PostgreSQL 使用只读、可重复读事务导出，结构、约束、索引、序列、视图和策略也已保存。加密业务配置保持原密文。
+Supabase 最新导出位于 `data/cloud-2026-09-09/`，通过只读 REST API 完整读取当前公开业务表，同时保存 OpenAPI 结构和存储桶清单。原始 SQL 迁移保存在源码中，早期结构备份也已保留。这次逐表读取并非数据库事务快照。
 
 - public.fate_connections：0 行。
 - public.fate_request_limits：10 行。

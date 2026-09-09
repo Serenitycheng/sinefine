@@ -2,7 +2,7 @@
   "generated_at": "2026-09-09",
   "scope": "All recovery repository files except this manifest and Git internals",
   "file_count": 2920,
-  "total_bytes": 687805708,
+  "total_bytes": 687805777,
   "files": [
     {
       "path": ".gitattributes",
@@ -13531,8 +13531,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 2771,
-      "sha256": "65a6c826f7e143a7c7a346218be9dabe423d8e2ea46dc8e43c8bd68b64253c36"
+      "bytes": 2840,
+      "sha256": "ab68d49f281cb26b822bfc0bc7ee30e5086f8dff21523ddbb3e29f3103257b70"
     },
     {
       "path": "recovered/data/api-schema.json",
