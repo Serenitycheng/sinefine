@@ -1,5 +1,7 @@
 'use client';
 import { memo, useState } from 'react';
+import Image from 'next/image';
+import townImage from '@/public/town.png';
 import {
   Sun,
   CloudRain,
@@ -77,9 +79,11 @@ export const GameMap = memo(function GameMap({
               following && person ? `${person.x}% ${person.y}%` : '50% 50%',
           }}
         >
-          <img
+          <Image
             className="town-map"
-            src="/town.png"
+            src={townImage}
+            sizes="100vw"
+            unoptimized
             alt="微光街区：住宅、学舍、商店、公园、诊所与龙息庭院"
             draggable={false}
           />

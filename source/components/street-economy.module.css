@@ -1,0 +1,108 @@
+.ledger {
+  margin: 20px 0;
+  padding: 16px 14px;
+  border: 1px solid #c4b27a38;
+  border-radius: 8px;
+  background: #202f2c;
+  color: #ced5c6;
+  font-size: 11px;
+  line-height: 1.8;
+}
+.ledger h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #e0d4a5;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+.ledger label {
+  display: block;
+  margin: 0 0 5px;
+}
+.ledger select {
+  width: 100%;
+  border: 1px solid #738471;
+  border-radius: 5px;
+  padding: 8px 10px;
+  color: #edf0e0;
+  background: #172622;
+}
+.ledger select:focus-visible,
+.ledger summary:focus-visible {
+  outline: 2px solid #e0d4a5;
+  outline-offset: 3px;
+}
+.balance {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+  margin: 16px 0 10px;
+  flex-wrap: wrap;
+}
+.balance strong {
+  font-size: 26px;
+  color: #f0dfac;
+  font-variant-numeric: tabular-nums;
+}
+.balance small {
+  font-size: 10px;
+  font-weight: 400;
+}
+.ledger p {
+  margin: 8px 0;
+}
+.ledger details {
+  margin: 12px 0;
+}
+.ledger summary {
+  color: #e0d4a5;
+  cursor: pointer;
+}
+.prices {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+}
+.prices li,
+.entries li > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.prices b {
+  font-weight: 500;
+  white-space: nowrap;
+}
+.ledger h4 {
+  font-size: 11px;
+  font-weight: 500;
+  margin: 14px 0 6px;
+}
+.entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow: auto;
+}
+.entries li {
+  padding: 9px 2px;
+  border-top: 1px solid #c4b27a20;
+}
+.entries b {
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.entries small,
+.note {
+  color: #a0b29e;
+  font-size: 10px;
+}
+.income {
+  color: #bcd9a3;
+}
+.expense {
+  color: #e6c49b;
+}

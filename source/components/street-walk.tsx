@@ -27,6 +27,7 @@ import {
   Gamepad2,
   MessageCircle,
   Settings2,
+  House,
 } from 'lucide-react';
 import {
   STREET,
@@ -51,6 +52,10 @@ import { useStreetLife } from './use-street-life';
 import { LifeControls, LifePanel } from './street-life-panel';
 import { StreetObserver } from './street-observer';
 import { lifePeriod, lifeStatus, lifeTime } from '@/lib/fate-life';
+import { FateInterior, type InteriorView } from './fate-interior';
+import { FATE_HOMES } from '@/lib/fate-housing';
+import { interiorResidents } from '@/lib/fate-interior';
+import interiorStyles from './fate-interior.module.css';
 import styles from './street-walk.module.css';
 
 const BASE_CAST = [
@@ -190,6 +195,69 @@ const BASE_CAST = [
     rows: 2,
     aspect: 1,
   },
+  {
+    id: 'gilgamesh' as const,
+    name: '吉尔伽美什',
+    caption: 'Archer · 英雄王',
+    image: '/fate/street/gilgamesh-walk.png',
+    row: 0,
+    rows: 1,
+    aspect: 0.75,
+  },
+  {
+    id: 'medusa' as const,
+    name: '美杜莎',
+    caption: 'Rider · 安静的守望',
+    image: '/fate/street/medusa-walk.png',
+    row: 0,
+    rows: 1,
+    aspect: 0.75,
+  },
+  {
+    id: 'tokiomi' as const,
+    name: '远坂时臣',
+    caption: '远坂家的父亲',
+    image: '/fate/street/tokiomi-walk.png',
+    row: 0,
+    rows: 1,
+    aspect: 0.75,
+  },
+  {
+    id: 'kirei' as const,
+    name: '言峰绮礼',
+    caption: '教会里的倾听者',
+    image: '/fate/street/kirei-walk.png',
+    row: 0,
+    rows: 1,
+    aspect: 0.75,
+  },
+  {
+    id: 'kariya' as const,
+    name: '间桐雁夜',
+    caption: '有希望的日常',
+    image: '/fate/street/kariya-walk.png',
+    row: 0,
+    rows: 1,
+    aspect: 0.75,
+  },
+  {
+    id: 'emiya' as const,
+    name: 'EMIYA',
+    caption: 'Archer · 务实的料理人',
+    image: '/fate/street/emiya-walk.png',
+    row: 0,
+    rows: 1,
+    aspect: 0.75,
+  },
+  {
+    id: 'natalia' as const,
+    name: '娜塔莉亚',
+    caption: '切嗣的养母与师父',
+    image: '/fate/street/natalia-walk.png',
+    row: 0,
+    rows: 1,
+    aspect: 0.75,
+  },
 ];
 const ASSETS = [
   '/fate/street/street.png',
@@ -240,6 +308,9 @@ export default function StreetWalk() {
   );
   const [nearby, setNearby] = useState<PartnerId | null>(null);
   const [dialog, setDialog] = useState<'settings' | PartnerId | null>(null);
+  const [dialogSpeaker, setDialogSpeaker] = useState<ActorId>('admin');
+  const [interiorView, setInteriorView] = useState<InteriorView | null>(null);
+  const interiorSurface = useRef<HTMLDivElement>(null);
   const overlay = useRef(false);
   const [active, setActive] = useState<ActorId>('illya');
   const [mode, setMode] = useState<'control' | 'observe'>('observe');
@@ -304,7 +375,7 @@ export default function StreetWalk() {
     world: Point;
     dragged: boolean;
   } | null>(null);
-  const settings = useRef({ active, mode, zoom, ready });
+  const settings = useRef({ active, mode, zoom, ready, interior: false });
   const padHistory = useRef<PadHistory>(null);
   const padIndex = useRef<number | null>(null);
   const padActions = useRef<{
@@ -313,12 +384,23 @@ export default function StreetWalk() {
     center: () => void;
     talk: () => void;
     back: () => void;
+    leaveInterior: () => void;
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
 
   useEffect(() => {
-    settings.current = { active, mode, zoom, ready };
-  }, [active, mode, zoom, ready]);
+    settings.current = {
+      active,
+      mode,
+      zoom,
+      ready,
+      interior: Boolean(interiorView),
+    };
+  }, [active, mode, zoom, ready, interiorView]);
+  useEffect(() => {
+    if (interiorView) interiorSurface.current?.focus({ preventScroll: true });
+    else stage.current?.focus({ preventScroll: true });
+  }, [interiorView]);
   useEffect(() => {
     let alive = true;
     const images = ASSETS.map(
@@ -369,6 +451,13 @@ export default function StreetWalk() {
         return;
       const key = e.key.toLowerCase();
       if (overlay.current) return;
+      if (settings.current.interior) {
+        if (key === 'escape' && !e.repeat) {
+          e.preventDefault();
+          padActions.current?.leaveInterior();
+        }
+        return;
+      }
       if (
         key === 'e' &&
         !e.repeat &&
@@ -435,6 +524,10 @@ export default function StreetWalk() {
             if (action === 'back') padActions.current?.back();
             continue;
           }
+          if (settings.current.interior) {
+            if (action === 'back') padActions.current?.leaveInterior();
+            continue;
+          }
           if (action === 'talk') {
             padActions.current?.talk();
             continue;
@@ -457,6 +550,13 @@ export default function StreetWalk() {
           return;
         }
         opts = settings.current;
+        if (opts.interior) {
+          // Keep the same daily simulation alive while the street surface is covered.
+          // Only direct street controls are suspended; nobody is moved into this view.
+          dailyActions.current.advance(dt);
+          raf = requestAnimationFrame(tick);
+          return;
+        }
         const keyboard = directionFromKeys(
           new Set([...keys.current, ...touchKeys.current]),
         );
@@ -573,7 +673,8 @@ export default function StreetWalk() {
         ? `正在跟随${CAST.find((p) => p.id === id)!.name}，人物仍自主生活；拖动画面可自由观察`
         : `正在控制${CAST.find((p) => p.id === id)!.name} · 摇杆、方向键或点击路面`,
     );
-    stage.current?.focus({ preventScroll: true });
+    if (!settings.current.interior)
+      stage.current?.focus({ preventScroll: true });
   }
   function switchMode() {
     dailyActions.current.cancel();
@@ -604,18 +705,24 @@ export default function StreetWalk() {
     settings.current = { ...settings.current, zoom: 1.24 };
     setZoom(1.24);
   }
-  function openDialog(value: 'settings' | PartnerId) {
+  function openDialog(
+    value: 'settings' | PartnerId,
+    speaker: ActorId = settings.current.active,
+    preserveRoutes = settings.current.interior,
+  ) {
     dailyActions.current.cancel();
     overlay.current = true;
     keys.current.clear();
     touchKeys.current.clear();
     pointer.current = null;
-    actors.current = actors.current.map((actor) => ({
-      ...actor,
-      path: [],
-      frame: 0,
-      rest: 4,
-    }));
+    if (!preserveRoutes)
+      actors.current = actors.current.map((actor) => ({
+        ...actor,
+        path: [],
+        frame: 0,
+        rest: 4,
+      }));
+    setDialogSpeaker(speaker);
     setDialog(value);
   }
   function closeDialog() {
@@ -623,7 +730,38 @@ export default function StreetWalk() {
     setDialog(null);
     keys.current.clear();
     touchKeys.current.clear();
-    stage.current?.focus({ preventScroll: true });
+    if (settings.current.interior)
+      interiorSurface.current?.focus({ preventScroll: true });
+    else stage.current?.focus({ preventScroll: true });
+  }
+  function visitInterior(value: InteriorView) {
+    keys.current.clear();
+    touchKeys.current.clear();
+    pointer.current = null;
+    settings.current = { ...settings.current, interior: true };
+    setInteriorView(value);
+  }
+  function leaveInterior() {
+    keys.current.clear();
+    touchKeys.current.clear();
+    pointer.current = null;
+    settings.current = { ...settings.current, interior: false };
+    setInteriorView(null);
+  }
+  function talkInside(id: PartnerId) {
+    if (!interiorView || interiorView === 'directory') return;
+    const person = interiorResidents(
+      daily.view,
+      interiorView,
+      mode === 'control' ? active : null,
+    ).find((item) => item.id === id && item.presence === 'inside');
+    if (
+      !person ||
+      !dailyActions.current.isInside(id) ||
+      daily.view.people[id].activity?.kind === 'sleep'
+    )
+      return;
+    openDialog(id, 'admin', true);
   }
   function talk() {
     if (settings.current.mode !== 'control') return;
@@ -645,6 +783,7 @@ export default function StreetWalk() {
       center: recenter,
       talk,
       back: closeDialog,
+      leaveInterior,
     };
   });
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
@@ -718,14 +857,31 @@ export default function StreetWalk() {
           <span className={styles.wordmark}>
             SINE<span> / </span>FINE
           </span>
-          <span className={styles.brandChinese}>无中之庭</span>
+          <span className={styles.brandChinese}>无终之庭</span>
         </Link>
         <div className={styles.location}>
           <MapPin size={16} />
-          <span>{location}</span>
+          <span>
+            {interiorView
+              ? interiorView === 'directory'
+                ? '冬木 · 住宅'
+                : FATE_HOMES[interiorView].name
+              : location}
+          </span>
           <small>{lifePeriod(daily.view.minutes)}</small>
         </div>
         <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.aiButton}
+            onClick={() => visitInterior('directory')}
+            disabled={!ready || !fate.loaded}
+            aria-label="查看住宅"
+            aria-pressed={Boolean(interiorView)}
+          >
+            <House size={16} />
+            <span>住宅</span>
+          </button>
           <Link
             href="/fate/world"
             className={styles.back}
@@ -760,7 +916,13 @@ export default function StreetWalk() {
           <div
             ref={stage}
             className={`${styles.stage} ${mode === 'observe' ? styles.observing : ''}`}
-            tabIndex={0}
+            tabIndex={interiorView ? -1 : 0}
+            inert={Boolean(interiorView)}
+            aria-hidden={Boolean(interiorView)}
+            style={{
+              opacity: interiorView ? 0 : 1,
+              pointerEvents: interiorView ? 'none' : undefined,
+            }}
             role="application"
             aria-label="冬木生活街道，默认观察他们自主生活；拖动或方向键移动镜头，进入角色后可控制走路"
             onPointerDown={onPointerDown}
@@ -836,97 +998,123 @@ export default function StreetWalk() {
               <div ref={marker} className={styles.destination} />
             </div>
           </div>
-          <div className={styles.modeBadge}>
-            <span className={styles.liveDot} />
-            {mode === 'control' ? `正在控制 · ${current.name}` : '自由观察'}
-            <span className={styles.preview}>
-              {lifeTime(daily.view.minutes).split(' · ')[1]}
-            </span>
-          </div>
-          <output
-            className={`${styles.gamepadStatus} ${padConnected ? styles.gamepadConnected : ''}`}
-          >
-            <Gamepad2 size={17} aria-hidden="true" />
-            <span>{padStatus}</span>
-          </output>
-          {ready && mode === 'control' && (
-            <button
-              className={styles.talkButton}
-              onClick={talk}
-              disabled={!nearby || !fate.loaded}
-            >
-              <MessageCircle size={16} />
-              {nearby
-                ? `与${fatePerson(nearby, waverStage)!.name}交谈`
-                : '靠近街道上的人物交谈'}
-              <kbd>E / A</kbd>
-            </button>
-          )}
-          <div className={styles.cameraTools}>
-            <button
-              onClick={() => setZoom((v) => clamp(v - 0.12, 1, 1.8))}
-              disabled={zoom <= 1}
-              aria-label="拉远镜头"
-              title="拉远镜头"
-            >
-              <Minus size={19} />
-            </button>
-            <button
-              onClick={recenter}
-              aria-label="镜头回到人物"
-              title="镜头回到人物"
-            >
-              <Focus size={19} />
-            </button>
-            <button
-              onClick={() => setZoom((v) => clamp(v + 0.12, 1, 1.8))}
-              disabled={zoom >= 1.8}
-              aria-label="拉近镜头"
-              title="拉近镜头"
-            >
-              <Plus size={19} />
-            </button>
-          </div>
-          {!ready && (
-            <div className={styles.assetState}>
-              <span>{error ? '街景素材未能载入' : '正在进入街道…'}</span>
-              {error && (
+          {!interiorView && (
+            <>
+              <div className={styles.modeBadge}>
+                <span className={styles.liveDot} />
+                {mode === 'control' ? `正在控制 · ${current.name}` : '自由观察'}
+                <span className={styles.preview}>
+                  {lifeTime(daily.view.minutes).split(' · ')[1]}
+                </span>
+              </div>
+              <output
+                className={`${styles.gamepadStatus} ${padConnected ? styles.gamepadConnected : ''}`}
+              >
+                <Gamepad2 size={17} aria-hidden="true" />
+                <span>{padStatus}</span>
+              </output>
+              {ready && mode === 'control' && (
                 <button
-                  onClick={() => {
-                    setReady(false);
-                    setError(false);
-                    setAttempt((v) => v + 1);
-                  }}
+                  className={styles.talkButton}
+                  onClick={talk}
+                  disabled={!nearby || !fate.loaded}
                 >
-                  重新载入
+                  <MessageCircle size={16} />
+                  {nearby
+                    ? `与${fatePerson(nearby, waverStage)!.name}交谈`
+                    : '靠近街道上的人物交谈'}
+                  <kbd>E / A</kbd>
                 </button>
               )}
-            </div>
-          )}
-          {ready && mode === 'control' && (
-            <div className={styles.dpad} aria-label="触屏方向键">
-              {[
-                { key: 'arrowup', label: '向上走', Icon: ArrowUp },
-                { key: 'arrowleft', label: '向左走', Icon: ArrowLeft },
-                { key: 'arrowdown', label: '向下走', Icon: ArrowDown },
-                { key: 'arrowright', label: '向右走', Icon: ArrowRight },
-              ].map(({ key, label, Icon }) => (
+              <div className={styles.cameraTools}>
                 <button
-                  key={key}
-                  className={styles[key]}
-                  aria-label={label}
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    e.currentTarget.setPointerCapture(e.pointerId);
-                    touchKeys.current.add(key);
-                  }}
-                  onPointerUp={() => touchKeys.current.delete(key)}
-                  onPointerCancel={() => touchKeys.current.delete(key)}
-                  onLostPointerCapture={() => touchKeys.current.delete(key)}
+                  onClick={() => setZoom((v) => clamp(v - 0.12, 1, 1.8))}
+                  disabled={zoom <= 1}
+                  aria-label="拉远镜头"
+                  title="拉远镜头"
                 >
-                  <Icon size={22} />
+                  <Minus size={19} />
                 </button>
-              ))}
+                <button
+                  onClick={recenter}
+                  aria-label="镜头回到人物"
+                  title="镜头回到人物"
+                >
+                  <Focus size={19} />
+                </button>
+                <button
+                  onClick={() => setZoom((v) => clamp(v + 0.12, 1, 1.8))}
+                  disabled={zoom >= 1.8}
+                  aria-label="拉近镜头"
+                  title="拉近镜头"
+                >
+                  <Plus size={19} />
+                </button>
+              </div>
+              {!ready && (
+                <div className={styles.assetState}>
+                  <span>{error ? '街景素材未能载入' : '正在进入街道…'}</span>
+                  {error && (
+                    <button
+                      onClick={() => {
+                        setReady(false);
+                        setError(false);
+                        setAttempt((v) => v + 1);
+                      }}
+                    >
+                      重新载入
+                    </button>
+                  )}
+                </div>
+              )}
+              {ready && mode === 'control' && (
+                <div className={styles.dpad} aria-label="触屏方向键">
+                  {[
+                    { key: 'arrowup', label: '向上走', Icon: ArrowUp },
+                    { key: 'arrowleft', label: '向左走', Icon: ArrowLeft },
+                    { key: 'arrowdown', label: '向下走', Icon: ArrowDown },
+                    { key: 'arrowright', label: '向右走', Icon: ArrowRight },
+                  ].map(({ key, label, Icon }) => (
+                    <button
+                      key={key}
+                      className={styles[key]}
+                      aria-label={label}
+                      onPointerDown={(e) => {
+                        e.preventDefault();
+                        e.currentTarget.setPointerCapture(e.pointerId);
+                        touchKeys.current.add(key);
+                      }}
+                      onPointerUp={() => touchKeys.current.delete(key)}
+                      onPointerCancel={() => touchKeys.current.delete(key)}
+                      onLostPointerCapture={() => touchKeys.current.delete(key)}
+                    >
+                      <Icon size={22} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          {interiorView && (
+            <div
+              ref={interiorSurface}
+              className={interiorStyles.surface}
+              tabIndex={-1}
+            >
+              <FateInterior
+                view={interiorView}
+                life={daily.view}
+                controlled={mode === 'control' ? active : null}
+                running={daily.running}
+                onVisit={visitInterior}
+                onReturn={leaveInterior}
+                onTalk={talkInside}
+                onStreet={(id) => {
+                  leaveInterior();
+                  if (settings.current.mode === 'control') switchMode();
+                  choose(id);
+                }}
+              />
             </div>
           )}
         </div>
@@ -939,7 +1127,7 @@ export default function StreetWalk() {
             onSettings={() => openDialog('settings')}
             onClose={() => setLifePanel(false)}
           />
-        ) : (
+        ) : !interiorView ? (
           <StreetObserver
             life={daily}
             watched={active}
@@ -948,93 +1136,99 @@ export default function StreetWalk() {
               choose(id);
             }}
           />
-        )}
+        ) : null}
       </div>
-      <footer className={styles.footer}>
-        <div className={styles.controlIntro}>
-          <span className={styles.eyebrow}>
-            {mode === 'control' ? '暂时进入角色' : '观察人物'}
-          </span>
-          <p>{mode === 'control' ? '随时返回观察' : '选择人物跟随镜头'}</p>
-        </div>
-        <div
-          ref={castList}
-          className={styles.cast}
-          aria-label="横向浏览人物，观察模式下选择只跟随镜头"
-        >
-          {CAST.map((person) => (
+      {!interiorView && (
+        <footer className={styles.footer}>
+          <div className={styles.controlIntro}>
+            <span className={styles.eyebrow}>
+              {mode === 'control' ? '暂时进入角色' : '观察人物'}
+            </span>
+            <p>{mode === 'control' ? '随时返回观察' : '选择人物跟随镜头'}</p>
+          </div>
+          <div
+            ref={castList}
+            className={styles.cast}
+            aria-label="横向浏览人物，观察模式下选择只跟随镜头"
+          >
+            {CAST.map((person) => (
+              <button
+                key={person.id}
+                disabled={!ready}
+                onClick={() => choose(person.id)}
+                className={`${styles.castCard} ${active === person.id ? styles.selected : ''}`}
+                aria-pressed={active === person.id}
+              >
+                <span className={styles.portrait} style={spriteStyle(person)} />
+                <span>
+                  <strong>{person.name}</strong>
+                  <small>{person.caption}</small>
+                </span>
+                {mode === 'control' && active === person.id && (
+                  <Footprints size={15} />
+                )}
+              </button>
+            ))}
+          </div>
+          <div className={styles.actions}>
             <button
-              key={person.id}
+              className={styles.observeButton}
               disabled={!ready}
-              onClick={() => choose(person.id)}
-              className={`${styles.castCard} ${active === person.id ? styles.selected : ''}`}
-              aria-pressed={active === person.id}
+              onClick={switchMode}
             >
-              <span className={styles.portrait} style={spriteStyle(person)} />
-              <span>
-                <strong>{person.name}</strong>
-                <small>{person.caption}</small>
-              </span>
-              {mode === 'control' && active === person.id && (
-                <Footprints size={15} />
+              {mode === 'control' ? (
+                <Eye size={18} />
+              ) : (
+                <Footprints size={18} />
               )}
+              <span>{mode === 'control' ? '返回观察' : '进入角色'}</span>
             </button>
-          ))}
-        </div>
-        <div className={styles.actions}>
-          <button
-            className={styles.observeButton}
-            disabled={!ready}
-            onClick={switchMode}
-          >
-            {mode === 'control' ? <Eye size={18} /> : <Footprints size={18} />}
-            <span>{mode === 'control' ? '返回观察' : '进入角色'}</span>
-          </button>
-          <button
-            className={styles.resetButton}
-            onClick={reset}
-            aria-label="回到初始位置"
-            title="回到初始位置"
-          >
-            <RotateCcw size={17} />
-          </button>
-        </div>
-        <div className={styles.instructions}>
-          <span aria-live="polite">{hint}</span>
-          <details className={styles.help}>
-            <summary>
-              <HelpCircle size={14} />
-              操作说明
-            </summary>
-            <div>
-              <p>默认旁观自主生活，选择人物只跟随镜头</p>
-              <p>进入角色后：WASD / 方向键走动，点击路面前往</p>
-              <p>自由观察：拖动画面</p>
-              <p>右上角 ＋ / −：调整镜头</p>
-              <p className={styles.helpLabel}>手柄 · 连接后按任意按钮</p>
-              <p>左摇杆 / 十字键：走动</p>
-              <p>LB / RB（L1 / R1）：切换人物</p>
-              <p>Y（△）：切换自由观察</p>
-              <p>右摇杆：自由观察时移动镜头</p>
-              <p>Menu / Options：镜头回到人物</p>
-              <p>E / A（×）：靠近人物后交谈</p>
-              <p>B（○）/ Esc：关闭交谈</p>
-              <p>
-                点击「开始日常」观察十四位 Fate 人物自主行动。连接 DeepSeek
-                并开启「AI
-                自主交谈」后，相遇的两个人会自由接话，显示在旁听栏里。进入角色可主动干预。离开页面后日常暂停。
-              </p>
-            </div>
-          </details>
-        </div>
-      </footer>
+            <button
+              className={styles.resetButton}
+              onClick={reset}
+              aria-label="回到初始位置"
+              title="回到初始位置"
+            >
+              <RotateCcw size={17} />
+            </button>
+          </div>
+          <div className={styles.instructions}>
+            <span aria-live="polite">{hint}</span>
+            <details className={styles.help}>
+              <summary>
+                <HelpCircle size={14} />
+                操作说明
+              </summary>
+              <div>
+                <p>默认旁观自主生活，选择人物只跟随镜头</p>
+                <p>进入角色后：WASD / 方向键走动，点击路面前往</p>
+                <p>自由观察：拖动画面</p>
+                <p>右上角 ＋ / −：调整镜头</p>
+                <p className={styles.helpLabel}>手柄 · 连接后按任意按钮</p>
+                <p>左摇杆 / 十字键：走动</p>
+                <p>LB / RB（L1 / R1）：切换人物</p>
+                <p>Y（△）：切换自由观察</p>
+                <p>右摇杆：自由观察时移动镜头</p>
+                <p>Menu / Options：镜头回到人物</p>
+                <p>E / A（×）：靠近人物后交谈</p>
+                <p>B（○）/ Esc：关闭交谈</p>
+                <p>
+                  点击「开始日常」观察二十一位 Fate 人物自主行动。连接 DeepSeek
+                  并开启「AI
+                  自主交谈」后，相遇的两个人会自由接话，显示在旁听栏里。进入角色可主动干预。离开页面后日常暂停。
+                </p>
+              </div>
+            </details>
+          </div>
+        </footer>
+      )}
       {dialog === 'settings' ? (
         <FateAISettings onClose={closeDialog} />
       ) : dialog ? (
         <FateConversation
-          key={`${dialog}-${active}`}
+          key={`${dialog}-${dialogSpeaker}`}
           target={dialog}
-          speaker={active}
+          speaker={dialogSpeaker}
           onClose={closeDialog}
           onSettings={() => openDialog('settings')}
         />

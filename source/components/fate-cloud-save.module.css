@@ -1,0 +1,162 @@
+.panel {
+  margin-top: 26px;
+  padding: 30px;
+  border: 1px solid var(--line);
+  background: #f9f8f2;
+}
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.heading > svg {
+  color: #809172;
+  flex-shrink: 0;
+}
+.heading span {
+  font:
+    10px Georgia,
+    serif;
+  color: #899679;
+  letter-spacing: 2px;
+}
+.panel h2 {
+  font-size: 21px;
+  font-weight: 400;
+  margin: 8px 0 0;
+}
+.panel h3 {
+  font-size: 14px;
+  font-weight: 500;
+  margin: 0 0 13px;
+  overflow-wrap: anywhere;
+}
+.note {
+  font-size: 12px;
+  line-height: 1.9;
+  color: #72816b;
+  overflow-wrap: anywhere;
+}
+.note a {
+  color: #4c6746;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.buttons {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 17px;
+}
+.buttons button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 15px;
+  border: 1px solid #8f9e7e66;
+  border-radius: 3px;
+  background: #fffdf8;
+  color: #4c6746;
+  font-size: 12px;
+  cursor: pointer;
+}
+.buttons button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.buttons button:focus-visible,
+.note a:focus-visible {
+  outline: 2px solid #4c6746;
+  outline-offset: 4px;
+}
+.buttons .primary {
+  background: #637758;
+  color: #fffdf8;
+}
+.account {
+  font-size: 12px;
+  color: #72816b;
+  overflow-wrap: anywhere;
+}
+.remote {
+  margin-top: 22px;
+  padding: 22px;
+  background: #f0f1e8;
+  border: 1px solid #8f9e7e33;
+}
+.snapshot h4 {
+  font-size: 16px;
+  font-weight: 400;
+  margin: 0 0 10px;
+  overflow-wrap: anywhere;
+}
+.snapshot p {
+  font-size: 11px;
+  color: #72816b;
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.snapshot dl {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  margin: 17px 0;
+}
+.snapshot dt {
+  font-size: 10px;
+  color: #809172;
+  margin-bottom: 8px;
+}
+.snapshot dd {
+  margin: 0;
+  font-size: 13px;
+}
+.confirm {
+  margin-top: 22px;
+  border: 1px solid #879676;
+  padding: 22px;
+  background: #eff2e8;
+}
+.comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 22px;
+}
+.comparison > div {
+  min-width: 0;
+  padding: 17px;
+  border: 1px solid #8f9e7e33;
+  background: #fffdf8;
+}
+.success,
+.error {
+  margin: 16px 0 0;
+  font-size: 12px;
+  line-height: 1.9;
+  overflow-wrap: anywhere;
+}
+.success {
+  color: #4c6746;
+}
+.error {
+  color: #935d49;
+}
+@media (max-width: 640px) {
+  .panel {
+    padding: 23px 19px;
+  }
+  .remote,
+  .confirm {
+    padding: 17px;
+  }
+  .comparison {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .snapshot dl {
+    gap: 18px;
+  }
+}

@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { useFate } from './fate-provider';
+import FateCloudSavePanel from './fate-cloud-save-panel';
 import {
   backupFilename,
   readFateBackupFile,
@@ -19,6 +20,7 @@ import {
   type FateBackup,
 } from '@/lib/fate-backup';
 import { lifeTime } from '@/lib/fate-life';
+import { FATE_ORIGINAL_RECOVERY_KEY } from '@/lib/fate-local-session';
 import type { FateSave } from '@/lib/fate-state';
 import styles from './fate-saves.module.css';
 
@@ -94,12 +96,20 @@ export default function FateSaveManager() {
     [error, setError] = useState('');
   const readVersion = useRef(0),
     preview = useRef<HTMLElement>(null);
-  useEffect(
-    () => () => {
-      readVersion.current++;
-    },
-    [],
-  );
+  useEffect(() => {
+    const version = readVersion;
+    version.current++;
+    let alive = true;
+    queueMicrotask(() => {
+      if (!alive) return;
+      setPending(null);
+      setReading(false);
+    });
+    return () => {
+      alive = false;
+      version.current++;
+    };
+  }, [fate.saveRevision]);
   useEffect(() => {
     if (pending) preview.current?.scrollIntoView({ block: 'nearest' });
   }, [pending]);
@@ -147,12 +157,12 @@ export default function FateSaveManager() {
       if (version === readVersion.current) setReading(false);
     }
   }
-  function selectCheckpoint(backup: FateBackup) {
+  function selectCheckpoint(backup: FateBackup, source = '浏览器中保留的备份') {
     readVersion.current++;
     setReading(false);
     setError('');
     setMessage('');
-    setPending({ backup, source: '浏览器中保留的备份' });
+    setPending({ backup, source });
   }
   function restore() {
     if (!pending) return;
@@ -162,9 +172,11 @@ export default function FateSaveManager() {
       setPending(null);
       setError('');
       setMessage(
-        fate.persistent
-          ? '已恢复所选存档，原进度已保留为「恢复前的进度」。回到街道后，点击开始继续。'
-          : '已在当前页面恢复，原进度也暂存在备份列表中；浏览器原始记录未被覆盖。请下载文件保留这份进度。',
+        fate.storageStatus === 'unreadable'
+          ? '已恢复有效备份，无法读取的旧记录已保留为原文，可在下方下载。'
+          : fate.persistent
+            ? '已恢复所选存档，原进度已保留为「恢复前的进度」。回到街道后，点击开始继续。'
+            : '已在当前页面恢复，原进度也暂存在备份列表中；浏览器原始记录未被覆盖。请下载文件保留这份进度。',
       );
     } catch (value) {
       showError(value);
@@ -182,7 +194,11 @@ export default function FateSaveManager() {
             回到街道 <ArrowUpRight size={16} />
           </Link>
         </div>
-        {fate.loaded ? (
+        {fate.storageStatus === 'unreadable' ? (
+          <p className={styles.note}>
+            尚未读到有效进度。原始记录仍在，可在下方导入有效备份。
+          </p>
+        ) : fate.loaded ? (
           <SaveSummary save={fate.save} />
         ) : (
           <p className={styles.note}>正在读取现有进度…</p>
@@ -213,7 +229,7 @@ export default function FateSaveManager() {
               type="button"
               className={styles.primary}
               onClick={keepCheckpoint}
-              disabled={!fate.loaded}
+              disabled={!fate.loaded || fate.storageBlocked}
             >
               <BookmarkPlus size={15} />
               {fate.persistent ? '保留当前进度' : '暂存当前进度'}
@@ -222,7 +238,7 @@ export default function FateSaveManager() {
               type="button"
               className={styles.secondary}
               onClick={() => download(fate.exportBackup(title))}
-              disabled={!fate.loaded}
+              disabled={!fate.loaded || fate.storageStatus === 'unreadable'}
             >
               <Download size={15} />
               下载存档文件
@@ -243,7 +259,7 @@ export default function FateSaveManager() {
             id="fate-import-file"
             type="file"
             accept=".json,application/json"
-            disabled={!fate.loaded}
+            disabled={!fate.loaded || fate.storageStatus === 'conflict'}
             onChange={(event) => {
               const file = event.target.files?.[0];
               event.target.value = '';
@@ -257,6 +273,11 @@ export default function FateSaveManager() {
           </small>
         </section>
       </div>
+      <FateCloudSavePanel
+        title={title}
+        onPreview={selectCheckpoint}
+        onDownload={download}
+      />
       <div className={styles.feedback} aria-live="polite">
         {message && (
           <output className={styles.success}>
@@ -302,15 +323,22 @@ export default function FateSaveManager() {
             </p>
           )}
           <p className={styles.restoreNote}>
-            恢复后，当前世界设定、人物补充、对话和日常进度会一起切换到这份存档。原进度会自动保留在下方列表，需要时可以恢复回来。
+            {fate.storageStatus === 'unreadable'
+              ? '确认后恢复这份有效备份。无法读取的旧记录会先保留为一份可下载的原文，替换之前的原文保护副本；原文不保证能恢复。'
+              : '恢复后，当前世界设定、人物补充、对话和日常进度会一起切换到这份存档。原进度会自动保留在下方列表，需要时可以恢复回来。'}
           </p>
-          {!fate.persistent && (
+          {fate.storageStatus === 'temporary' && (
             <p className={styles.error}>
               浏览器目前无法保存：这次恢复与备份仅在当前页面有效。请下载文件保留，刷新后可能回到原进度。
             </p>
           )}
           <div className={styles.buttons}>
-            <button type="button" className={styles.primary} onClick={restore}>
+            <button
+              type="button"
+              className={styles.primary}
+              onClick={restore}
+              disabled={fate.storageStatus === 'conflict'}
+            >
               <RotateCcw size={15} />
               保留当前进度并恢复
             </button>
@@ -357,6 +385,7 @@ export default function FateSaveManager() {
                     type="button"
                     className={styles.secondary}
                     onClick={() => selectCheckpoint(backup)}
+                    disabled={fate.storageBlocked}
                   >
                     <RotateCcw size={14} />
                     查看并恢复
@@ -379,6 +408,35 @@ export default function FateSaveManager() {
         备份文件不含 DeepSeek 连接密钥，导入也不会开启自主 AI
         或重置本次调用额度。恢复后的日常从暂停开始。浏览器备份与当前存档仍在本机，重要的进度建议同时下载文件保存。
       </p>
+      {fate.hasOriginalRecovery && (
+        <section className={styles.card} aria-label="原始记录保护">
+          <h2>保留的原始记录</h2>
+          <p>
+            这份原文来自最近一次无法读取的记录恢复，供排查或另行保留，不是可直接导入的游戏备份。
+          </p>
+          <button
+            className={styles.secondary}
+            onClick={() => {
+              try {
+                const raw = localStorage.getItem(FATE_ORIGINAL_RECOVERY_KEY);
+                if (raw === null) throw new Error('原文保护副本已不存在。');
+                const url = URL.createObjectURL(
+                  new Blob([raw], { type: 'application/json' }),
+                );
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'sinefine-fate-original-recovery.json';
+                link.click();
+                window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+              } catch (value) {
+                showError(value);
+              }
+            }}
+          >
+            下载保护的原始记录
+          </button>
+        </section>
+      )}
     </>
   );
 }

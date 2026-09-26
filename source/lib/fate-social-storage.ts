@@ -1,6 +1,7 @@
-import { isPartner, type PartnerId } from './fate-cast';
+import { isPartner, STREET_PARTNERS, type PartnerId } from './fate-cast';
 import {
   bondKey,
+  ConflictingMeetupError,
   MEETUPS,
   parseSocialEffects,
   type Appointment,
@@ -51,7 +52,10 @@ export function parseBonds(
     !value ||
     typeof value !== 'object' ||
     Array.isArray(value) ||
-    Object.keys(value).length > 104
+    Object.keys(value).length >
+      (STREET_PARTNERS.length * (STREET_PARTNERS.length - 1)) / 2 +
+        STREET_PARTNERS.length -
+        1
   )
     throw new Error('相处记录无效');
   const result: Record<string, Bond> = {};
@@ -143,6 +147,7 @@ export function parseAppointments(
   value: unknown,
   minutes: number,
   nextId: number,
+  onLegacyCancelled?: (id: number) => void,
 ): Appointment[] {
   if (!Array.isArray(value) || value.length > 20)
     throw new Error('约定记录无效');
@@ -176,24 +181,36 @@ export function parseAppointments(
       (d) => Math.abs(a.start - a.createdAt - d) < 1e-6,
     ) as 60 | 120 | 180 | undefined;
     if (q.length !== 2 || !delay) throw new Error('约定依据无效');
-    parseSocialEffects(
-      {
-        impressions: [],
-        promise: {
-          activity: a.activity,
-          delay,
-          proposal: 0,
-          acceptance: 1,
-          proposalQuote: q[0].text,
-          acceptanceQuote: q[1].text,
-        },
-      },
-      q,
-    );
     if (a.status === 'pending' || a.status === 'meeting') {
       if (busy.has(a.a) || busy.has(a.b)) throw new Error('约定时间冲突');
       busy.add(a.a);
       busy.add(a.b);
+    }
+    let status = a.status;
+    try {
+      parseSocialEffects(
+        {
+          impressions: [],
+          promise: {
+            activity: a.activity,
+            delay,
+            proposal: 0,
+            acceptance: 1,
+            proposalQuote: q[0].text,
+            acceptanceQuote: q[1].text,
+          },
+        },
+        q,
+      );
+    } catch (error) {
+      // Older versions accepted a counterproposal as agreement. Keep its quotes
+      // and completed history, but stop a still-live plan from moving residents.
+      // All other malformed evidence must continue to reject the save.
+      if (!(error instanceof ConflictingMeetupError)) throw error;
+      if (status === 'pending' || status === 'meeting') {
+        status = 'cancelled';
+        onLegacyCancelled?.(a.id);
+      }
     }
     return {
       id: a.id,
@@ -206,7 +223,7 @@ export function parseAppointments(
       until: a.until,
       shared: a.shared,
       talked: a.talked,
-      status: a.status,
+      status,
       quotes: q,
     };
   });

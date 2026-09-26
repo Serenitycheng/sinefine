@@ -23,9 +23,7 @@ import {
 } from 'lucide-react';
 import { useWorld } from '@/hooks/use-world';
 import {
-  type EventKind,
   type LifeEvent,
-  type World,
   dateText,
   clockText,
 } from '@/lib/world';
@@ -75,7 +73,9 @@ export default function Home() {
   );
   const select = useCallback((id: string) => setSelected(id), []);
   const apiRef = useRef({ ctx, select, setView });
-  apiRef.current = { ctx, select, setView };
+  useEffect(() => {
+    apiRef.current = { ctx, select, setView };
+  }, [ctx, select]);
   useEffect(() => {
     const context = (
       document as unknown as {
@@ -189,7 +189,7 @@ export default function Home() {
             <Sparkles size={22} />
           </div>
           <div>
-            <strong>无中之庭</strong>
+            <strong>无终之庭</strong>
             <small>SINE FINE</small>
           </div>
           <span className="alpha">初生世界</span>
@@ -665,10 +665,10 @@ export default function Home() {
         </DialogContent>
       </Dialog>
       {ctx.notice && (
-        <div className="toast-message" role="status">
+        <output className="toast-message">
           <Sparkles size={17} />
           <span>{ctx.notice}</span>
-        </div>
+        </output>
       )}
     </main>
   );

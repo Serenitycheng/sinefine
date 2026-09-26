@@ -7,7 +7,7 @@ import entry from '@/components/world-entry.module.css';
 import styles from '@/components/fate-saves.module.css';
 
 export const metadata: Metadata = {
-  title: '存档与备份 · SINE FINE｜无中之庭',
+  title: '存档与备份 · SINE FINE｜无终之庭',
   description: '留住冬木的一段日常。下载、导入和恢复你的 Fate 存档。',
 };
 export default function FateSavesPage() {

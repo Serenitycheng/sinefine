@@ -13,8 +13,14 @@ import { FateHousingEditor } from './fate-housing-editor';
 import styles from './fate-world.module.css';
 
 export function FateWorldEditor() {
-  const { save, loaded, storageNotice, updateSettings, setWaverStage } =
-    useFate();
+  const {
+    save,
+    loaded,
+    storageBlocked,
+    storageNotice,
+    updateSettings,
+    setWaverStage,
+  } = useFate();
   const [selected, setSelected] = useState('kiritsugu');
   const stage = save.life?.waverStage ?? 'young';
   const [stageError, setStageError] = useState('');
@@ -64,7 +70,7 @@ export function FateWorldEditor() {
               id="fate-world-note"
               rows={6}
               maxLength={2000}
-              disabled={!loaded}
+              disabled={!loaded || storageBlocked}
               value={save.worldNote}
               onChange={(event) =>
                 updateSettings({ ...save, worldNote: event.target.value })
@@ -105,7 +111,10 @@ export function FateWorldEditor() {
               查看当前立绘 ↗
             </a>
           </div>
-          <fieldset className={styles.field} disabled={!loaded}>
+          <fieldset
+            className={styles.field}
+            disabled={!loaded || storageBlocked}
+          >
             <legend>选择当前时期</legend>
             <label>
               <input
@@ -186,7 +195,7 @@ export function FateWorldEditor() {
                 id="fate-character-note"
                 rows={4}
                 maxLength={1000}
-                disabled={!loaded}
+                disabled={!loaded || storageBlocked}
                 value={characterNote}
                 onChange={(event) =>
                   setNote('characterNotes', event.target.value)
@@ -204,7 +213,7 @@ export function FateWorldEditor() {
                 id="fate-relationship-note"
                 rows={4}
                 maxLength={1000}
-                disabled={!loaded}
+                disabled={!loaded || storageBlocked}
                 value={relationshipNote}
                 onChange={(event) =>
                   setNote('relationshipNotes', event.target.value)
@@ -219,7 +228,11 @@ export function FateWorldEditor() {
             <button
               className={styles.reset}
               type="button"
-              disabled={!loaded || (!characterNote && !relationshipNote)}
+              disabled={
+                !loaded ||
+                storageBlocked ||
+                (!characterNote && !relationshipNote)
+              }
               onClick={() =>
                 updateSettings({
                   ...save,

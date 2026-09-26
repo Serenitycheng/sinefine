@@ -1,5 +1,7 @@
 'use client';
 import { useState, type ReactNode } from 'react';
+import Image from 'next/image';
+import townImage from '@/public/town.png';
 import {
   Sparkles,
   ArrowRight,
@@ -786,7 +788,7 @@ function PersonEditor({
           : d.traits,
         backstory: String(r.backstory || '').slice(0, 1000),
         goal: String(r.goal || d.goal).slice(0, 300),
-        school: SCHOOLS.includes(r.school) ? r.school : '自然',
+        school: r.school && SCHOOLS.includes(r.school) ? r.school : '自然',
         talent: clamp(Number(r.talent) || 50),
         magic: clamp(Number(r.magic) || 0),
       });
@@ -1140,7 +1142,12 @@ function WorldPicker({ ctx, close }: { ctx: Context; close: () => void }) {
   return (
     <>
       <div className="world-card">
-        <img src="/town.png" alt="微光街区" />
+        <Image
+          src={townImage}
+          alt="微光街区"
+          sizes="(max-width: 768px) 100vw, 640px"
+          unoptimized
+        />
         <div>
           <span className="focus-tag">当前世界</span>
           <h3>微光街区</h3>

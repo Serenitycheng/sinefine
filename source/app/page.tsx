@@ -22,7 +22,7 @@ export default function WorldEntryPage() {
             </p>
             <h1 id="entry-title" className={styles.heroTitle}>
               SINE <em>FINE</em>
-              <span>无中之庭</span>
+              <span>无终之庭</span>
             </h1>
             <p className={styles.lead}>
               给世界一个开始，
@@ -85,7 +85,9 @@ export default function WorldEntryPage() {
             <article className={`${styles.worldCard} ${styles.natureCard}`}>
               <div className={styles.cardTop}>
                 <span className={styles.number}>01</span>
-                <span className={styles.pending}>待开放</span>
+                <span className={styles.available}>
+                  <span /> 本地生态已开放
+                </span>
               </div>
               <Leaf className={styles.worldIcon} size={32} strokeWidth={1.1} />
               <p className={styles.cardEnglish}>NATURE</p>
@@ -93,20 +95,20 @@ export default function WorldEntryPage() {
               <p className={styles.cardDescription}>
                 从生存、进食与繁衍开始，
                 <br />
-                观察生命如何适应环境，演化出新的可能。
+                观察食物、水分与天气怎样改变这片生境。
               </p>
               <div className={styles.cardBase}>
-                <span>这里的生命，尚待萌芽。</span>
-                <button disabled aria-label="自然界，尚未开放">
-                  等待开放 <MoveUpRight size={16} />
-                </button>
+                <span>植物 · 草食动物 · 捕食者</span>
+                <Link href="/nature">
+                  观察自然 <MoveUpRight size={16} />
+                </Link>
               </div>
             </article>
             <article className={`${styles.worldCard} ${styles.humanCard}`}>
               <div className={styles.cardTop}>
                 <span className={styles.number}>02</span>
                 <span className={styles.available}>
-                  <span /> Fate 已开放
+                  <span /> Fate / 自由世界已开放
                 </span>
               </div>
               <Sparkles

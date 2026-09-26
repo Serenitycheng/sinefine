@@ -12,7 +12,7 @@ import { useFate } from './fate-provider';
 import styles from './fate-world.module.css';
 
 export function FateHousingEditor() {
-  const { save, loaded, setHousing } = useFate();
+  const { save, loaded, storageBlocked, setHousing } = useFate();
   const housing = save.life?.housing ?? defaultHousing();
   const stage = save.life?.waverStage ?? 'young';
   const [error, setError] = useState('');
@@ -44,7 +44,7 @@ export function FateHousingEditor() {
             有多位御主的角色，这里先采用下方显示的居住安排，可自由调整；这不强制改写原作契约或恋爱关系。
           </p>
           <p>
-            住址会影响回家、休息、做饭和室内相遇。目前用街道入口与状态呈现，独立室内画面待制作。
+            住址会影响回家、休息、做饭和室内相遇。在街道右上角打开「住宅」，可以查看屋内生活和同住人物。
           </p>
           {Object.entries(FATE_HOMES).map(([id, home]) => {
             const residents = FATE_CAST.filter(
@@ -59,7 +59,7 @@ export function FateHousingEditor() {
             ) : null;
           })}
         </div>
-        <fieldset className={styles.field} disabled={!loaded}>
+        <fieldset className={styles.field} disabled={!loaded || storageBlocked}>
           <legend>同住安排 · 自动保存</legend>
           <label>
             <input

@@ -7,13 +7,13 @@ export function WorldHeader({ active }: { active: 'home' | 'worlds' }) {
       <Link
         className={styles.brand}
         href="/"
-        aria-label="SINE FINE 无中之庭，世界入口"
+        aria-label="SINE FINE 无终之庭，世界入口"
       >
         <span className={styles.brandMark}>
           S<span>/</span>F
         </span>
         <span className={styles.brandText}>
-          无中之庭<small>SINE FINE</small>
+          无终之庭<small>SINE FINE</small>
         </span>
       </Link>
       <nav className={styles.nav} aria-label="主要导航">
@@ -28,7 +28,11 @@ export function WorldHeader({ active }: { active: 'home' | 'worlds' }) {
         </Link>
       </nav>
       <div className={styles.headerLinks}>
-        <Link className={styles.settingsLink} href="/fate/connect">
+        <Link
+          className={styles.settingsLink}
+          href="/fate/connect"
+          aria-label="AI 设置"
+        >
           <SlidersHorizontal size={15} />
           <span>AI 设置</span>
         </Link>
@@ -53,7 +57,7 @@ export function WorldFooter() {
       <Link href="/prototype">
         早期街区原型 <ArrowUpRight size={13} />
       </Link>
-      <small>无中之庭 · 持续制作中</small>
+      <small>无终之庭 · 持续制作中</small>
     </footer>
   );
 }

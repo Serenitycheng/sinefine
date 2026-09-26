@@ -27,6 +27,8 @@ function ButtonGroup({
   orientation,
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof buttonGroupVariants>) {
+  // A generic action group may contain links and menus, not just form controls.
+  /* eslint-disable jsx-a11y/prefer-tag-over-role */
   return (
     <div
       role="group"
@@ -36,6 +38,7 @@ function ButtonGroup({
       {...props}
     />
   );
+  /* eslint-enable jsx-a11y/prefer-tag-over-role */
 }
 
 function ButtonGroupText({

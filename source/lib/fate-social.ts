@@ -97,6 +97,70 @@ function proof(turns: DialogueTurn[], index: unknown, quote: unknown) {
     throw new Error('交谈依据无效');
   return turns[Number(index)];
 }
+
+/** Only thrown after the previous save format's evidence checks have passed. */
+export class ConflictingMeetupError extends Error {
+  constructor() {
+    super('双方提到的活动或地点不一致，暂不安排见面。');
+    this.name = 'ConflictingMeetupError';
+  }
+}
+
+const meetupActions: Record<MeetupKind, readonly string[]> = {
+  walk: ['散步', '走走', '逛逛'],
+  read: ['看书', '读书', '阅读'],
+  eat: ['吃饭', '用餐'],
+};
+function conflictsWithMeetup(text: string, activity: MeetupKind) {
+  const actions = meetupActions[activity];
+  const places = activity === 'walk' ? ['林荫路边'] : ['街角咖啡店', '咖啡店'];
+  const references = [...places, '那里', '那儿'];
+  if (
+    Object.entries(meetupActions).some(
+      ([kind, words]) =>
+        kind !== activity && words.some((word) => text.includes(word)),
+    ) ||
+    Object.values(MEETUPS).some(
+      (meetup) =>
+        meetup.place !== MEETUPS[activity].place && text.includes(meetup.place),
+    )
+  )
+    return true;
+  // A named destination must still be the proposed place. Plain agreement and
+  // references such as "到时候见" or "在那里等你" need not repeat the whole plan.
+  for (const [, destination] of text.matchAll(
+    /(?:在|到|去)(?!时)([^，。！？!?；;\s]+)/g,
+  )) {
+    if (
+      [...references, ...actions].some((word) => destination.startsWith(word))
+    )
+      continue;
+    // "过去等你" and "有你在就放心" name no destination. Only an
+    // identifiable place phrase can contradict the proposed meeting place.
+    if (
+      /^.{0,16}?(?:公园|学校|学园|咖啡店|咖啡馆|图书馆|书店|商店|餐厅|教会|住处|路边|河边|广场|家里|家中|宅|寺)/.test(
+        destination,
+      )
+    )
+      return true;
+  }
+  // Do not treat "好，一起打球" as agreement to one of the supported activities.
+  for (const [, plan] of text.matchAll(/一起([^，。！？!?；;\s]*)/g)) {
+    let rest = plan
+      .replace(/^[一二两三\d]+小时后/, '')
+      .replace(/^[在到去]/, '');
+    const place = references.find((word) => rest.startsWith(word));
+    if (place) rest = rest.slice(place.length);
+    rest = rest.replace(/^去/, '');
+    if (
+      rest &&
+      !actions.some((word) => rest.startsWith(word)) &&
+      !/^(?:吧|呀|啊|见|碰面|等你)/.test(rest)
+    )
+      return true;
+  }
+  return false;
+}
 /** Effects must cite this conversation; missing annotations remain a neutral remembered encounter. */
 export function parseSocialEffects(
   value: unknown,
@@ -149,6 +213,11 @@ export function parseSocialEffects(
     ].some((match) => match[0] !== time)
   )
     throw new Error('约定尚未明确同意');
+  if (
+    conflictsWithMeetup(first.text, p.activity) ||
+    conflictsWithMeetup(second.text, p.activity)
+  )
+    throw new ConflictingMeetupError();
   return {
     impressions,
     promise: {

@@ -13,9 +13,9 @@ import {
 import { WorldHeader, WorldFooter } from '@/components/world-navigation';
 import styles from '@/components/world-entry.module.css';
 export const metadata: Metadata = {
-  title: '人类社会 · SINE FINE｜无中之庭',
+  title: '人类社会 · SINE FINE｜无终之庭',
   description:
-    '选择熟悉的世界，走入角色们的日常。首个开放世界：Fate 冬木街道。',
+    '走进 Fate 冬木，或从海风小镇、星灯学园、远星栖所开始创造自己的世界。',
 };
 export default function HumanWorldsPage() {
   return (
@@ -44,7 +44,7 @@ export default function HumanWorldsPage() {
             <div className={styles.modeHeading}>
               <BookOpen size={18} strokeWidth={1.4} />
               <h2 id="existing-title">现有世界观</h2>
-              <span>01 / 已开放</span>
+              <span>FATE + 3 个原创模板</span>
             </div>
             <p className={styles.modeDescription}>
               保留熟悉的人物与背景，让他们拥有属于这里的生活。
@@ -79,9 +79,8 @@ export default function HumanWorldsPage() {
                 <p>
                   走过住宅门前，在小店旁停留。
                   <br />
-                  遇见
-                  Saber、凛、士郎、樱、切嗣、爱丽丝菲尔、伊莉雅、藤村老师、两位
-                  Lancer、韦伯、征服王、美狄亚与葛木，聊聊今天，也聊聊你眼中的世界。
+                  遇见 Saber、凛、士郎、韦伯、吉尔伽美什等 21 位居民，
+                  聊聊今天，也聊聊你眼中的世界。
                 </p>
                 <div className={styles.featureRow}>
                   <span>
@@ -106,17 +105,38 @@ export default function HumanWorldsPage() {
                 </div>
               </div>
             </article>
-            <div className={styles.moreWorlds}>
-              <Plus size={16} />
-              <span>其他世界观</span>
-              <small>待后续逐一制作</small>
+            <div className={styles.templateWorlds}>
+              <h3>
+                其他世界观 <small>原创 · 可修改模板</small>
+              </h3>
+              <Link href="/create?template=coastal">
+                <span>
+                  <strong>海风小镇</strong>
+                  <small>修船、烹饪与沿海的慢生活</small>
+                </span>
+                <ArrowUpRight size={17} />
+              </Link>
+              <Link href="/create?template=academy">
+                <span>
+                  <strong>星灯学园</strong>
+                  <small>魔法背景下的研习与相遇</small>
+                </span>
+                <ArrowUpRight size={17} />
+              </Link>
+              <Link href="/create?template=orbital">
+                <span>
+                  <strong>远星栖所</strong>
+                  <small>远航居民在空间站的日常</small>
+                </span>
+                <ArrowUpRight size={17} />
+              </Link>
             </div>
           </section>
           <section className={styles.freeMode} aria-labelledby="free-title">
             <div className={styles.modeHeading}>
               <Feather size={18} strokeWidth={1.4} />
               <h2 id="free-title">自由创造</h2>
-              <span className={styles.pending}>待开放</span>
+              <span className={styles.available}>本地创作已开放</span>
             </div>
             <p className={styles.modeDescription}>
               由你设定世界、人物与最初的规则。
@@ -127,19 +147,23 @@ export default function HumanWorldsPage() {
               </div>
               <span>AN UNWRITTEN WORLD</span>
               <h3>为你的想象留一页空白。</h3>
-              <p>世界观 · 人物 · 自然语言规则</p>
-              <button disabled>创作入口尚未开放</button>
+              <p>世界观 · 原创人物 · 可调生活规则</p>
+              <Link className={styles.createLink} href="/create">
+                开始创造 <ArrowUpRight size={16} />
+              </Link>
             </div>
             <p className={styles.pendingNote}>
-              此模式保留位置，完成 Fate 日常系统后再制作。
+              最多保存 8
+              个独立世界。设定文字用于记录故事背景；日常按明确的生活规则推进，无需连接
+              AI。
             </p>
           </section>
         </div>
         <aside className={styles.scopeNote}>
           <span>当前可体验</span>
           <p>
-            街道漫游、十四人的自主日常、切换主控与交谈；也可编辑世界与首批 21
-            人的设定。美狄亚与葛木已登场，韦伯可切换青年或成年版本。完整阵容将逐步接入。
+            Fate 支持 21
+            人日常、住宅、交谈与生活账本。原创世界支持人物设定、生活观察与独立存档；自然界可从世界入口进入。各模式当前均可在本浏览器体验。
           </p>
         </aside>
       </main>

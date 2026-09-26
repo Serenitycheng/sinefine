@@ -1,11 +1,9 @@
 'use client';
 import {
   Sparkles,
-  Heart,
   Leaf,
   Focus,
   Pencil,
-  Star,
   ArrowUpRight,
 } from 'lucide-react';
 import { type World, type Resident, PLACES, dateText } from '@/lib/world';

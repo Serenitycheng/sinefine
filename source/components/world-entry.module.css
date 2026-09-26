@@ -686,6 +686,50 @@
   color: #95a08a;
   margin-top: 18px;
 }
+.blankWorld > .createLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 30px;
+  padding: 13px 22px;
+  border-radius: 2px;
+  background: #2d5142;
+  color: #f5f2e5;
+  font-size: 12px;
+}
+.templateWorlds {
+  margin-top: 24px;
+  border-top: 1px solid var(--line);
+}
+.templateWorlds h3 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 21px 0 10px;
+}
+.templateWorlds small {
+  font-size: 11px;
+  color: #6b7b67;
+}
+.templateWorlds > a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.templateWorlds > a:hover {
+  background: #e4e8dd;
+}
+.templateWorlds strong {
+  display: block;
+  font-weight: 400;
+  margin-bottom: 7px;
+}
 .scopeNote {
   display: flex;
   align-items: baseline;

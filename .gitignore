@@ -1,0 +1,19 @@
+# Local dependencies, build output, and verification artifacts
+node_modules/
+.next/
+.test-build/
+.verification/
+.local-tools/
+coverage/
+*.tsbuildinfo
+*.log
+
+# Local service configuration
+.env
+.env.*
+!.env.example
+.vercel/
+
+# Editor and operating system files
+.DS_Store
+Thumbs.db

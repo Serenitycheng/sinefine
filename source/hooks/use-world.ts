@@ -16,6 +16,27 @@ import {
   type AiDecision,
 } from '@/lib/simulation';
 import { saveWorld, loadWorld } from '@/lib/storage';
+import type { parseLocalRule } from '@/lib/rules';
+
+type AiResults = {
+  test: undefined;
+  rules: ReturnType<typeof parseLocalRule>;
+  decisions: { decisions: AiDecision[] };
+  character: Partial<
+    Pick<
+      Resident,
+      | 'name'
+      | 'age'
+      | 'job'
+      | 'traits'
+      | 'backstory'
+      | 'goal'
+      | 'school'
+      | 'talent'
+      | 'magic'
+    >
+  >;
+};
 export type AiSettings = {
   key: string;
   model: string;
@@ -87,14 +108,22 @@ export function useWorld() {
     [commit],
   );
   useEffect(() => {
-    try {
-      const saved = loadWorld();
-      if (saved) commit(saved);
-    } catch (e) {
-      autosave.current = false;
-      setNotice(e instanceof Error ? e.message : '存档读取失败。');
-    }
-    setReady(true);
+    let cancelled = false;
+    // Restore after hydration; cancel the first StrictMode mount or a stale unmount.
+    queueMicrotask(() => {
+      if (cancelled) return;
+      try {
+        const saved = loadWorld();
+        if (saved) commit(saved);
+      } catch (e) {
+        autosave.current = false;
+        setNotice(e instanceof Error ? e.message : '存档读取失败。');
+      }
+      setReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [commit]);
   useEffect(() => {
     if (!notice) return;
@@ -232,7 +261,10 @@ export function useWorld() {
     [autoPause, commit, importantSince, progress, save],
   );
   const aiRequest = useCallback(
-    async (mode: string, payload: Record<string, unknown>) => {
+    async <Mode extends keyof AiResults>(
+      mode: Mode,
+      payload: Record<string, unknown>,
+    ) => {
       const current = aiRef.current;
       if (busyRef.current) throw Error('上一条 AI 请求还在处理中。');
       if (!current.key) throw Error('请在设置里填写 DeepSeek 密钥。');
@@ -264,7 +296,7 @@ export function useWorld() {
         const data = (await response.json()) as {
           error?: string;
           models?: string[];
-          result: any;
+          result: AiResults[Mode];
           usage?: { total_tokens?: number };
         };
         if (!response.ok || data.error)
@@ -316,9 +348,7 @@ export function useWorld() {
         commit((next) => {
           applied = applyDecisions(
             next,
-            (data.result.decisions as AiDecision[]).filter((d) =>
-              allowed.has(d.id),
-            ),
+            data.result.decisions.filter((d) => allowed.has(d.id)),
           );
         });
         if (!applied) notify('AI 没有给出当前可执行的行动，居民继续本地生活。');

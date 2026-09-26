@@ -7,13 +7,14 @@ import { FateConnectionError } from './fate-chat';
 import { sameOriginRequest } from './fate-origin';
 
 export class CloudError extends FateConnectionError {}
+export class CloudConfigurationError extends CloudError {}
 export const privateHeaders = { 'Cache-Control': 'private, no-store', Vary: 'Cookie' };
 export function cloudConfig() {
   const url = process.env.SUPABASE_URL;
   const anon = process.env.SUPABASE_ANON_KEY;
   const admin = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const secret = process.env.FATE_VAULT_SECRET;
-  if (!url || !anon || !admin || !secret) throw new CloudError('云端连接尚未配置完成，请先使用本浏览器连接。');
+  if (!url || !anon || !admin || !secret) throw new CloudConfigurationError('云端连接尚未配置完成，请先使用本浏览器连接。');
   return { url, anon, admin, secret };
 }
 export function cloudAdmin() {

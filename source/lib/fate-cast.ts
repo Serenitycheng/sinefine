@@ -1,3 +1,5 @@
+import { RECOVERY_PRESETS } from './fate-recovery-presets';
+
 export type FatePerson = {
   id: string;
   name: string;
@@ -261,7 +263,7 @@ export function fateArtwork(person: FatePerson) {
     (person.chibi ? { file: person.chibi, label: 'Q 版形象' } : null)
   );
 }
-export const STREET_PARTNERS = [
+export const LEGACY_STREET_PARTNERS = [
   'saber',
   'rin',
   'shirou',
@@ -277,6 +279,16 @@ export const STREET_PARTNERS = [
   'medea',
   'kuzuki',
 ] as const;
+export const STREET_PARTNERS = [
+  ...LEGACY_STREET_PARTNERS,
+  'gilgamesh',
+  'medusa',
+  'tokiomi',
+  'kirei',
+  'kariya',
+  'emiya',
+  'natalia',
+] as const;
 export type PartnerId = (typeof STREET_PARTNERS)[number];
 export function isPartner(id: unknown): id is PartnerId {
   return (
@@ -290,6 +302,7 @@ export const TOPICS = [
 ] as const;
 export type TopicId = (typeof TOPICS)[number]['id'];
 const PRESETS: Record<PartnerId, Record<TopicId, string>> = {
+  ...RECOVERY_PRESETS,
   medea: {
     greeting:
       '还不错。能按自己的心意安排一天，倒也值得花些时间。有什么事就直说吧……若只是闲聊，也不是不可以。',

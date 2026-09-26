@@ -9,6 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
+  // This combines one input with decorations, rather than a fieldset of controls.
+  /* eslint-disable jsx-a11y/prefer-tag-over-role */
   return (
     <div
       data-slot="input-group"
@@ -20,6 +22,7 @@ function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
       {...props}
     />
   );
+  /* eslint-enable jsx-a11y/prefer-tag-over-role */
 }
 
 const inputGroupAddonVariants = cva(
@@ -48,9 +51,11 @@ function InputGroupAddon({
   align = 'inline-start',
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof inputGroupAddonVariants>) {
+  // Clicking a decoration only focuses the input, which is already keyboard reachable.
+  // Nested buttons retain their own semantics and must not be wrapped in a button.
+  /* eslint-disable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-static-element-interactions */
   return (
     <div
-      role="group"
       data-slot="input-group-addon"
       data-align={align}
       className={cn(inputGroupAddonVariants({ align }), className)}
@@ -58,11 +63,14 @@ function InputGroupAddon({
         if ((e.target as HTMLElement).closest('button')) {
           return;
         }
-        e.currentTarget.parentElement?.querySelector('input')?.focus();
+        e.currentTarget.parentElement
+          ?.querySelector<HTMLElement>('input, textarea')
+          ?.focus();
       }}
       {...props}
     />
   );
+  /* eslint-enable jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-static-element-interactions */
 }
 
 const inputGroupButtonVariants = cva(

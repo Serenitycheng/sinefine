@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 
 function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
+  // Items support polymorphic render targets and separators, rather than only li children.
+  /* eslint-disable jsx-a11y/prefer-tag-over-role */
   return (
     <div
       role="list"
@@ -18,6 +20,7 @@ function ItemGroup({ className, ...props }: React.ComponentProps<'div'>) {
       {...props}
     />
   );
+  /* eslint-enable jsx-a11y/prefer-tag-over-role */
 }
 
 function ItemSeparator({

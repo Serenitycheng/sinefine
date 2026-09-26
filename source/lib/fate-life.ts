@@ -1,5 +1,13 @@
 import { LIFE_ROUTINES, LEISURE_ACTIONS, lifeRoutine } from './fate-habits';
 import {
+  createEconomy,
+  advanceEconomy,
+  parseEconomy,
+  economySummary,
+  canAfford,
+  type Economy,
+} from './fate-economy';
+import {
   rememberEncounter,
   socialContext,
   socialAffinity,
@@ -25,6 +33,7 @@ import {
   advanceBelongings,
   finishInterest,
   finishSideDish,
+  shoppingChoice,
   type Belongings,
   type ItemEvent,
 } from './fate-belongings';
@@ -42,6 +51,8 @@ import {
   type ScheduleEvent,
 } from './fate-schedule';
 import { addedEncounters } from './fate-new-encounters';
+import { recoveryEncounter } from './fate-recovery-encounters';
+import { varyEncounter } from './fate-encounter-variation';
 import { storedDialogueTurns, type DialogueTurn } from './fate-dialogue';
 import {
   activeMeal,
@@ -71,6 +82,7 @@ import {
   fatePerson,
   isPartner,
   STREET_PARTNERS,
+  LEGACY_STREET_PARTNERS,
   type PartnerId,
   type WaverStage,
   parseWaverStage,
@@ -108,6 +120,12 @@ export const LIFE_ACTIONS = {
   visit: { label: '探望家人', place: 'home', duration: 45 },
 } as const;
 export type LifeAction = keyof typeof LIFE_ACTIONS;
+function actionDuration(kind: LifeAction, minutes: number) {
+  const minute = minutes % 1440;
+  if (kind === 'sleep' && (minute >= 1320 || minute < 360))
+    return (1800 - minute) % 1440;
+  return LIFE_ACTIONS[kind].duration;
+}
 export type LifePerson = {
   hunger: number;
   energy: number;
@@ -158,6 +176,7 @@ export const LIFE_HABITS = Object.fromEntries(
   STREET_PARTNERS.map((id) => [id, LIFE_ROUTINES[id].habits]),
 ) as Record<PartnerId, string>;
 export type DailyLife = {
+  economy: Economy;
   bonds: Record<string, Bond>;
   appointments: Appointment[];
   belongings: Record<PartnerId, Belongings>;
@@ -165,7 +184,7 @@ export type DailyLife = {
   meals: HomeMeal[];
   housing: FateHousing;
   familyVisitDay: number;
-  version: 11;
+  version: 13;
   waverStage: WaverStage;
   minutes: number;
   people: Record<PartnerId, LifePerson>;
@@ -235,6 +254,7 @@ export function createDailyLife(): DailyLife {
     createStreetActors().map((a) => [a.id, { x: a.x, y: a.y }]),
   ) as Record<ActorId, Point>;
   return {
+    economy: createEconomy(980),
     bonds: {},
     appointments: [],
     belongings: createBelongings(),
@@ -242,10 +262,47 @@ export function createDailyLife(): DailyLife {
     meals: [],
     housing: defaultHousing(),
     familyVisitDay: -1,
-    version: 11,
+    version: 13,
     waverStage: 'young',
     minutes: 980,
     people: {
+      gilgamesh: {
+        hunger: 24,
+        energy: 85,
+        social: 45,
+        choices: 0,
+        activity: null,
+      },
+      medusa: {
+        hunger: 29,
+        energy: 73,
+        social: 24,
+        choices: 0,
+        activity: null,
+      },
+      tokiomi: {
+        hunger: 25,
+        energy: 76,
+        social: 30,
+        choices: 0,
+        activity: null,
+      },
+      kirei: { hunger: 32, energy: 79, social: 20, choices: 0, activity: null },
+      kariya: {
+        hunger: 36,
+        energy: 58,
+        social: 34,
+        choices: 0,
+        activity: null,
+      },
+      emiya: { hunger: 28, energy: 81, social: 27, choices: 0, activity: null },
+      natalia: {
+        hunger: 30,
+        energy: 77,
+        social: 25,
+        choices: 0,
+        activity: null,
+      },
       medea: { hunger: 26, energy: 73, social: 26, choices: 0, activity: null },
       kuzuki: {
         hunger: 29,
@@ -357,6 +414,13 @@ export function lifeDestination(
         iskandar: 0,
         medea: -28,
         kuzuki: 28,
+        gilgamesh: -8,
+        medusa: -16,
+        tokiomi: 24,
+        kirei: 42,
+        kariya: -40,
+        emiya: 8,
+        natalia: -24,
       }[id],
     y:
       place.y +
@@ -375,6 +439,13 @@ export function lifeDestination(
         iskandar: -32,
         medea: -27,
         kuzuki: -18,
+        gilgamesh: 21,
+        medusa: 7,
+        tokiomi: -4,
+        kirei: -16,
+        kariya: 15,
+        emiya: 24,
+        natalia: -8,
       }[id],
   };
 }
@@ -476,7 +547,10 @@ export function decideLife(life: DailyLife, id: PartnerId): LifePlan {
     )
     .slice(-2)
     .map((e) => e.decision!.action);
-  const candidates = LEISURE_ACTIONS;
+  const item = shoppingChoice(life, id);
+  const candidates = LEISURE_ACTIONS.filter(
+    (kind) => kind !== 'shop' || (item && canAfford(life.economy, id, item)),
+  );
   const action = candidates
     .map((kind, i) => ({
       kind,
@@ -518,6 +592,7 @@ export function advanceDailyLife(
   }
   const elapsed = seconds * options.speed * 2;
   life.minutes += elapsed;
+  advanceEconomy(life.economy, life.minutes);
   reconcileAppointments(life, actors, elapsed, options.controlled, (text) =>
     addEvent(life, text),
   );
@@ -599,7 +674,7 @@ export function advanceDailyLife(
       person.activity = {
         kind,
         phase: 'going',
-        remaining: LIFE_ACTIONS[kind].duration,
+        remaining: actionDuration(kind, life.minutes),
         reason: plan.reason,
         source: 'rules',
         ...(LIFE_ACTIONS[kind].place === 'home'
@@ -613,8 +688,6 @@ export function advanceDailyLife(
       };
       if (kind === 'visit' && id === 'kiritsugu')
         life.familyVisitDay = Math.floor(life.minutes / 1440);
-      if (kind === 'sleep')
-        person.activity.remaining = (1800 - (life.minutes % 1440)) % 1440 || 1;
       person.choices++;
       actor.path = pathTo(
         actor,
@@ -742,7 +815,7 @@ export function advanceDailyLife(
       )
     )
       continue;
-    const dialogue = encounterDialogue(first, second, life.waverStage);
+    let dialogue = encounterDialogue(first, second, life.waverStage);
     const table = activeMeal(life, life.people[first].activity?.meal);
     const dining =
       table?.phase === 'ready' &&
@@ -828,7 +901,27 @@ export function advanceDailyLife(
           dialogue.target === 'kiritsugu'
             ? '嗯，士郎。你也坐一会儿，别只顾着忙。'
             : '没有，我有照顾自己。老爸也是，坐下来歇会儿吧。';
-      } else {
+      } else if (
+        dialogue.speaker === 'shirou' &&
+        dialogue.target === 'medusa'
+      ) {
+        dialogue.message =
+          'Rider，想安静读一会儿书吗？在屋里坐一会儿也好，不用急着出去。';
+        dialogue.reply =
+          '谢谢，士郎。我想先读一会儿。你也安排些自己的事，不必一直照顾别人。';
+      } else if (
+        dialogue.speaker === 'gilgamesh' &&
+        dialogue.target === 'iskandar'
+      ) {
+        dialogue.message = '征服王，难得停下脚步，闲暇时又有何消遣？';
+        dialogue.reply =
+          '休息时也有许多乐趣！看看书，听听见闻，再想想自己下一步想做什么。';
+      } else if (
+        [first, second].every((id) =>
+          LEGACY_STREET_PARTNERS.some((legacy) => legacy === id),
+        )
+      ) {
+        // New residents already have relationship-aware, scene-neutral openings.
         dialogue.message = `${fatePerson(dialogue.target, life.waverStage)!.name}，你手边的事忙完了吗？想和你说会儿话。`;
         dialogue.reply = '可以。你说，我在听。';
       }
@@ -910,6 +1003,10 @@ export function advanceDailyLife(
               : '不用你提醒！我自己也知道要吃饭的。';
       }
     }
+    dialogue = varyEncounter(life, dialogue, {
+      indoors: Boolean(homeA),
+      dining: Boolean(dining),
+    });
     life.encounters++;
     if (meeting) meeting.talked = true;
     life.lastEncounters[key] = life.minutes;
@@ -1128,7 +1225,12 @@ export function encounterDialogue(
       reply: '谢谢你，Saber。今天想慢慢逛一会儿，看看自己平时没留意的地方。',
     },
   ];
-  const entry = lines.find(({ pair }) => pair.includes(a) && pair.includes(b))!;
+  const entry = lines.find(({ pair }) => pair.includes(a) && pair.includes(b));
+  if (!entry) {
+    const added = recoveryEncounter(a, b, stage);
+    if (added) return added;
+    throw new Error('相遇人物无效');
+  }
   return {
     ...(entry.pair.includes('waver') ? { waverStage: stage } : {}),
     speaker: entry.pair[0],
@@ -1162,6 +1264,13 @@ export type LifeScene = {
   iskandar: string;
   medea: string;
   kuzuki: string;
+  gilgamesh: string;
+  medusa: string;
+  tokiomi: string;
+  kirei: string;
+  kariya: string;
+  emiya: string;
+  natalia: string;
 };
 export function lifeScene(life: DailyLife, target: PartnerId): LifeScene {
   const p = life.positions[target];
@@ -1190,7 +1299,10 @@ export function lifeScene(life: DailyLife, target: PartnerId): LifeScene {
       .slice(-6)
       .map((a) => appointmentSummary(a, life.waverStage)),
     belongings: Object.fromEntries(
-      LIFE_IDS.map((id) => [id, belongingsSummary(life, id)]),
+      LIFE_IDS.map((id) => [
+        id,
+        `${belongingsSummary(life, id)} ${economySummary(life.economy, id)}`,
+      ]),
     ),
     agenda: agendaSummary(life, target),
     ...(home &&
@@ -1219,6 +1331,13 @@ export function lifeScene(life: DailyLife, target: PartnerId): LifeScene {
     iskandar: lifeStatus(life.people.iskandar),
     medea: lifeStatus(life.people.medea),
     kuzuki: lifeStatus(life.people.kuzuki),
+    gilgamesh: lifeStatus(life.people.gilgamesh),
+    medusa: lifeStatus(life.people.medusa),
+    tokiomi: lifeStatus(life.people.tokiomi),
+    kirei: lifeStatus(life.people.kirei),
+    kariya: lifeStatus(life.people.kariya),
+    emiya: lifeStatus(life.people.emiya),
+    natalia: lifeStatus(life.people.natalia),
   };
 }
 export function parseLifeScene(value: unknown): LifeScene {
@@ -1226,7 +1345,7 @@ export function parseLifeScene(value: unknown): LifeScene {
   const x = value as Record<string, unknown>;
   const social: NonNullable<LifeScene['social']> = [];
   if (x.social !== undefined) {
-    if (!Array.isArray(x.social) || x.social.length > 13)
+    if (!Array.isArray(x.social) || x.social.length > LIFE_IDS.length - 1)
       throw new Error('相处场景无效');
     const seen = new Set<PartnerId>();
     for (const s of x.social) {
@@ -1309,6 +1428,13 @@ export function parseLifeScene(value: unknown): LifeScene {
       'iskandar',
       'medea',
       'kuzuki',
+      'gilgamesh',
+      'medusa',
+      'tokiomi',
+      'kirei',
+      'kariya',
+      'emiya',
+      'natalia',
     ].some(
       (id) =>
         x[id] !== undefined &&
@@ -1341,6 +1467,13 @@ export function parseLifeScene(value: unknown): LifeScene {
     iskandar: typeof x.iskandar === 'string' ? x.iskandar : '尚未记录',
     medea: typeof x.medea === 'string' ? x.medea : '尚未记录',
     kuzuki: typeof x.kuzuki === 'string' ? x.kuzuki : '尚未记录',
+    gilgamesh: typeof x.gilgamesh === 'string' ? x.gilgamesh : '尚未记录',
+    medusa: typeof x.medusa === 'string' ? x.medusa : '尚未记录',
+    tokiomi: typeof x.tokiomi === 'string' ? x.tokiomi : '尚未记录',
+    kirei: typeof x.kirei === 'string' ? x.kirei : '尚未记录',
+    kariya: typeof x.kariya === 'string' ? x.kariya : '尚未记录',
+    emiya: typeof x.emiya === 'string' ? x.emiya : '尚未记录',
+    natalia: typeof x.natalia === 'string' ? x.natalia : '尚未记录',
   };
 }
 export function canAutoReply(x: {
@@ -1410,10 +1543,14 @@ export function applyLifePlan(
     (person.energy <= 10 && !['rest', 'sleep', 'eat'].includes(plan.action))
   )
     return false;
+  if (plan.action === 'shop') {
+    const item = shoppingChoice(life, id);
+    if (!item || !canAfford(life.economy, id, item)) return false;
+  }
   person.activity = {
     kind: plan.action,
     phase: 'going',
-    remaining: LIFE_ACTIONS[plan.action].duration,
+    remaining: actionDuration(plan.action, life.minutes),
     reason: plan.reason,
     source: 'deepseek',
     ...(LIFE_ACTIONS[plan.action].place === 'home'
@@ -1440,7 +1577,7 @@ export function parseDailyLife(value: unknown): DailyLife {
   const number = (v: unknown, max = 1e9) =>
     typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
   if (
-    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].includes(x.version) ||
+    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(x.version) ||
     !number(x.minutes) ||
     !number(x.nextEncounter) ||
     !number(x.holdUntil) ||
@@ -1453,15 +1590,21 @@ export function parseDailyLife(value: unknown): DailyLife {
   )
     throw new Error('日常存档无效');
   const result = createDailyLife();
+  const cancelledLegacyMeetings = new Set<number>();
   if (x.version >= 11) {
     result.bonds = parseBonds(x.bonds, x.minutes, x.nextId);
     result.appointments = parseAppointments(
       x.appointments,
       x.minutes,
       x.nextId,
+      (id) => cancelledLegacyMeetings.add(id),
     );
   }
-  if (x.version >= 10) result.belongings = parseBelongings(x.belongings);
+  if (x.version >= 10)
+    result.belongings = parseBelongings(
+      x.belongings,
+      x.version < 12 ? LEGACY_STREET_PARTNERS : LIFE_IDS,
+    );
   if (x.version >= 9) result.agenda = parseAgenda(x.agenda, x.minutes);
   if (x.version >= 8) result.meals = parseMeals(x.meals, x.minutes);
   result.housing = parseHousing(x.housing);
@@ -1545,7 +1688,9 @@ export function parseDailyLife(value: unknown): DailyLife {
                     'waver',
                     'iskandar',
                   ]
-                : LIFE_IDS;
+                : x.version < 12
+                  ? LEGACY_STREET_PARTNERS
+                  : LIFE_IDS;
   for (const id of ['admin', ...ids] as ActorId[]) {
     const p = x.positions?.[id];
     if (!p || !isWalkable(p)) throw new Error('人物位置无效');
@@ -1606,7 +1751,8 @@ export function parseDailyLife(value: unknown): DailyLife {
         );
         if (
           !meeting ||
-          !['pending', 'meeting'].includes(meeting.status) ||
+          (!['pending', 'meeting'].includes(meeting.status) &&
+            !cancelledLegacyMeetings.has(meeting.id)) ||
           (meeting.stage !== null && meeting.stage !== result.waverStage) ||
           a.kind !== meeting.activity ||
           !Object.hasOwn(MEETUPS, a.kind) ||
@@ -1652,6 +1798,9 @@ export function parseDailyLife(value: unknown): DailyLife {
         )
           throw new Error('用餐行动无效');
       } else if (a.waiting !== undefined) throw new Error('等候用餐记录无效');
+      // Cancel only otherwise-valid actions linked to a specifically migrated old promise.
+      if (a.meeting !== undefined && cancelledLegacyMeetings.has(a.meeting))
+        activity = null;
     }
     result.people[id] = {
       hunger: p.hunger,
@@ -1660,6 +1809,15 @@ export function parseDailyLife(value: unknown): DailyLife {
       choices: p.choices,
       activity,
     };
+  }
+  result.economy =
+    x.version >= 13
+      ? parseEconomy(x.economy, x.minutes)
+      : createEconomy(x.minutes);
+  for (const id of LIFE_IDS) {
+    const choice = result.economy.accounts[id].lastShopChoice;
+    if (choice !== null && choice > result.people[id].choices)
+      throw new Error('购物记录与人物行动不一致');
   }
   let previousId = 0;
   result.events = x.events.map((event) => {

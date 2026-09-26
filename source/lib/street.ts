@@ -105,6 +105,13 @@ export function createStreetActors(): Actor[] {
     { id: 'iskandar', x: 770, y: 811 },
     { id: 'medea', x: 845, y: 701 },
     { id: 'kuzuki', x: 940, y: 764 },
+    { id: 'gilgamesh', x: 1060, y: 810 },
+    { id: 'medusa', x: 1010, y: 883 },
+    { id: 'tokiomi', x: 610, y: 821 },
+    { id: 'kirei', x: 1560, y: 821 },
+    { id: 'kariya', x: 950, y: 897 },
+    { id: 'emiya', x: 545, y: 811 },
+    { id: 'natalia', x: 710, y: 899 },
   ].map((p, i) => ({
     ...p,
     id: p.id as ActorId,

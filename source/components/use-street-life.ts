@@ -115,6 +115,7 @@ export function useStreetLife(
       ctx.current.saveLife(
         snapshotLife(life.current, actors.current),
         engineRevision.current,
+        true,
       );
   }, [actors]);
   useEffect(() => {

@@ -7,6 +7,7 @@ import {
 } from './fate-cast';
 import type { DailyLife, LifeAction, LifePlan } from './fate-life';
 import { lifeRoutine } from './fate-habits';
+import { canAfford, purchaseSupply, SUPPLY_PRICES } from './fate-economy';
 
 export const SUPPLIES = {
   groceries: '一篮时蔬',
@@ -31,6 +32,13 @@ export const BOOKS = {
   iskandar: '世界地理图册',
   medea: '结构与纹样图册',
   kuzuki: '教学参考读物',
+  gilgamesh: '器物与审美图录',
+  medusa: '静夜文学选集',
+  tokiomi: '魔术传承与理论札记',
+  kirei: '伦理与人性读本',
+  kariya: '寻常生活纪事',
+  emiya: '料理技法与火候随笔',
+  natalia: '旅途观察手记',
 } as const;
 export type BookId = keyof typeof BOOKS;
 type Hobby = 'read' | 'study' | 'repair' | 'cook';
@@ -88,6 +96,16 @@ export function createBelongings() {
   ) as Record<PartnerId, Belongings>;
 }
 export function deviceName(id: PartnerId) {
+  const addedDevices: Partial<Record<PartnerId, string>> = {
+    gilgamesh: '书桌台灯',
+    medusa: '床头阅读灯',
+    tokiomi: '书房台灯',
+    kirei: '门廊灯',
+    kariya: '便携手电',
+    emiya: '厨房计时器',
+    natalia: '旅行手电',
+  };
+  if (addedDevices[id]) return addedDevices[id];
   return id === 'shirou'
     ? '旧台灯'
     : id === 'kiritsugu'
@@ -118,7 +136,7 @@ export function belongingsPlan(
   id: PartnerId,
 ): LifePlan | undefined {
   const s = life.belongings[id];
-  if (s.wish && needs(s, s.wish))
+  if (s.wish && needs(s, s.wish) && canAfford(life.economy, id, s.wish))
     return {
       action: 'shop',
       reason: `手头想做的事还缺${SUPPLIES[s.wish]}，先去店里挑选，再回来继续。`,
@@ -136,8 +154,9 @@ export function shoppingChoice(
 ): SupplyId | undefined {
   const s = life.belongings[id],
     weights = lifeRoutine(id, life.waverStage).weights;
-  if (s.wish && needs(s, s.wish)) return s.wish;
-  return (Object.keys(SUPPLIES) as SupplyId[])
+  if (s.wish && needs(s, s.wish) && canAfford(life.economy, id, s.wish))
+    return s.wish;
+  const candidates = (Object.keys(SUPPLIES) as SupplyId[])
     .filter((item) => needs(s, item))
     .sort((a, b) => {
       const score = (item: SupplyId) =>
@@ -151,7 +170,11 @@ export function shoppingChoice(
                 (life.people[id].hunger > 40 ? 0.4 : 0) -
                 s.groceries * 0.7;
       return score(b) - score(a);
-    })[0];
+    });
+  return (
+    candidates.find((item) => canAfford(life.economy, id, item)) ??
+    candidates[0]
+  );
 }
 function want(
   life: DailyLife,
@@ -219,6 +242,25 @@ export function finishInterest(
       });
       return;
     }
+    const purchase = purchaseSupply(
+      life.economy,
+      id,
+      item,
+      life.minutes,
+      life.people[id].choices,
+    );
+    if (purchase === 'duplicate') return;
+    if (purchase === 'insufficient') {
+      log(
+        `${name}看了看${SUPPLIES[item]}，这次的生活点不够，先保留打算，去做些别的事。`,
+        {
+          person: id,
+          kind: 'browsed',
+          item,
+        },
+      );
+      return;
+    }
     if (item === 'book')
       s.book = {
         topic: bookTopic(id, life.waverStage),
@@ -230,10 +272,10 @@ export function finishInterest(
         item === 'groceries' ? 3 : 4,
         s[item] + (item === 'paper' ? 2 : 1),
       );
-    s.wish = null;
+    if (s.wish === item) s.wish = null;
     s.next = followup[item];
     log(
-      `${name}挑好了${item === 'book' ? `《${BOOKS[s.book!.topic]}》` : SUPPLIES[item]}，带在身边，准备之后${{ book: '阅读', groceries: '做菜', parts: '修理', paper: '整理笔记' }[item]}。`,
+      `${name}花了 ${SUPPLY_PRICES[item]} 生活点，挑好了${item === 'book' ? `《${BOOKS[s.book!.topic]}》` : SUPPLIES[item]}，带在身边，准备之后${{ book: '阅读', groceries: '做菜', parts: '修理', paper: '整理笔记' }[item]}。`,
       { person: id, kind: 'bought', item },
     );
   } else if (action === 'read') {
@@ -335,14 +377,17 @@ export function parseItemEvent(value: unknown): ItemEvent {
     throw new Error('物品经历无效');
   return { person: e.person, kind: e.kind, item: e.item };
 }
-export function parseBelongings(value: unknown): Record<PartnerId, Belongings> {
+export function parseBelongings(
+  value: unknown,
+  requiredIds: readonly PartnerId[] = STREET_PARTNERS,
+): Record<PartnerId, Belongings> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('随身物品无效');
   const data = value as Record<PartnerId, Belongings>,
     result = createBelongings();
   const integer = (n: number, max: number) =>
     Number.isSafeInteger(n) && n >= 0 && n <= max;
-  for (const id of STREET_PARTNERS) {
+  for (const id of requiredIds) {
     const s = data[id];
     if (
       !s ||

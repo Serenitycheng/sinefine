@@ -74,6 +74,8 @@ function Field({
   orientation = 'vertical',
   ...props
 }: React.ComponentProps<'div'> & VariantProps<typeof fieldVariants>) {
+  // Field can be nested inside a Label; a fieldset would invalidate that composition.
+  /* eslint-disable jsx-a11y/prefer-tag-over-role */
   return (
     <div
       role="group"
@@ -83,6 +85,7 @@ function Field({
       {...props}
     />
   );
+  /* eslint-enable jsx-a11y/prefer-tag-over-role */
 }
 
 function FieldContent({ className, ...props }: React.ComponentProps<'div'>) {

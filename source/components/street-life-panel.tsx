@@ -12,6 +12,7 @@ import type { ActorId } from '@/lib/street';
 import type { StreetLife } from './use-street-life';
 import styles from './street-life.module.css';
 import { StreetSocialPanel } from './street-social-panel';
+import { StreetEconomyPanel } from './street-economy-panel';
 
 export function LifeControls({
   life,
@@ -124,7 +125,7 @@ export function LifePanel({
       <section className={styles.ai} aria-label="今日作息">
         <h3>今日作息 · {weekdayName(life.view.minutes)}</h3>
         <p>
-          周一至周五有固定课业，周末自由安排。学园在街区右侧出口之外；到校后以状态呈现，室内场景尚未开放。
+          周一至周五有固定课业，周末自由安排。学园在街区右侧出口之外；到校后以状态呈现，学园室内暂未开放。
         </p>
         {LIFE_IDS.filter(
           (id) => dutyIds(id, life.view.waverStage).length > 0,
@@ -140,6 +141,7 @@ export function LifePanel({
         ))}
       </section>
       <StreetSocialPanel life={life.view} />
+      <StreetEconomyPanel life={life.view} />
       <section className={styles.ai} aria-label="家中的餐桌">
         <h3>家中的餐桌</h3>
         {life.view.meals.filter(
@@ -349,7 +351,7 @@ export function LifePanel({
         存档与备份 · 保留或恢复进度
       </Link>
       <p className={styles.fine}>
-        当前为十四人的自主日常。物品与使用进度随存档保留；时蔬用于添配菜，基础餐食仍照常供应。室内画面和花销结算待制作，普通修理与笔记不直接提升战斗能力。自然语言设定用于
+        当前为二十一人的自主日常。可从「住宅」查看屋内生活；购物完成后结算生活点，物品、账本和使用进度随存档保留。时蔬用于添配菜，基础餐食仍照常供应。普通修理与笔记不直接提升战斗能力。自然语言设定用于
         AI，基础行为尚不解释任意文字规则。
       </p>
     </aside>
