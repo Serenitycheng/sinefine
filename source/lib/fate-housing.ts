@@ -1,18 +1,8 @@
 import { FATE_CAST, fatePerson, type WaverStage } from './fate-cast';
 
-// Entrances stand for addresses in the wider district, not finished interior maps.
-export const FATE_HOMES = {
-  einzbern: { name: '切嗣一家 · 新居', x: 307, y: 779 },
-  emiya: { name: '卫宫宅 · 士郎的家', x: 465, y: 835 },
-  tohsaka: { name: '远坂宅', x: 630, y: 835 },
-  matou: { name: '间桐宅', x: 990, y: 835 },
-  waver: { name: '韦伯的住处', x: 1120, y: 835 },
-  temple: { name: '柳洞寺 · 葛木的住处', x: 1430, y: 835 },
-  church: { name: '教会 · 绮礼的住处', x: 1570, y: 835 },
-  kayneth: { name: '肯尼斯的住处', x: 1300, y: 835 },
-  fujimura: { name: '藤村家', x: 130, y: 835 },
-  natalia: { name: '娜塔莉亚的住处', x: 790, y: 835 },
-} as const;
+import { DISTRICT_HOMES } from './fate-district';
+
+export const FATE_HOMES = DISTRICT_HOMES;
 export type HomeId = keyof typeof FATE_HOMES;
 export const SERVANT_MASTERS: Record<string, string> = {
   saber: 'shirou',

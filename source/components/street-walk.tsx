@@ -9,8 +9,8 @@ import {
   type CSSProperties,
   type PointerEvent,
 } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   ArrowLeft,
   ArrowDown,
@@ -28,6 +28,7 @@ import {
   MessageCircle,
   Settings2,
   House,
+  Map as MapIcon,
 } from 'lucide-react';
 import {
   STREET,
@@ -40,6 +41,7 @@ import {
   placeName,
   screenToWorld,
   stepActor,
+  WALK_SPEED,
   type ActorId,
   type Point,
 } from '@/lib/street';
@@ -54,6 +56,20 @@ import { StreetObserver } from './street-observer';
 import { lifePeriod, lifeStatus, lifeTime } from '@/lib/fate-life';
 import { FateInterior, type InteriorView } from './fate-interior';
 import { FATE_HOMES } from '@/lib/fate-housing';
+import {
+  DistrictAtlas,
+  DistrictPlaceCard,
+} from './fate-district-map';
+import { FateStreetScenery } from './fate-street-scenery';
+import { FateCityScenery } from './fate-city-scenery';
+import {
+  DISTRICT_LANDMARKS,
+  districtSceneImage,
+  nearestDistrictLandmark,
+  STREET_SCENE_SCALE,
+  streetScenePoint,
+  type DistrictLandmark,
+} from '@/lib/fate-district';
 import { interiorResidents } from '@/lib/fate-interior';
 import interiorStyles from './fate-interior.module.css';
 import styles from './street-walk.module.css';
@@ -260,7 +276,6 @@ const BASE_CAST = [
   },
 ];
 const ASSETS = [
-  '/fate/street/street.png',
   ...new Set(BASE_CAST.map((p) => p.image)),
 ];
 const MOVE_KEYS = new Set([
@@ -314,11 +329,26 @@ export default function StreetWalk() {
   const overlay = useRef(false);
   const [active, setActive] = useState<ActorId>('illya');
   const [mode, setMode] = useState<'control' | 'observe'>('observe');
+  const [scene, setScene] = useState<'street' | 'map'>('street');
+  const [scenePlace, setScenePlace] = useState<DistrictLandmark>(
+    DISTRICT_LANDMARKS.find((place) => place.id === 'cafe')!,
+  );
   const [zoom, setZoom] = useState(1.24);
+  const [atlasOpen, setAtlasOpen] = useState(false);
+  const [selectedPlace, setSelectedPlace] = useState<DistrictLandmark | null>(
+    null,
+  );
+  const [closeupPlace, setCloseupPlace] = useState<DistrictLandmark | null>(null);
+  const [leavingCloseupPlace, setLeavingCloseupPlace] = useState<DistrictLandmark | null>(null);
+  const [streetJourney, setStreetJourney] = useState<{
+    from: DistrictLandmark;
+    to: DistrictLandmark;
+    total: number;
+  } | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [location, setLocation] = useState('冬木 · 生活街道');
+  const [location, setLocation] = useState('冬木市 · 商业街');
   const [hint, setHint] = useState(
     '点击「开始日常」旁观他们的一天；选择人物只跟随镜头',
   );
@@ -362,11 +392,18 @@ export default function StreetWalk() {
   }, [daily.advance, daily.isInside, daily.cancel]);
   const actorElements = useRef(new Map<ActorId, HTMLDivElement>());
   const spriteElements = useRef(new Map<ActorId, HTMLDivElement>());
+  const closeupElements = useRef(new Map<ActorId, HTMLDivElement>());
+  const closeupSprites = useRef(new Map<ActorId, HTMLDivElement>());
+  const closeupPlaceRef = useRef<DistrictLandmark | null>(null);
+  const streetJourneyRef = useRef<typeof streetJourney>(null);
+  const pendingCloseup = useRef<DistrictLandmark | null>(null);
+  const closeupExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keys = useRef(new Set<string>());
   const touchKeys = useRef(new Set<string>());
   const camera = useRef({ x: 0, y: 0, scale: 1 });
   const viewport = useRef({ width: 1000, height: 600 });
-  const freeView = useRef<Point>({ x: 837, y: 850 });
+  const freeView = useRef<Point>({ ...DISTRICT_LANDMARKS.find((place) => place.id === 'cafe')! });
+  const scenePlaceRef = useRef(scenePlace);
   const following = useRef<ActorId | null>(null);
   const pointer = useRef<{
     id: number;
@@ -375,7 +412,14 @@ export default function StreetWalk() {
     world: Point;
     dragged: boolean;
   } | null>(null);
-  const settings = useRef({ active, mode, zoom, ready, interior: false });
+  const settings = useRef({
+    active,
+    mode,
+    scene,
+    zoom,
+    ready,
+    interior: false,
+  });
   const padHistory = useRef<PadHistory>(null);
   const padIndex = useRef<number | null>(null);
   const padActions = useRef<{
@@ -387,16 +431,74 @@ export default function StreetWalk() {
     leaveInterior: () => void;
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
+  const connectedStreetPlace = closeupPlace?.id === 'shops'
+    ? DISTRICT_LANDMARKS.find((place) => place.id === 'cafe')
+    : closeupPlace?.id === 'cafe'
+      ? DISTRICT_LANDMARKS.find((place) => place.id === 'shops')
+      : null;
+
+  function leaveCloseup() {
+    if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
+    const place = closeupPlaceRef.current;
+    if (place) {
+      setLeavingCloseupPlace(place);
+      closeupExitTimer.current = setTimeout(() => {
+        setLeavingCloseupPlace(null);
+        closeupExitTimer.current = null;
+      }, 480);
+    }
+    closeupPlaceRef.current = null;
+    pendingCloseup.current = null;
+    if (streetJourneyRef.current) {
+      const actor = actors.current.find((a) => a.id === settings.current.active);
+      if (actor) actor.path = [];
+    }
+    streetJourneyRef.current = null;
+    setStreetJourney(null);
+    setCloseupPlace(null);
+  }
+  function showCloseup(place: DistrictLandmark) {
+    if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
+    closeupExitTimer.current = null;
+    setLeavingCloseupPlace(null);
+    streetJourneyRef.current = null;
+    setStreetJourney(null);
+    pendingCloseup.current = null;
+    closeupPlaceRef.current = place;
+    setCloseupPlace(place);
+    setHint(`已进入${place.name}街景 · 用方向键或点击路面移动，走出边缘可返回街区`);
+    stage.current?.focus({ preventScroll: true });
+  }
+
+  function followStreetTo(destination: DistrictLandmark) {
+    const from = closeupPlaceRef.current;
+    if (!from || (from.id !== 'shops' && from.id !== 'cafe')) return;
+    const actor = actors.current.find((a) => a.id === settings.current.active)!;
+    actor.path = pathTo(actor, destination);
+    const total = actor.path.reduce(
+      (distance, point, index) => {
+        const previous = index ? actor.path[index - 1] : actor;
+        return distance + Math.hypot(point.x - previous.x, point.y - previous.y);
+      },
+      0,
+    );
+    const journey = { from, to: destination, total: Math.max(1, total) };
+    streetJourneyRef.current = journey;
+    setStreetJourney(journey);
+    setHint(`沿街前往${destination.name}；到达后直接进入下一处街景`);
+    stage.current?.focus({ preventScroll: true });
+  }
 
   useEffect(() => {
     settings.current = {
       active,
       mode,
+      scene,
       zoom,
       ready,
       interior: Boolean(interiorView),
     };
-  }, [active, mode, zoom, ready, interiorView]);
+  }, [active, mode, scene, zoom, ready, interiorView]);
   useEffect(() => {
     if (interiorView) interiorSurface.current?.focus({ preventScroll: true });
     else stage.current?.focus({ preventScroll: true });
@@ -445,7 +547,7 @@ export default function StreetWalk() {
     const keyDown = (e: KeyboardEvent) => {
       if (
         (e.target as HTMLElement)?.closest(
-          'input,textarea,select,[contenteditable="true"],summary',
+          'input,textarea,select,button,a,[contenteditable="true"],summary',
         )
       )
         return;
@@ -561,6 +663,9 @@ export default function StreetWalk() {
           new Set([...keys.current, ...touchKeys.current]),
         );
         const input = keyboard.x || keyboard.y ? keyboard : sampled.move;
+        const walkingInput = streetJourneyRef.current ? { x: 0, y: 0 } : input;
+        if (opts.mode === 'control' && (walkingInput.x || walkingInput.y))
+          pendingCloseup.current = null;
         if (opts.mode === 'observe') {
           const look =
             keyboard.x || keyboard.y
@@ -578,25 +683,89 @@ export default function StreetWalk() {
         for (const actor of actors.current) {
           const controlled =
             opts.mode === 'control' && actor.id === opts.active;
-          if (controlled) stepActor(actor, dt, input, 165);
+          if (controlled)
+            stepActor(
+              actor,
+              dt,
+              walkingInput,
+              actor.path.length && !walkingInput.x && !walkingInput.y ? 115 : WALK_SPEED,
+            );
           else if (actor.id === 'admin') actor.frame = 0;
           const node = actorElements.current.get(actor.id),
             sprite = spriteElements.current.get(actor.id);
           if (node) {
+            const projected = opts.scene === 'street' ? streetScenePoint(actor) : actor;
             node.style.visibility =
               !controlled && dailyActions.current.isInside(actor.id)
                 ? 'hidden'
                 : 'visible';
-            node.style.left = `${actor.x}px`;
-            node.style.top = `${actor.y}px`;
-            node.style.zIndex = String(Math.round(actor.y));
+            node.style.left = `${projected.x}px`;
+            node.style.top = `${projected.y}px`;
+            node.style.zIndex = String(Math.round(projected.y));
           }
           if (sprite) {
             sprite.style.backgroundPositionX = `${(actor.frame / 3) * 100}%`;
             sprite.style.transform = `scaleX(${actor.facing})`;
           }
+          const closeupNode = closeupElements.current.get(actor.id);
+          const closeupSprite = closeupSprites.current.get(actor.id);
+          const place = closeupPlaceRef.current;
+          if (closeupNode && place) {
+            const journey = streetJourneyRef.current;
+            if (journey) {
+              let remaining = 0;
+              let previous: Point = actor;
+              for (const point of actor.path) {
+                remaining += Math.hypot(point.x - previous.x, point.y - previous.y);
+                previous = point;
+              }
+              const progress = clamp(1 - remaining / journey.total, 0, 1);
+              closeupNode.style.visibility = controlled ? 'visible' : 'hidden';
+              closeupNode.style.left = `${journey.to.x >= journey.from.x ? 25 + progress * 50 : 75 - progress * 50}%`;
+              closeupNode.style.top = '82%';
+            } else {
+              const dx = actor.x - place.x;
+              const dy = actor.y - place.y;
+              closeupNode.style.visibility =
+                Math.abs(dx) <= 145 &&
+                Math.abs(dy) <= 100 &&
+                (controlled || !dailyActions.current.isInside(actor.id))
+                  ? 'visible'
+                  : 'hidden';
+              closeupNode.style.left = `${50 + dx / 4.5}%`;
+              closeupNode.style.top = `${82 + dy * 0.07}%`;
+            }
+            closeupNode.style.zIndex = String(Math.round(actor.y));
+          }
+          if (closeupSprite) {
+            closeupSprite.style.backgroundPositionX = `${(actor.frame / 3) * 100}%`;
+            closeupSprite.style.transform = `scaleX(${actor.facing})`;
+          }
         }
         const selected = actors.current.find((p) => p.id === opts.active)!;
+        const journey = streetJourneyRef.current;
+        if (
+          journey &&
+          selected.path.length === 0 &&
+          Math.hypot(selected.x - journey.to.x, selected.y - journey.to.y) < 30
+        ) showCloseup(journey.to);
+        const pending = pendingCloseup.current;
+        if (
+          pending &&
+          opts.mode === 'control' &&
+          selected.path.length === 0 &&
+          Math.hypot(selected.x - pending.x, selected.y - pending.y) < 30
+        ) {
+          showCloseup(pending);
+        }
+        const opened = closeupPlaceRef.current;
+        if (
+          opened && !streetJourneyRef.current &&
+          Math.hypot(selected.x - opened.x, selected.y - opened.y) > 155
+        ) {
+          leaveCloseup();
+          setHint('已离开地点近景，返回连续街区道路');
+        }
         const near =
           opts.mode === 'control'
             ? nearestPartner(
@@ -618,11 +787,21 @@ export default function StreetWalk() {
         if (opts.mode === 'observe' && followed)
           freeView.current = { x: followed.x, y: followed.y };
         const point = opts.mode === 'control' ? selected : freeView.current;
+        if (opts.scene === 'street') {
+          const place = nearestDistrictLandmark(point, scenePlaceRef.current);
+          if (place.id !== scenePlaceRef.current.id) {
+            scenePlaceRef.current = place;
+            setScenePlace(place);
+          }
+        }
         const next = cameraFor(
-          point,
+          opts.scene === 'street' ? streetScenePoint(point) : point,
           viewport.current.width,
           viewport.current.height,
           opts.zoom,
+          opts.scene === 'street'
+            ? { x: STREET.width * STREET_SCENE_SCALE, y: STREET.height * STREET_SCENE_SCALE }
+            : { x: STREET.width, y: STREET.height },
         );
         camera.current = next;
         if (world.current)
@@ -630,13 +809,18 @@ export default function StreetWalk() {
         if (marker.current) {
           const destination =
             opts.mode === 'control' ? selected.path.at(-1) : null;
-          marker.current.style.display = destination ? 'block' : 'none';
-          if (destination) {
-            marker.current.style.left = `${destination.x}px`;
-            marker.current.style.top = `${destination.y}px`;
+          const visibleDestination = destination;
+          marker.current.style.display = visibleDestination ? 'block' : 'none';
+          if (visibleDestination) {
+            const projected = opts.scene === 'street' ? streetScenePoint(destination) : destination;
+            marker.current.style.left = `${projected.x}px`;
+            marker.current.style.top = `${projected.y}px`;
           }
         }
-        const nextPlace = placeName(point);
+        const nextPlace =
+          opts.scene === 'street'
+            ? scenePlaceRef.current.name
+            : placeName(point);
         if (nextPlace !== reported) {
           reported = nextPlace;
           setLocation(nextPlace);
@@ -653,15 +837,22 @@ export default function StreetWalk() {
       window.removeEventListener('keyup', keyUp);
       window.removeEventListener('blur', stop);
       document.removeEventListener('visibilitychange', stop);
+      if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
     };
   }, []);
 
   function choose(id: ActorId) {
+    leaveCloseup();
     if (settings.current.mode === 'control') dailyActions.current.cancel();
     // Watching somebody must not interrupt that person or clear everyone else's route.
     const old = actors.current.find((p) => p.id === settings.current.active)!;
     if (settings.current.mode === 'control') old.path = [];
     const selected = actors.current.find((p) => p.id === id)!;
+    if (settings.current.scene === 'street') {
+      const place = nearestDistrictLandmark(selected);
+      scenePlaceRef.current = place;
+      setScenePlace(place);
+    }
     freeView.current = { x: selected.x, y: selected.y };
     following.current = id;
     keys.current.clear();
@@ -677,11 +868,17 @@ export default function StreetWalk() {
       stage.current?.focus({ preventScroll: true });
   }
   function switchMode() {
+    leaveCloseup();
     dailyActions.current.cancel();
     const next = settings.current.mode === 'control' ? 'observe' : 'control';
     const selected = actors.current.find(
       (p) => p.id === settings.current.active,
     )!;
+    if (settings.current.scene === 'street') {
+      const place = nearestDistrictLandmark(selected);
+      scenePlaceRef.current = place;
+      setScenePlace(place);
+    }
     freeView.current = { x: selected.x, y: selected.y };
     selected.path = [];
     following.current = selected.id;
@@ -692,7 +889,7 @@ export default function StreetWalk() {
     setHint(
       next === 'observe'
         ? '拖动画面或使用右摇杆；点击「开始日常」观察他们的生活'
-        : '点击街道前往，也可以使用 WASD 或方向键',
+        : 'WASD / 方向键在街景中行走；地图可选择远处目的地',
     );
     stage.current?.focus({ preventScroll: true });
   }
@@ -700,6 +897,11 @@ export default function StreetWalk() {
     const selected = actors.current.find(
       (p) => p.id === settings.current.active,
     )!;
+    if (settings.current.scene === 'street') {
+      const place = nearestDistrictLandmark(selected);
+      scenePlaceRef.current = place;
+      setScenePlace(place);
+    }
     freeView.current = { x: selected.x, y: selected.y };
     following.current = selected.id;
     settings.current = { ...settings.current, zoom: 1.24 };
@@ -735,9 +937,12 @@ export default function StreetWalk() {
     else stage.current?.focus({ preventScroll: true });
   }
   function visitInterior(value: InteriorView) {
+    leaveCloseup();
     keys.current.clear();
     touchKeys.current.clear();
     pointer.current = null;
+    setAtlasOpen(false);
+    setSelectedPlace(null);
     settings.current = { ...settings.current, interior: true };
     setInteriorView(value);
   }
@@ -786,7 +991,62 @@ export default function StreetWalk() {
       leaveInterior,
     };
   });
+  function selectPlace(place: DistrictLandmark) {
+    setSelectedPlace(place);
+    setAtlasOpen(false);
+    if (settings.current.mode === 'observe') {
+      following.current = null;
+      freeView.current = { x: place.x, y: place.y };
+    }
+    setHint('已选择' + place.name + '；点击地点卡即可让当前人物沿路前往');
+  }
+  function toggleScene() {
+    leaveCloseup();
+    if (settings.current.scene === 'street') {
+      settings.current = { ...settings.current, scene: 'map' };
+      setScene('map');
+      setAtlasOpen(true);
+      setHint('冬木市地图已打开；选择地点或人物定位');
+      return;
+    }
+    const point =
+      settings.current.mode === 'control'
+        ? actors.current.find((p) => p.id === settings.current.active)!
+        : freeView.current;
+    const place = nearestDistrictLandmark(point);
+    scenePlaceRef.current = place;
+    setScenePlace(place);
+    settings.current = { ...settings.current, scene: 'street' };
+    setScene('street');
+    setAtlasOpen(false);
+    setSelectedPlace(null);
+    keys.current.clear();
+    touchKeys.current.clear();
+    setHint('已进入冬木市连续街区；沿道路行走可经过不同区域');
+    stage.current?.focus({ preventScroll: true });
+  }
+  function travelToPlace(destination: DistrictLandmark) {
+    if (settings.current.mode === 'observe') switchMode();
+    const actor = actors.current.find((a) => a.id === settings.current.active)!;
+    actor.path = pathTo(actor, destination);
+    pendingCloseup.current = destination;
+    const place = nearestDistrictLandmark(actor);
+    scenePlaceRef.current = place;
+    setScenePlace(place);
+    settings.current = { ...settings.current, scene: 'street' };
+    setScene('street');
+    setAtlasOpen(false);
+    setHint('正在前往' + destination.name + ' · 到达后进入可行走街景');
+    setSelectedPlace(null);
+    if (Math.hypot(actor.x - destination.x, actor.y - destination.y) < 30)
+      showCloseup(destination);
+    stage.current?.focus({ preventScroll: true });
+  }
+  function walkToPlace() {
+    if (selectedPlace) travelToPlace(selectedPlace);
+  }
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
+    if ((e.target as HTMLElement).closest('button')) return;
     if (e.button !== 0 || !ready) return;
     stage.current?.focus({ preventScroll: true });
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -823,27 +1083,64 @@ export default function StreetWalk() {
     pointer.current = null;
     if (!p || p.dragged || mode !== 'control') return;
     const rect = e.currentTarget.getBoundingClientRect();
+    const closeup = closeupPlaceRef.current;
+    if (closeup) {
+      if (streetJourneyRef.current) {
+        setHint('正在沿街前往下一处街景；到达后可继续自由行走');
+        return;
+      }
+      if ((e.clientY - rect.top) / rect.height < 0.62) {
+        setHint('点击画面下方的街道移动人物');
+        return;
+      }
+      const actor = actors.current.find((a) => a.id === active)!;
+      const requested = nearestWalkable({
+        x: closeup.x + ((e.clientX - rect.left) / rect.width - 0.5) * 300,
+        y: actor.y,
+      });
+      actor.path = pathTo(actor, requested);
+      setHint('正在沿街道前往 · 方向键可随时改变路线');
+      return;
+    }
     const wanted = screenToWorld(
       e.clientX - rect.left,
       e.clientY - rect.top,
       camera.current,
     );
-    const destination = nearestWalkable(wanted);
-    if (Math.hypot(wanted.x - destination.x, wanted.y - destination.y) > 145) {
+    const actor = actors.current.find((a) => a.id === active)!;
+    const requested = scene === 'street'
+      ? { x: wanted.x / STREET_SCENE_SCALE, y: wanted.y / STREET_SCENE_SCALE }
+      : wanted;
+    const destination = nearestWalkable(requested);
+    if (
+      Math.hypot(requested.x - destination.x, requested.y - destination.y) > 145
+    ) {
       setHint('点一下人物脚边的路面，就能走过去');
       return;
     }
-    const actor = actors.current.find((a) => a.id === active)!;
     actor.path = pathTo(actor, destination);
     setHint('正在前往 · 随时按方向键改变方向');
   }
   function reset() {
+    leaveCloseup();
     dailyActions.current.cancel();
     actors.current = createStreetActors();
     daily.resetPlans();
     keys.current.clear();
     touchKeys.current.clear();
-    freeView.current = { x: 837, y: 850 };
+    setAtlasOpen(false);
+    setSelectedPlace(null);
+    settings.current = {
+      ...settings.current,
+      scene: 'street',
+      mode: 'observe',
+    };
+    setScene('street');
+    setMode('observe');
+    const cafe = DISTRICT_LANDMARKS.find((place) => place.id === 'cafe')!;
+    scenePlaceRef.current = cafe;
+    setScenePlace(cafe);
+    freeView.current = { x: cafe.x, y: cafe.y };
     following.current = null;
     setZoom(1.24);
     setHint('已回到街道起点');
@@ -871,6 +1168,20 @@ export default function StreetWalk() {
           <small>{lifePeriod(daily.view.minutes)}</small>
         </div>
         <div className={styles.headerActions}>
+          <button
+            type="button"
+            className={styles.aiButton}
+            aria-label={scene === 'street' ? '查看冬木市地图' : '返回街区行走'}
+            aria-pressed={scene === 'map'}
+            disabled={!ready || !fate.loaded}
+            onClick={() => {
+              if (interiorView) leaveInterior();
+              toggleScene();
+            }}
+          >
+            <MapIcon size={16} />
+            <span>{scene === 'street' ? '地图' : '街区'}</span>
+          </button>
           <button
             type="button"
             className={styles.aiButton}
@@ -924,7 +1235,9 @@ export default function StreetWalk() {
               pointerEvents: interiorView ? 'none' : undefined,
             }}
             role="application"
-            aria-label="冬木生活街道，默认观察他们自主生活；拖动或方向键移动镜头，进入角色后可控制走路"
+            aria-label={closeupPlace
+              ? `${closeupPlace.name}可行走街景；方向键、触屏方向键或点击路面移动人物`
+              : '冬木市连续街道，默认观察他们自主生活；拖动或方向键移动镜头，进入角色后可控制走路'}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -935,68 +1248,121 @@ export default function StreetWalk() {
             <div
               ref={world}
               className={styles.world}
-              style={{ width: STREET.width, height: STREET.height }}
+              style={{
+                width: STREET.width * (scene === 'street' ? STREET_SCENE_SCALE : 1),
+                height: STREET.height * (scene === 'street' ? STREET_SCENE_SCALE : 1),
+              }}
             >
-              <Image
-                className={styles.background}
-                src="/fate/street/street.png"
-                alt="暖阳下的冬木街道，左侧是住宅庭院，右侧是街角咖啡店"
-                width={STREET.width}
-                height={STREET.height}
-                unoptimized
-                preload
-                draggable={false}
-                style={{
-                  filter:
-                    lifePeriod(daily.view.minutes) === '夜间'
-                      ? 'brightness(0.48) saturate(0.7)'
-                      : lifePeriod(daily.view.minutes) === '傍晚'
-                        ? 'brightness(0.85) sepia(0.15)'
-                        : 'none',
-                }}
-              />
+              {scene === 'street' ? (
+                <FateStreetScenery
+                  period={lifePeriod(daily.view.minutes)}
+                />
+              ) : (
+                <div className={styles.background}>
+                  <FateCityScenery />
+                </div>
+              )}
               {ready &&
-                CAST.map((person) => (
+                scene === 'map' &&
+                DISTRICT_LANDMARKS.map((place) => (
+                  <button
+                    type="button"
+                    key={place.id}
+                    className={styles.landmark}
+                    style={{ left: place.x, top: place.y - 147 }}
+                    aria-label={'查看' + place.name}
+                    onClick={() => selectPlace(place)}
+                  >
+                    <MapPin size={13} />
+                    {place.name}
+                  </button>
+                ))}
+              {ready &&
+                CAST.map((person) => {
+                  const height =
+                    scene === 'street'
+                      ? person.id === 'iskandar'
+                        ? 320
+                        : 270
+                      : person.id === 'iskandar'
+                        ? 130
+                        : 108;
+                  return (
+                    <div
+                      key={person.id}
+                      ref={(node) => {
+                        if (node) actorElements.current.set(person.id, node);
+                        else actorElements.current.delete(person.id);
+                      }}
+                      className={`${styles.actor} ${person.id === 'iskandar' ? styles.mounted : ''} ${person.id === active && mode === 'control' ? styles.controlled : ''}`}
+                      style={{
+                        width: height * person.aspect,
+                        height,
+                      }}
+                    >
+                      <div className={styles.groundShadow} />
+                      <div
+                        ref={(node) => {
+                          if (node) spriteElements.current.set(person.id, node);
+                          else spriteElements.current.delete(person.id);
+                        }}
+                        className={styles.sprite}
+                        style={spriteStyle(person)}
+                      />
+                      <span className={styles.actorName}>
+                        {person.id === active && mode === 'control' && (
+                          <span className={styles.activeDot} />
+                        )}{' '}
+                        {person.name}
+                        {isPartner(person.id) && (
+                          <small className={styles.actorActivity}>
+                            {mode === 'control' && person.id === active
+                              ? '由你控制'
+                              : lifeStatus(daily.view.people[person.id])}
+                          </small>
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
+
+              <div ref={marker} className={styles.destination} />
+            </div>
+            {(closeupPlace || leavingCloseupPlace) && (
+              <div key={streetJourney ? 'new-city-link' : (closeupPlace || leavingCloseupPlace)!.id} className={`${styles.closeupScene} ${closeupPlace ? styles.closeupEntering : styles.closeupLeaving}`} aria-hidden="true">
+                <Image
+                  src={streetJourney ? '/fate/street/scenes/new-city-link.png' : districtSceneImage((closeupPlace || leavingCloseupPlace)!)}
+                  alt=""
+                  fill
+                  sizes="(max-width: 800px) 100vw, 85vw"
+                  draggable={false}
+                  className={styles.closeupArtwork}
+                />
+                <div className={styles.closeupRoad} />
+                {CAST.map((person) => (
                   <div
                     key={person.id}
                     ref={(node) => {
-                      if (node) actorElements.current.set(person.id, node);
-                      else actorElements.current.delete(person.id);
+                      if (node) closeupElements.current.set(person.id, node);
+                      else closeupElements.current.delete(person.id);
                     }}
-                    className={`${styles.actor} ${person.id === 'iskandar' ? styles.mounted : ''} ${person.id === active && mode === 'control' ? styles.controlled : ''}`}
-                    style={{
-                      width:
-                        (person.id === 'iskandar' ? 320 : 270) * person.aspect,
-                      height: person.id === 'iskandar' ? 320 : 270,
-                    }}
+                    className={styles.closeupActor}
+                    style={{ aspectRatio: String(person.aspect) }}
                   >
                     <div className={styles.groundShadow} />
                     <div
                       ref={(node) => {
-                        if (node) spriteElements.current.set(person.id, node);
-                        else spriteElements.current.delete(person.id);
+                        if (node) closeupSprites.current.set(person.id, node);
+                        else closeupSprites.current.delete(person.id);
                       }}
                       className={styles.sprite}
                       style={spriteStyle(person)}
                     />
-                    <span className={styles.actorName}>
-                      {person.id === active && mode === 'control' && (
-                        <span className={styles.activeDot} />
-                      )}{' '}
-                      {person.name}
-                      {isPartner(person.id) && (
-                        <small className={styles.actorActivity}>
-                          {mode === 'control' && person.id === active
-                            ? '由你控制'
-                            : lifeStatus(daily.view.people[person.id])}
-                        </small>
-                      )}
-                    </span>
+                    <span className={styles.actorName}>{person.name}</span>
                   </div>
                 ))}
-              <span className={styles.schoolExit}>穗群原学园 →</span>
-              <div ref={marker} className={styles.destination} />
-            </div>
+              </div>
+            )}
           </div>
           {!interiorView && (
             <>
@@ -1007,6 +1373,59 @@ export default function StreetWalk() {
                   {lifeTime(daily.view.minutes).split(' · ')[1]}
                 </span>
               </div>
+              {scene === 'map' && (
+                <button
+                  type="button"
+                  className={styles.mapDirectoryButton}
+                  aria-label="打开地图目录"
+                  aria-expanded={atlasOpen}
+                  onClick={() => setAtlasOpen((open) => !open)}
+                >
+                  <MapPin size={15} /> 地点目录
+                </button>
+              )}
+              {closeupPlace && (
+                <div className={styles.closeupControls}>
+                  <strong>{streetJourney ? `沿街前往${streetJourney.to.name}` : `${closeupPlace.name} · 街景`}</strong>
+                  {connectedStreetPlace && !streetJourney && (
+                    <button type="button" className={styles.streetLinkButton} onClick={() => followStreetTo(connectedStreetPlace)}>
+                      沿街去{connectedStreetPlace.name}
+                    </button>
+                  )}
+                  <button type="button" onClick={() => {
+                    leaveCloseup();
+                    stage.current?.focus({ preventScroll: true });
+                  }}>
+                    返回街区
+                  </button>
+                </div>
+              )}
+              {scene === 'street' && !closeupPlace && (
+                <div className={styles.streetPlaceBadge}>
+                  <MapPin size={15} />
+                  <span>{scenePlace.name}</span>
+                  <button type="button" onClick={() => travelToPlace(scenePlace)}>
+                    进入街景
+                  </button>
+                  {scenePlace.kind === 'home' && (
+                    <button
+                      type="button"
+                      disabled={
+                        mode === 'control' &&
+                        Math.hypot(
+                          daily.view.positions[active].x - scenePlace.x,
+                          daily.view.positions[active].y - scenePlace.y,
+                        ) > 75
+                      }
+                      onClick={() =>
+                        visitInterior(scenePlace.id as keyof typeof FATE_HOMES)
+                      }
+                    >
+                      {mode === 'control' ? '进入住宅' : '观察住宅'}
+                    </button>
+                  )}
+                </div>
+              )}
               <output
                 className={`${styles.gamepadStatus} ${padConnected ? styles.gamepadConnected : ''}`}
               >
@@ -1026,7 +1445,7 @@ export default function StreetWalk() {
                   <kbd>E / A</kbd>
                 </button>
               )}
-              <div className={styles.cameraTools}>
+              {!closeupPlace && <div className={styles.cameraTools}>
                 <button
                   onClick={() => setZoom((v) => clamp(v - 0.12, 1, 1.8))}
                   disabled={zoom <= 1}
@@ -1050,7 +1469,7 @@ export default function StreetWalk() {
                 >
                   <Plus size={19} />
                 </button>
-              </div>
+              </div>}
               {!ready && (
                 <div className={styles.assetState}>
                   <span>{error ? '街景素材未能载入' : '正在进入街道…'}</span>
@@ -1095,6 +1514,25 @@ export default function StreetWalk() {
               )}
             </>
           )}
+          {!interiorView && selectedPlace && (
+            <DistrictPlaceCard
+              place={selectedPlace}
+              control={mode === 'control'}
+              traveler={CAST.find((person) => person.id === active)?.name ?? '当前人物'}
+              arrived={
+                Math.hypot(
+                  daily.view.positions[active].x - selectedPlace.x,
+                  daily.view.positions[active].y - selectedPlace.y,
+                ) < 25
+              }
+              onWalk={walkToPlace}
+              onVisit={(home) => {
+                setSelectedPlace(null);
+                visitInterior(home);
+              }}
+              onClose={() => setSelectedPlace(null)}
+            />
+          )}
           {interiorView && (
             <div
               ref={interiorSurface}
@@ -1118,7 +1556,23 @@ export default function StreetWalk() {
             </div>
           )}
         </div>
-        {lifePanel ? (
+        {atlasOpen && scene === 'map' && !interiorView ? (
+          <DistrictAtlas
+            life={daily.view}
+            active={active}
+            onClose={() => setAtlasOpen(false)}
+            onSelect={selectPlace}
+            onFind={(id) => {
+              if (settings.current.mode === 'control') switchMode();
+              setSelectedPlace(null);
+              setAtlasOpen(false);
+              choose(id);
+              const home = daily.view.people[id].activity?.home;
+              if (home && dailyActions.current.isInside(id))
+                visitInterior(home);
+            }}
+          />
+        ) : lifePanel ? (
           <LifePanel
             life={daily}
             controlled={mode === 'control' ? active : null}
@@ -1201,7 +1655,11 @@ export default function StreetWalk() {
               </summary>
               <div>
                 <p>默认旁观自主生活，选择人物只跟随镜头</p>
-                <p>进入角色后：WASD / 方向键走动，点击路面前往</p>
+                <p>「地图」查看冬木市两岸道路；选地点后可沿桥和街道步行前往</p>
+                <p>选地点后可直接带当前人物前往；WASD / 方向键可随时改走向</p>
+                <p>
+                  人物沿连续街区移动；点「进入街景」可在当前地点近景中行走
+                </p>
                 <p>自由观察：拖动画面</p>
                 <p>右上角 ＋ / −：调整镜头</p>
                 <p className={styles.helpLabel}>手柄 · 连接后按任意按钮</p>

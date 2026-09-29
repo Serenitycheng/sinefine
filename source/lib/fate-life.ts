@@ -1,3 +1,4 @@
+import { cityPoint, DISTRICT_PLACES } from './fate-district';
 import { LIFE_ROUTINES, LEISURE_ACTIONS, lifeRoutine } from './fate-habits';
 import {
   createEconomy,
@@ -20,6 +21,7 @@ import {
 } from './fate-social';
 import {
   advanceAppointment,
+  meetupDestination,
   reconcileAppointments,
   meetupPair,
 } from './fate-meetups';
@@ -39,6 +41,7 @@ import {
 } from './fate-belongings';
 import {
   SCHOOL_GATE,
+  routineDestination,
   DUTIES,
   isDuty,
   dutyIds,
@@ -91,8 +94,10 @@ import {
   clamp,
   createStreetActors,
   isWalkable,
+  nearestWalkable,
   pathTo,
   stepActor,
+  wasWalkableInDistrict,
   WALK_AREAS,
   type Actor,
   type ActorId,
@@ -101,10 +106,10 @@ import {
 
 export const LIFE_PLACES = {
   school: SCHOOL_GATE,
-  cafe: { name: '街角咖啡店', x: 1250, y: 844 },
-  home: { name: '住宅', x: 307, y: 779 },
-  shops: { name: '商店侧巷', x: 893, y: 740 },
-  street: { name: '林荫路边', x: 666, y: 859 },
+  cafe: DISTRICT_PLACES.cafe,
+  home: { ...FATE_HOMES.einzbern, name: '住宅' },
+  shops: DISTRICT_PLACES.shops,
+  street: { ...DISTRICT_PLACES.park, name: '林荫路边' },
 } as const;
 export type LifePlace = keyof typeof LIFE_PLACES;
 export const LIFE_ACTIONS = {
@@ -184,7 +189,7 @@ export type DailyLife = {
   meals: HomeMeal[];
   housing: FateHousing;
   familyVisitDay: number;
-  version: 13;
+  version: 15;
   waverStage: WaverStage;
   minutes: number;
   people: Record<PartnerId, LifePerson>;
@@ -262,7 +267,7 @@ export function createDailyLife(): DailyLife {
     meals: [],
     housing: defaultHousing(),
     familyVisitDay: -1,
-    version: 13,
+    version: 15,
     waverStage: 'young',
     minutes: 980,
     people: {
@@ -1281,12 +1286,15 @@ export function lifeScene(life: DailyLife, target: PartnerId): LifeScene {
       ? 'school'
       : home
         ? 'home'
-        : p.x > 1080
+        : Math.hypot(p.x - LIFE_PLACES.cafe.x, p.y - LIFE_PLACES.cafe.y) < 110
           ? 'cafe'
-          : p.x < 530
-            ? 'home'
-            : p.y < 790
-              ? 'shops'
+          : Math.hypot(p.x - LIFE_PLACES.shops.x, p.y - LIFE_PLACES.shops.y) <
+              100
+            ? 'shops'
+            : Object.values(FATE_HOMES).some(
+                  (h) => Math.hypot(p.x - h.x, p.y - h.y) < 70,
+                )
+              ? 'home'
               : 'street';
   return {
     social: socialContext(life, target),
@@ -1577,7 +1585,7 @@ export function parseDailyLife(value: unknown): DailyLife {
   const number = (v: unknown, max = 1e9) =>
     typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
   if (
-    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13].includes(x.version) ||
+    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(x.version) ||
     !number(x.minutes) ||
     !number(x.nextEncounter) ||
     !number(x.holdUntil) ||
@@ -1693,8 +1701,11 @@ export function parseDailyLife(value: unknown): DailyLife {
                   : LIFE_IDS;
   for (const id of ['admin', ...ids] as ActorId[]) {
     const p = x.positions?.[id];
-    if (!p || !isWalkable(p)) throw new Error('人物位置无效');
-    result.positions[id] = { x: p.x, y: p.y };
+    if (!p || !(x.version < 15 ? wasWalkableInDistrict(p) : isWalkable(p)))
+      throw new Error('人物位置无效');
+    result.positions[id] = x.version < 15
+      ? nearestWalkable(cityPoint(p))
+      : { x: p.x, y: p.y };
   }
   for (const id of ids) {
     const p = x.people?.[id];
@@ -1809,6 +1820,22 @@ export function parseDailyLife(value: unknown): DailyLife {
       choices: p.choices,
       activity,
     };
+  }
+  if (x.version < 14) {
+    // Ongoing activities keep their remaining time and history. Place somebody
+    // already indoors/at an appointment at the relocated destination; journeys
+    // are replanned from their saved pavement position by the daily engine.
+    for (const id of ids) {
+      const a = result.people[id].activity;
+      if (!a || a.phase !== 'doing') continue;
+      const appointment = result.appointments.find((m) => m.id === a.meeting);
+      const duty = result.agenda.find((entry) => entry.id === a.routine);
+      result.positions[id] = appointment
+        ? meetupDestination(appointment, id)
+        : duty
+          ? routineDestination(result, id, duty, Boolean(a.returning))
+          : lifeDestination(id, a.kind, a.home);
+    }
   }
   result.economy =
     x.version >= 13

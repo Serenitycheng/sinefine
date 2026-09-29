@@ -9,6 +9,7 @@ import {
   type LifeAction,
 } from '../lib/fate-life';
 import { createStreetActors } from '../lib/street';
+import { legacyDistrictPositions } from './legacy-district';
 
 for (const { label, minute, expected } of [
   { label: '22:01', minute: 1321, expected: 479 },
@@ -127,10 +128,10 @@ void test('loading older and current saves preserves an already-running sleep co
   life.people.cu.activity!.remaining = 91.5;
   for (const version of [10, 11, 12]) {
     const loaded = parseDailyLife(
-      JSON.parse(JSON.stringify({ ...life, version })),
+      JSON.parse(JSON.stringify({ ...life, version, positions: legacyDistrictPositions(life.positions) })),
     );
     assert.deepEqual(loaded.people.cu.activity, life.people.cu.activity);
-    assert.equal(loaded.version, 13);
+    assert.equal(loaded.version, 15);
     assert.equal(loaded.minutes, 1450);
   }
 });

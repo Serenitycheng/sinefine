@@ -11,6 +11,7 @@ import {
   type SocialEffects,
 } from '../lib/fate-social';
 import { parseAppointments } from '../lib/fate-social-storage';
+import { legacyDistrictPositions } from './legacy-district';
 
 const proposal = '一小时后一起在街角咖啡店看书，好吗？';
 const changedPlan = '好，那我们一起在林荫路边散步。';
@@ -227,12 +228,12 @@ function legacyLife() {
     people: Object.fromEntries(
       LEGACY_STREET_PARTNERS.map((id) => [id, life.people[id]]),
     ),
-    positions: Object.fromEntries(
+    positions: legacyDistrictPositions(Object.fromEntries(
       ['admin' as const, ...LEGACY_STREET_PARTNERS].map((id) => [
         id,
         life.positions[id],
       ]),
-    ),
+    )),
     belongings: Object.fromEntries(
       LEGACY_STREET_PARTNERS.map((id) => [id, life.belongings[id]]),
     ),
@@ -246,7 +247,7 @@ void test('a full legacy save clears only travel towards the cancelled counterpr
   assert.equal(Object.keys(life.positions).length, 15);
   assert.equal(Object.keys(life.belongings).length, 14);
   const restored = parseDailyLife(life);
-  assert.equal(restored.version, 13);
+  assert.equal(restored.version, 15);
   assert.equal(Object.keys(restored.people).length, STREET_PARTNERS.length);
   assert.equal(restored.appointments[0].status, 'cancelled');
   assert.equal(restored.people.rin.activity, null);

@@ -1,3 +1,4 @@
+import { DISTRICT_PLACES } from './fate-district';
 import {
   fatePerson,
   isPartner,
@@ -9,7 +10,7 @@ import { FATE_HOMES, homeOf } from './fate-housing';
 import { pathTo, stepActor, type Actor, type Point } from './street';
 import type { DailyLife } from './fate-life';
 
-export const SCHOOL_GATE = { name: '穗群原学园', x: 1590, y: 835 };
+export const SCHOOL_GATE = DISTRICT_PLACES.school;
 export const DUTIES = {
   'student-am': {
     label: '上午上课',

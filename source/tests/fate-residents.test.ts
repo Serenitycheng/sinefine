@@ -23,6 +23,8 @@ import {
 import { dutyIds } from '../lib/fate-schedule';
 import { parseSocialEffects, rememberEncounter } from '../lib/fate-social';
 import { createStreetActors, isWalkable } from '../lib/street';
+import { cityPoint } from '../lib/fate-district';
+import { legacyDistrictPositions } from './legacy-district';
 
 const newcomers = [
   'gilgamesh',
@@ -46,9 +48,9 @@ function legacySave(version: number) {
     ...life,
     version,
     people: Object.fromEntries(ids.map((id) => [id, life.people[id]])),
-    positions: Object.fromEntries(
+    positions: legacyDistrictPositions(Object.fromEntries(
       ['admin' as const, ...ids].map((id) => [id, life.positions[id]]),
-    ),
+    )),
     belongings: Object.fromEntries(
       LEGACY_STREET_PARTNERS.map((id) => [id, life.belongings[id]]),
     ),
@@ -63,7 +65,7 @@ void test('all 21 configured residents have individual daily states, belongings 
     [...STREET_PARTNERS].sort(),
     FATE_CAST.map((p) => p.id).sort(),
   );
-  assert.equal(life.version, 13);
+  assert.equal(life.version, 15);
   assert.equal(actors.length, 22);
   assert.deepEqual(
     Object.keys(life.people).sort(),
@@ -91,12 +93,12 @@ void test('all 21 configured residents have individual daily states, belongings 
   assert.deepEqual(parseDailyLife(life), life);
 });
 
-void test('early daily-life schemas upgrade to v13 while preserving their recorded residents', () => {
+void test('early daily-life schemas upgrade to v15 while preserving their recorded residents', () => {
   const defaults = createDailyLife();
   for (let version = 1; version <= 11; version++) {
     const saved = legacySave(version);
     const migrated = parseDailyLife(JSON.parse(JSON.stringify(saved)));
-    assert.equal(migrated.version, 13);
+    assert.equal(migrated.version, 15);
     assert.equal(migrated.minutes, saved.minutes);
     for (const [id, person] of Object.entries(saved.people)) {
       assert.deepEqual(
@@ -104,9 +106,11 @@ void test('early daily-life schemas upgrade to v13 while preserving their record
         person,
         `v${version}:${id}`,
       );
-      assert.deepEqual(
-        migrated.positions[id as PartnerId],
-        saved.positions[id],
+      assert.ok(
+        Math.hypot(
+          migrated.positions[id as PartnerId].x - cityPoint(saved.positions[id]).x,
+          migrated.positions[id as PartnerId].y - cityPoint(saved.positions[id]).y,
+        ) < 1e-9,
       );
     }
     for (const id of newcomers) {
@@ -198,7 +202,7 @@ void test('current saves never treat missing or damaged new-resident state as an
     badItem.belongings[id].paper = 9;
     assert.throws(() => parseDailyLife(badItem));
   }
-  assert.throws(() => parseDailyLife({ ...createDailyLife(), version: 14 }));
+  assert.throws(() => parseDailyLife({ ...createDailyLife(), version: 16 }));
 });
 
 void test('new residents have their own reading choices and motivations without borrowing school roles', () => {

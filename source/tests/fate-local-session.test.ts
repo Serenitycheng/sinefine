@@ -7,6 +7,7 @@ import {
   type FateStorage,
 } from '../lib/fate-backup';
 import { createDailyLife } from '../lib/fate-life';
+import { legacyDistrictPositions } from './legacy-district';
 import {
   FateStorageConflict,
   FATE_ORIGINAL_RECOVERY_KEY,
@@ -201,6 +202,7 @@ void test('invalid proposed worlds and failed storage writes leave the previous 
 
 void test('daily-life migration keeps the exact stored baseline until an explicit single write', () => {
   const { economy: _economy, ...v12Life } = createDailyLife();
+  v12Life.positions = legacyDistrictPositions(v12Life.positions);
   const raw = JSON.stringify(
     {
       ...emptyFateLibrary(),
@@ -211,7 +213,7 @@ void test('daily-life migration keeps the exact stored baseline until an explici
   );
   const { storage, writes } = memoryStorage([[FATE_LIBRARY_KEY, raw]]);
   const snapshot = readFateLocalSnapshot(storage);
-  assert.equal(snapshot.library.current.life!.version, 13);
+  assert.equal(snapshot.library.current.life!.version, 15);
   assert.equal(snapshot.stamp.library, raw);
   assert.equal(writes.length, 0);
   const saved = writeFateLocalSnapshot(

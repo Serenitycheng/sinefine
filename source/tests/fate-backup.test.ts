@@ -17,6 +17,7 @@ import {
   type FateStorage,
 } from '../lib/fate-backup';
 import { createDailyLife, LIFE_IDS } from '../lib/fate-life';
+import { legacyDistrictPoint } from './legacy-district';
 import {
   emptyFateSave,
   FATE_STORAGE_KEY,
@@ -88,9 +89,9 @@ void test('raw v1 saves and the original two-resident daily life migrate without
       encounters: 1,
       people: { saber: baseline.people.saber, rin: baseline.people.rin },
       positions: {
-        admin: baseline.positions.admin,
-        saber: baseline.positions.saber,
-        rin: baseline.positions.rin,
+        admin: legacyDistrictPoint(baseline.positions.admin),
+        saber: legacyDistrictPoint(baseline.positions.saber),
+        rin: legacyDistrictPoint(baseline.positions.rin),
       },
       events: [
         {
@@ -111,7 +112,7 @@ void test('raw v1 saves and the original two-resident daily life migrate without
   const backup = readFateBackupText(JSON.stringify(legacy));
   assert.equal(backup.createdAt, null);
   assert.equal(backup.save.worldNote, legacy.worldNote);
-  assert.equal(backup.save.life!.version, 13);
+  assert.equal(backup.save.life!.version, 15);
   assert.equal(backup.save.life!.minutes, 1080);
   assert.equal(backup.save.life!.lastEncounters['rin|saber'], 1070);
   assert.equal(backup.save.life!.waverStage, 'young');

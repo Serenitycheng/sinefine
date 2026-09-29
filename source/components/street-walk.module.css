@@ -88,6 +88,7 @@
 }
 .talkButton {
   position: absolute;
+  z-index: 5;
   bottom: 18px;
   left: 50%;
   transform: translateX(-50%);
@@ -149,6 +150,7 @@
 .stage {
   position: absolute;
   inset: 0;
+  z-index: 1;
   overflow: hidden;
   touch-action: none;
   cursor: crosshair;
@@ -177,6 +179,127 @@
   object-fit: fill;
   pointer-events: none;
   max-width: none;
+}
+.continuousScenery {
+  position: absolute;
+  inset: 0 auto auto 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: #a1b2a4;
+}
+.sceneryWorld {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.closeupScene {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #62716a;
+  pointer-events: none;
+}
+.closeupEntering {
+  animation: closeupEnter .64s cubic-bezier(.22, 1, .36, 1) both;
+}
+.closeupLeaving {
+  animation: closeupLeave .48s ease-in both;
+}
+.closeupEntering .closeupArtwork {
+  animation: closeupArtworkEnter .72s cubic-bezier(.22, 1, .36, 1) both;
+}
+@keyframes closeupEnter {
+  from { opacity: 0; filter: blur(7px); }
+  to { opacity: 1; filter: blur(0); }
+}
+@keyframes closeupLeave {
+  from { opacity: 1; filter: blur(0); }
+  to { opacity: 0; filter: blur(6px); }
+}
+@keyframes closeupArtworkEnter {
+  from { transform: scale(1.12); }
+  to { transform: scale(1); }
+}
+.closeupArtwork {
+  object-fit: cover;
+  object-position: center bottom;
+}
+.closeupRoad {
+  position: absolute;
+  inset: 66% 0 0;
+  background: linear-gradient(transparent, #18252138);
+}
+.closeupActor {
+  position: absolute;
+  top: 82%;
+  height: clamp(112px, 24vh, 190px);
+  transform: translate(-50%, -92%);
+  visibility: hidden;
+  pointer-events: none;
+}
+.closeupActor .actorName {
+  bottom: -2%;
+}
+.closeupControls {
+  position: absolute;
+  z-index: 5;
+  top: 72px;
+  left: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100% - 48px);
+  padding: 8px 10px;
+  border: 1px solid #fff4ce6a;
+  border-radius: 6px;
+  background: #14201be8;
+  color: #fff4d5;
+  font-size: 12px;
+}
+.closeupControls .streetLinkButton {
+  background: #e9d2a0;
+  border-color: #f5e8c6;
+  font-weight: 600;
+}
+.closeupControls strong {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.closeupControls button {
+  flex: none;
+  border: 1px solid #ddc18588;
+  border-radius: 4px;
+  background: #c4a976;
+  color: #16221e;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+.landmark {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  pointer-events: auto;
+  border: 1px solid #566e5366;
+  border-radius: 5px;
+  padding: 7px 9px;
+  background: #f8f3dfe8;
+  color: #354f45;
+  font-size: 13px;
+  cursor: pointer;
+  z-index: 940;
+}
+.landmark:hover,
+.landmark:focus-visible {
+  background: #fff9e6;
+  outline: 2px solid #876839;
+  outline-offset: 2px;
 }
 .actor {
   position: absolute;
@@ -250,6 +373,7 @@
 }
 .modeBadge {
   position: absolute;
+  z-index: 5;
   top: 20px;
   left: 24px;
   display: flex;
@@ -263,6 +387,49 @@
   font-size: 13px;
   pointer-events: none;
 }
+.streetPlaceBadge {
+  position: absolute;
+  z-index: 5;
+  top: 72px;
+  left: 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid #fff4ce6a;
+  border-radius: 6px;
+  background: #14201bd9;
+  color: #fff4d5;
+  font-size: 12px;
+}
+.mapDirectoryButton {
+  position: absolute;
+  z-index: 5;
+  top: 72px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #fff4ce6a;
+  border-radius: 6px;
+  background: #14201bd9;
+  color: #fff4d5;
+  padding: 9px 11px;
+  font-size: 12px;
+}
+.streetPlaceBadge button {
+  margin-left: 4px;
+  border: 1px solid #ddc18588;
+  border-radius: 4px;
+  background: #c4a976;
+  color: #16221e;
+  padding: 5px 8px;
+  font-size: 11px;
+}
+.streetPlaceBadge button:disabled {
+  opacity: 0.55;
+}
 .liveDot {
   width: 6px;
   height: 6px;
@@ -272,6 +439,7 @@
 }
 .gamepadStatus {
   position: absolute;
+  z-index: 5;
   left: 24px;
   bottom: 18px;
   max-width: calc(100% - 184px);
@@ -303,6 +471,7 @@
 }
 .cameraTools {
   position: absolute;
+  z-index: 5;
   top: 20px;
   right: 24px;
   display: flex;
@@ -524,6 +693,7 @@
 }
 .dpad {
   position: absolute;
+  z-index: 5;
   bottom: 50px;
   right: 24px;
   display: grid;
@@ -698,6 +868,19 @@
     padding: 8px 10px;
     font-size: 12px;
   }
+  .streetPlaceBadge,
+  .mapDirectoryButton {
+    top: 52px;
+    left: 13px;
+    max-width: calc(100% - 26px);
+    font-size: 11px;
+  }
+  .closeupControls {
+    top: 103px;
+    left: 13px;
+    max-width: calc(100% - 26px);
+    font-size: 11px;
+  }
   .gamepadStatus {
     left: 13px;
     bottom: 13px;
@@ -783,6 +966,10 @@
 @media (prefers-reduced-motion: reduce) {
   .shell * {
     scroll-behavior: auto;
+  }
+  .closeupScene,
+  .closeupEntering .closeupArtwork {
+    animation: none;
   }
 }
 .schoolExit {

@@ -17,7 +17,8 @@ import {
   parseLifeScene,
   snapshotLife,
 } from '../lib/fate-life';
-import { createStreetActors } from '../lib/street';
+import { createStreetActors, isWalkable } from '../lib/street';
+import { legacyDistrictPositions } from './legacy-district';
 
 void test('v12 progress preserves all 21 residents and initializes only the current day budget', () => {
   const old = createDailyLife();
@@ -25,11 +26,15 @@ void test('v12 progress preserves all 21 residents and initializes only the curr
   old.people.medusa.hunger = 71;
   old.people.natalia.choices = 15;
   old.belongings.emiya.notes = 8;
-  const legacy = { ...old, version: 12, economy: undefined };
+  const legacy = { ...old, version: 12, economy: undefined, positions: legacyDistrictPositions(old.positions) };
   const restored = parseDailyLife(JSON.parse(JSON.stringify(legacy)));
-  assert.equal(restored.version, 13);
+  assert.equal(restored.version, 15);
   assert.deepEqual(restored.people, old.people);
-  assert.deepEqual(restored.positions, old.positions);
+  for (const [id, point] of Object.entries(old.positions)) {
+    const moved = restored.positions[id as keyof typeof old.positions];
+    if (id !== 'medea' && id !== 'kuzuki') assert.deepEqual(moved, point);
+    assert.ok(isWalkable(moved), id);
+  }
   assert.deepEqual(restored.belongings, old.belongings);
   for (const id of STREET_PARTNERS) {
     assert.equal(restored.economy.accounts[id].balance, DAILY_BUDGET);
@@ -136,7 +141,7 @@ void test('current saves reject missing ledgers and future shopping tokens, incl
   const damaged = structuredClone(current);
   damaged.economy.accounts.rin.lastShopChoice = damaged.people.rin.choices + 1;
   assert.throws(() => parseDailyLife(damaged), /购物记录/);
-  const old = { ...current, version: 12, economy: undefined };
+  const old = { ...current, version: 12, economy: undefined, positions: legacyDistrictPositions(current.positions) };
   Reflect.deleteProperty(old.people, 'medusa');
   assert.throws(() => parseDailyLife(old), /人物状态/);
 });

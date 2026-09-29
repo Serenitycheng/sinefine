@@ -1,3 +1,4 @@
+import { DISTRICT_PLACES } from './fate-district';
 import {
   fatePerson,
   isPartner,
@@ -12,9 +13,14 @@ import {
 import type { DailyLife, LifeEvent } from './fate-life';
 
 export const MEETUPS = {
-  walk: { label: '散步', place: '林荫路边', x: 666, y: 859 },
-  read: { label: '看书', place: '街角咖啡店', x: 1250, y: 844 },
-  eat: { label: '吃饭', place: '街角咖啡店', x: 1250, y: 844 },
+  walk: {
+    label: '散步',
+    place: '林荫路边',
+    x: DISTRICT_PLACES.park.x,
+    y: DISTRICT_PLACES.park.y,
+  },
+  read: { label: '看书', place: '街角咖啡店', ...DISTRICT_PLACES.cafe },
+  eat: { label: '吃饭', place: '街角咖啡店', ...DISTRICT_PLACES.cafe },
 } as const;
 export type MeetupKind = keyof typeof MEETUPS;
 export type Impression = {
