@@ -47,7 +47,7 @@ void test('every district destination has its own street-level artwork and share
   }
 });
 
-void test('close-up streets form a bidirectional route from Ryudou Temple across Fuyuki Bridge to the cafe', () => {
+void test('all 14 close-up destinations are connected by streets actors can walk in either direction', () => {
   for (const link of STREET_CLOSEUP_LINKS) {
     const from = DISTRICT_LANDMARKS.find((place) => place.id === link.from)!;
     const to = DISTRICT_LANDMARKS.find((place) => place.id === link.to)!;
@@ -55,7 +55,14 @@ void test('close-up streets form a bidirectional route from Ryudou Temple across
     assert.ok(existsSync(join(process.cwd(), 'public', link.image.slice(1))), link.image);
     assert.ok(streetLinksFrom(from.id).some(({ place }) => place.id === to.id));
     assert.ok(streetLinksFrom(to.id).some(({ place }) => place.id === from.id));
-    assert.ok(pathTo(from, to).length, `${from.id} -> ${to.id} has no road`);
+    for (const [start, end] of [[from, to], [to, from]]) {
+      const actor = createStreetActors()[0];
+      Object.assign(actor, { x: start.x, y: start.y, path: pathTo(start, end) });
+      assert.ok(actor.path.length, `${start.id} -> ${end.id} has no road`);
+      for (let frame = 0; frame < 1500 && actor.path.length; frame++) stepActor(actor, 0.05);
+      assert.equal(actor.path.length, 0, `${start.id} -> ${end.id} gets stuck`);
+      assert.ok(Math.hypot(actor.x - end.x, actor.y - end.y) < 1, `${start.id} -> ${end.id} arrives elsewhere`);
+    }
   }
   const visited = new Set(['temple']);
   const queue = ['temple'];
@@ -66,7 +73,7 @@ void test('close-up streets form a bidirectional route from Ryudou Temple across
       queue.push(place.id);
     }
   }
-  for (const id of ['temple', 'einzbern', 'emiya', 'school', 'fujimura', 'park', 'shops', 'cafe'])
+  for (const { id } of DISTRICT_LANDMARKS)
     assert.ok(visited.has(id), `${id} is disconnected from the close-up street route`);
   const west = DISTRICT_LANDMARKS.find((place) => place.id === 'fujimura')!;
   const east = DISTRICT_LANDMARKS.find((place) => place.id === 'park')!;

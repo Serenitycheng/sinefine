@@ -202,12 +202,10 @@
 }
 .closeupEntering {
   animation: closeupEnter .64s cubic-bezier(.22, 1, .36, 1) both;
+  background: transparent;
 }
 .closeupLeaving {
   animation: closeupLeave .48s ease-in both;
-}
-.closeupEntering .closeupArtwork {
-  animation: closeupArtworkEnter .72s cubic-bezier(.22, 1, .36, 1) both;
 }
 @keyframes closeupEnter {
   from { opacity: 0; filter: blur(7px); }
@@ -217,13 +215,39 @@
   from { opacity: 1; filter: blur(0); }
   to { opacity: 0; filter: blur(6px); }
 }
-@keyframes closeupArtworkEnter {
-  from { transform: scale(1.12); }
-  to { transform: scale(1); }
-}
 .closeupArtwork {
   object-fit: cover;
   object-position: center bottom;
+}
+.activeCloseupArtwork {
+  opacity: 0;
+  transition: opacity .72s ease;
+}
+.closeupArtworkReady {
+  opacity: 1;
+}
+.closeupDusk .closeupArtwork {
+  filter: brightness(.86) sepia(.14);
+}
+.closeupNight .closeupArtwork {
+  filter: brightness(.58) saturate(.78);
+}
+.closeupScene.closeupNight::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(#09172c65, #0a173038 65%, #09182b45);
+  pointer-events: none;
+}
+.closeupActors {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.closeupActors.closeupNight .sprite {
+  filter: brightness(.78) saturate(.84);
 }
 .closeupRoad {
   position: absolute;
@@ -968,8 +992,11 @@
     scroll-behavior: auto;
   }
   .closeupScene,
-  .closeupEntering .closeupArtwork {
+  .closeupActors {
     animation: none;
+  }
+  .activeCloseupArtwork {
+    transition: none;
   }
 }
 .schoolExit {

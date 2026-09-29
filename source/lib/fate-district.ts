@@ -34,10 +34,19 @@ type DistrictPlaceId = keyof typeof DISTRICT_HOMES | keyof typeof DISTRICT_PLACE
 export const STREET_CLOSEUP_LINKS = [
   { from: 'temple', to: 'einzbern', image: '/fate/street/scenes/temple-hill-link.png' },
   { from: 'einzbern', to: 'emiya', image: '/fate/street/scenes/miyama-residential-link.png' },
+  { from: 'einzbern', to: 'matou', image: '/fate/street/scenes/miyama-south-lane-link.png' },
   { from: 'emiya', to: 'school', image: '/fate/street/scenes/miyama-residential-link.png' },
+  { from: 'emiya', to: 'tohsaka', image: '/fate/street/scenes/miyama-estate-link.png' },
   { from: 'school', to: 'fujimura', image: '/fate/street/scenes/miyama-residential-link.png' },
+  { from: 'school', to: 'kayneth', image: '/fate/street/scenes/miyama-south-road-link.png' },
+  { from: 'tohsaka', to: 'fujimura', image: '/fate/street/scenes/miyama-estate-link.png' },
+  { from: 'matou', to: 'natalia', image: '/fate/street/scenes/miyama-south-lane-link.png' },
+  { from: 'natalia', to: 'kayneth', image: '/fate/street/scenes/miyama-south-road-link.png' },
   { from: 'fujimura', to: 'park', image: '/fate/street/scenes/fuyuki-bridge-link.png' },
   { from: 'park', to: 'shops', image: '/fate/street/scenes/new-city-link.png' },
+  { from: 'park', to: 'waver', image: '/fate/street/scenes/shinto-residential-link.png' },
+  { from: 'waver', to: 'shops', image: '/fate/street/scenes/shinto-residential-link.png' },
+  { from: 'waver', to: 'church', image: '/fate/street/scenes/church-slope-link.png' },
   { from: 'shops', to: 'cafe', image: '/fate/street/scenes/new-city-link.png' },
 ] as const satisfies ReadonlyArray<{ from: DistrictPlaceId; to: DistrictPlaceId; image: string }>;
 

@@ -346,8 +346,11 @@ export default function StreetWalk() {
     to: DistrictLandmark;
     total: number;
     image: string;
+    startX: number;
+    direction: 1 | -1;
   } | null>(null);
   const [streetTransitionImage, setStreetTransitionImage] = useState<string | null>(null);
+  const [loadedSceneImage, setLoadedSceneImage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -397,6 +400,8 @@ export default function StreetWalk() {
   const spriteElements = useRef(new Map<ActorId, HTMLDivElement>());
   const closeupElements = useRef(new Map<ActorId, HTMLDivElement>());
   const closeupSprites = useRef(new Map<ActorId, HTMLDivElement>());
+  const journeyArtwork = useRef<HTMLImageElement>(null);
+  const reducedMotion = useRef(false);
   const closeupPlaceRef = useRef<DistrictLandmark | null>(null);
   const streetJourneyRef = useRef<typeof streetJourney>(null);
   const pendingCloseup = useRef<DistrictLandmark | null>(null);
@@ -436,6 +441,10 @@ export default function StreetWalk() {
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
   const connectedStreetPlaces = closeupPlace ? streetLinksFrom(closeupPlace.id) : [];
+  const shownCloseupPlace = closeupPlace || leavingCloseupPlace;
+  const shownCloseupImage = streetJourney?.image ?? (shownCloseupPlace ? districtSceneImage(shownCloseupPlace) : null);
+  const period = lifePeriod(daily.view.minutes);
+  const closeupLight = period === '夜间' ? styles.closeupNight : period === '傍晚' ? styles.closeupDusk : '';
 
   function crossfadeFrom(image: string | null) {
     if (streetTransitionTimer.current) clearTimeout(streetTransitionTimer.current);
@@ -443,7 +452,16 @@ export default function StreetWalk() {
     streetTransitionTimer.current = image ? setTimeout(() => {
       setStreetTransitionImage(null);
       streetTransitionTimer.current = null;
-    }, 720) : null;
+    }, 4000) : null;
+  }
+
+  function finishStreetCrossfade() {
+    if (!streetTransitionTimer.current) return;
+    clearTimeout(streetTransitionTimer.current);
+    streetTransitionTimer.current = setTimeout(() => {
+      setStreetTransitionImage(null);
+      streetTransitionTimer.current = null;
+    }, 720);
   }
 
   function leaveCloseup() {
@@ -498,7 +516,15 @@ export default function StreetWalk() {
       },
       0,
     );
-    const journey = { from, to: destination, total: Math.max(1, total), image: link.image };
+    const direction: 1 | -1 = (destination.x !== from.x ? destination.x > from.x : destination.y > from.y) ? 1 : -1;
+    const journey = {
+      from,
+      to: destination,
+      total: Math.max(1, total),
+      image: link.image,
+      startX: clamp(50 + (actor.x - from.x) / 4.5, 20, 80),
+      direction,
+    };
     crossfadeFrom(districtSceneImage(from));
     streetJourneyRef.current = journey;
     setStreetJourney(journey);
@@ -598,6 +624,7 @@ export default function StreetWalk() {
     window.addEventListener('keydown', keyDown);
     window.addEventListener('keyup', keyUp);
     window.addEventListener('blur', stop);
+    reducedMotion.current = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     document.addEventListener('visibilitychange', stop);
     let raf = 0,
       last = 0,
@@ -727,9 +754,9 @@ export default function StreetWalk() {
           const closeupNode = closeupElements.current.get(actor.id);
           const closeupSprite = closeupSprites.current.get(actor.id);
           const place = closeupPlaceRef.current;
+          const journey = streetJourneyRef.current;
           if (closeupNode && place) {
-            const journey = streetJourneyRef.current;
-            if (journey) {
+            if (journey && controlled) {
               let remaining = 0;
               let previous: Point = actor;
               for (const point of actor.path) {
@@ -737,9 +764,15 @@ export default function StreetWalk() {
                 previous = point;
               }
               const progress = clamp(1 - remaining / journey.total, 0, 1);
-              closeupNode.style.visibility = controlled ? 'visible' : 'hidden';
-              closeupNode.style.left = `${journey.to.x >= journey.from.x ? 25 + progress * 50 : 75 - progress * 50}%`;
+              closeupNode.style.visibility = 'visible';
+              closeupNode.style.left = `${clamp(journey.startX + (50 - journey.startX) * progress + journey.direction * Math.sin(Math.PI * progress) * 7, 20, 80)}%`;
               closeupNode.style.top = '82%';
+              if (journeyArtwork.current)
+                journeyArtwork.current.style.transform = reducedMotion.current
+                  ? 'none'
+                  : `translate3d(${journey.direction * (0.5 - progress) * 12}%, 0, 0) scale(1.16)`;
+            } else if (journey) {
+              closeupNode.style.visibility = 'hidden';
             } else {
               const dx = actor.x - place.x;
               const dy = actor.y - place.y;
@@ -756,7 +789,7 @@ export default function StreetWalk() {
           }
           if (closeupSprite) {
             closeupSprite.style.backgroundPositionX = `${(actor.frame / 3) * 100}%`;
-            closeupSprite.style.transform = `scaleX(${actor.facing})`;
+            closeupSprite.style.transform = `scaleX(${journey && controlled ? journey.direction : actor.facing})`;
           }
         }
         const selected = actors.current.find((p) => p.id === opts.active)!;
@@ -1348,21 +1381,30 @@ export default function StreetWalk() {
               <div ref={marker} className={styles.destination} />
             </div>
             {streetTransitionImage && (
-              <div className={styles.closeupScene} aria-hidden="true">
+              <div className={`${styles.closeupScene} ${closeupLight}`} aria-hidden="true">
                 <Image src={streetTransitionImage} alt="" fill sizes="(max-width: 800px) 100vw, 85vw" draggable={false} className={styles.closeupArtwork} />
               </div>
             )}
-            {(closeupPlace || leavingCloseupPlace) && (
-              <div key={streetJourney ? `${streetJourney.from.id}-${streetJourney.to.id}` : (closeupPlace || leavingCloseupPlace)!.id} className={`${styles.closeupScene} ${closeupPlace ? styles.closeupEntering : styles.closeupLeaving}`} aria-hidden="true">
+            {shownCloseupImage && (
+              <div key={streetJourney ? `${streetJourney.from.id}-${streetJourney.to.id}` : shownCloseupPlace!.id} className={`${styles.closeupScene} ${closeupLight} ${closeupPlace ? styles.closeupEntering : styles.closeupLeaving}`} aria-hidden="true">
                 <Image
-                  src={streetJourney ? streetJourney.image : districtSceneImage((closeupPlace || leavingCloseupPlace)!)}
+                  ref={streetJourney ? journeyArtwork : null}
+                  src={shownCloseupImage}
                   alt=""
                   fill
                   sizes="(max-width: 800px) 100vw, 85vw"
                   draggable={false}
-                  className={styles.closeupArtwork}
+                  className={`${styles.closeupArtwork} ${styles.activeCloseupArtwork} ${loadedSceneImage === shownCloseupImage ? styles.closeupArtworkReady : ''}`}
+                  onLoad={() => {
+                    setLoadedSceneImage(shownCloseupImage);
+                    finishStreetCrossfade();
+                  }}
                 />
                 <div className={styles.closeupRoad} />
+              </div>
+            )}
+            {shownCloseupPlace && (
+              <div className={`${styles.closeupActors} ${closeupLight} ${closeupPlace ? '' : styles.closeupLeaving}`} aria-hidden="true">
                 {CAST.map((person) => (
                   <div
                     key={person.id}
