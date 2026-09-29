@@ -185,6 +185,43 @@ export function pathTo(start: Point, requested: Point): Point[] {
   }
   return route;
 }
+
+export function routePosition(point: Point, route: Point[]) {
+  let traveled = 0;
+  let length = 0;
+  let closest = { distance: Infinity, traveled: 0 };
+  for (let i = 1; i < route.length; i++) {
+    const from = route[i - 1], to = route[i];
+    const dx = to.x - from.x, dy = to.y - from.y;
+    const segment = Math.hypot(dx, dy);
+    if (!segment) continue;
+    const fraction = clamp(((point.x - from.x) * dx + (point.y - from.y) * dy) / (segment * segment), 0, 1);
+    const distance = Math.hypot(point.x - from.x - fraction * dx, point.y - from.y - fraction * dy);
+    if (distance < closest.distance) closest = { distance, traveled: traveled + fraction * segment };
+    traveled += segment;
+    length += segment;
+  }
+  return { distance: closest.distance, progress: length ? closest.traveled / length : 0 };
+}
+
+export function pointAlongRoute(route: Point[], progress: number): Point {
+  if (!route.length) return { x: 0, y: 0 };
+  const distances = route.slice(1).map((point, index) =>
+    Math.hypot(point.x - route[index].x, point.y - route[index].y));
+  let remaining = distances.reduce((sum, distance) => sum + distance, 0) * clamp(progress, 0, 1);
+  for (let index = 0; index < distances.length; index++) {
+    const length = distances[index];
+    if (remaining <= length) {
+      const fraction = length ? remaining / length : 0;
+      return {
+        x: route[index].x + (route[index + 1].x - route[index].x) * fraction,
+        y: route[index].y + (route[index + 1].y - route[index].y) * fraction,
+      };
+    }
+    remaining -= length;
+  }
+  return route.at(-1)!;
+}
 export function createStreetActors(): Actor[] {
   return [
     { id: 'admin', x: 690, y: 863 },

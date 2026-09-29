@@ -10,6 +10,7 @@ import {
   districtSceneImage,
   nearestDistrictLandmark,
   streetLinksFrom,
+  streetRoute,
   streetScenePoint,
 } from '../lib/fate-district';
 import { FATE_HOMES, homeOf } from '../lib/fate-housing';
@@ -27,6 +28,8 @@ import {
   createStreetActors,
   isWalkable,
   pathTo,
+  pointAlongRoute,
+  routePosition,
   stepActor,
   STREET,
   WALK_AREAS,
@@ -89,6 +92,28 @@ void test('all 14 close-up destinations are connected by streets actors can walk
   }
   assert.ok(steppedOntoBridge);
   assert.equal(crossing.path.length, 0);
+});
+
+void test('multi-stop street routes and camera projection follow connected roads', () => {
+  for (const from of DISTRICT_LANDMARKS)
+    for (const to of DISTRICT_LANDMARKS) {
+      const route = streetRoute(from.id, to.id);
+      assert.equal(route[0].id, from.id);
+      assert.equal(route.at(-1)!.id, to.id);
+      for (let index = 1; index < route.length; index++)
+        assert.ok(streetLinksFrom(route[index - 1].id).some(({ place }) => place.id === route[index].id));
+    }
+  const from = DISTRICT_LANDMARKS.find((place) => place.id === 'emiya')!;
+  const to = DISTRICT_LANDMARKS.find((place) => place.id === 'tohsaka')!;
+  const path = [from, ...pathTo(from, to)];
+  assert.equal(routePosition(from, path).progress, 0);
+  assert.equal(routePosition(to, path).progress, 1);
+  const midpoint = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 };
+  assert.ok(Math.abs(routePosition(midpoint, path).progress - 0.5) < 0.01);
+  assert.ok(routePosition({ x: midpoint.x, y: midpoint.y + 100 }, path).distance > 90);
+  assert.deepEqual(pointAlongRoute(path, 0), { x: from.x, y: from.y });
+  assert.deepEqual(pointAlongRoute(path, 1), { x: to.x, y: to.y });
+  assert.deepEqual(pointAlongRoute(path, 0.5), midpoint);
 });
 
 void test('a walk across the river moves through the same continuous street world', () => {

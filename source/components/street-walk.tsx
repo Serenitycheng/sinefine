@@ -39,6 +39,8 @@ import {
   nearestWalkable,
   pathTo,
   placeName,
+  pointAlongRoute,
+  routePosition,
   screenToWorld,
   stepActor,
   WALK_SPEED,
@@ -67,6 +69,7 @@ import {
   districtSceneImage,
   nearestDistrictLandmark,
   streetLinksFrom,
+  streetRoute,
   STREET_SCENE_SCALE,
   streetScenePoint,
   type DistrictLandmark,
@@ -348,9 +351,12 @@ export default function StreetWalk() {
     image: string;
     startX: number;
     direction: 1 | -1;
+    route: Point[];
+    manual: boolean;
   } | null>(null);
   const [streetTransitionImage, setStreetTransitionImage] = useState<string | null>(null);
   const [loadedSceneImage, setLoadedSceneImage] = useState<string | null>(null);
+  const [walkingBackdrop, setWalkingBackdrop] = useState<{ image: string; origin: Point } | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -400,10 +406,14 @@ export default function StreetWalk() {
   const spriteElements = useRef(new Map<ActorId, HTMLDivElement>());
   const closeupElements = useRef(new Map<ActorId, HTMLDivElement>());
   const closeupSprites = useRef(new Map<ActorId, HTMLDivElement>());
-  const journeyArtwork = useRef<HTMLImageElement>(null);
+  const journeyArtwork = useRef<HTMLDivElement>(null);
+  const stillArtwork = useRef<HTMLDivElement>(null);
   const reducedMotion = useRef(false);
   const closeupPlaceRef = useRef<DistrictLandmark | null>(null);
   const streetJourneyRef = useRef<typeof streetJourney>(null);
+  const walkingBackdropRef = useRef<typeof walkingBackdrop>(null);
+  const streetItinerary = useRef<DistrictLandmark[]>([]);
+  const itineraryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingCloseup = useRef<DistrictLandmark | null>(null);
   const closeupExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const streetTransitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -442,7 +452,6 @@ export default function StreetWalk() {
   const current = CAST.find((p) => p.id === active)!;
   const connectedStreetPlaces = closeupPlace ? streetLinksFrom(closeupPlace.id) : [];
   const shownCloseupPlace = closeupPlace || leavingCloseupPlace;
-  const shownCloseupImage = streetJourney?.image ?? (shownCloseupPlace ? districtSceneImage(shownCloseupPlace) : null);
   const period = lifePeriod(daily.view.minutes);
   const closeupLight = period === '夜间' ? styles.closeupNight : period === '傍晚' ? styles.closeupDusk : '';
 
@@ -466,6 +475,9 @@ export default function StreetWalk() {
 
   function leaveCloseup() {
     crossfadeFrom(null);
+    streetItinerary.current = [];
+    if (itineraryTimer.current) clearTimeout(itineraryTimer.current);
+    itineraryTimer.current = null;
     if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
     const place = closeupPlaceRef.current;
     if (place) {
@@ -482,6 +494,8 @@ export default function StreetWalk() {
       if (actor) actor.path = [];
     }
     streetJourneyRef.current = null;
+    walkingBackdropRef.current = null;
+    setWalkingBackdrop(null);
     setStreetJourney(null);
     setCloseupPlace(null);
   }
@@ -489,26 +503,39 @@ export default function StreetWalk() {
     if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
     closeupExitTimer.current = null;
     setLeavingCloseupPlace(null);
-    crossfadeFrom(streetJourneyRef.current?.image ?? null);
+    crossfadeFrom(streetJourneyRef.current
+      ? districtSceneImage(place)
+      : closeupPlaceRef.current
+        ? walkingBackdropRef.current?.image ?? districtSceneImage(closeupPlaceRef.current)
+        : null);
     streetJourneyRef.current = null;
+    walkingBackdropRef.current = null;
+    setWalkingBackdrop(null);
     setStreetJourney(null);
     pendingCloseup.current = null;
     closeupPlaceRef.current = place;
     setCloseupPlace(place);
-    setHint(`已进入${place.name}街景 · 用方向键或点击路面移动，走出边缘可返回街区`);
+    setHint(`已进入${place.name}街景 · 用方向键或点击路面移动，沿街可继续走向相邻地点`);
     stage.current?.focus({ preventScroll: true });
   }
 
-  function followStreetTo(destination: DistrictLandmark) {
+  function followStreetTo(destination: DistrictLandmark, manual = false, queued = false) {
     const from = closeupPlaceRef.current;
     const link = from && streetLinksFrom(from.id).find((candidate) => candidate.place.id === destination.id);
     if (!from || !link) return;
+    if (!queued) {
+      streetItinerary.current = [];
+      if (itineraryTimer.current) clearTimeout(itineraryTimer.current);
+      itineraryTimer.current = null;
+    }
     const actor = actors.current.find((a) => a.id === settings.current.active)!;
-    actor.path = pathTo(actor, destination);
-    if (!actor.path.length) {
+    const path = pathTo(actor, destination);
+    const route = [from, ...pathTo(from, destination)];
+    if (!path.length || route.length < 2) {
       setHint('当前位置没有可通行的街道路段');
       return;
     }
+    if (!manual) actor.path = path;
     const total = actor.path.reduce(
       (distance, point, index) => {
         const previous = index ? actor.path[index - 1] : actor;
@@ -522,13 +549,15 @@ export default function StreetWalk() {
       to: destination,
       total: Math.max(1, total),
       image: link.image,
-      startX: clamp(50 + (actor.x - from.x) / 4.5, 20, 80),
+      startX: clamp(50 + (actor.x - from.x) / 4.5, 38, 62),
       direction,
+      route,
+      manual,
     };
-    crossfadeFrom(districtSceneImage(from));
+    crossfadeFrom(walkingBackdropRef.current?.image ?? districtSceneImage(from));
     streetJourneyRef.current = journey;
     setStreetJourney(journey);
-    setHint(`沿街前往${destination.name}；到达后直接进入下一处街景`);
+    setHint(manual ? `正沿街走向${destination.name}；方向键可继续自由行走` : `沿街前往${destination.name}；到达后直接进入下一处街景`);
     stage.current?.focus({ preventScroll: true });
   }
 
@@ -707,7 +736,7 @@ export default function StreetWalk() {
           new Set([...keys.current, ...touchKeys.current]),
         );
         const input = keyboard.x || keyboard.y ? keyboard : sampled.move;
-        const walkingInput = streetJourneyRef.current ? { x: 0, y: 0 } : input;
+        const walkingInput = streetJourneyRef.current && !streetJourneyRef.current.manual ? { x: 0, y: 0 } : input;
         if (opts.mode === 'control' && (walkingInput.x || walkingInput.y))
           pendingCloseup.current = null;
         if (opts.mode === 'observe') {
@@ -763,14 +792,16 @@ export default function StreetWalk() {
                 remaining += Math.hypot(point.x - previous.x, point.y - previous.y);
                 previous = point;
               }
-              const progress = clamp(1 - remaining / journey.total, 0, 1);
+              const progress = journey.manual
+                ? routePosition(actor, journey.route).progress
+                : clamp(1 - remaining / journey.total, 0, 1);
               closeupNode.style.visibility = 'visible';
               closeupNode.style.left = `${clamp(journey.startX + (50 - journey.startX) * progress + journey.direction * Math.sin(Math.PI * progress) * 7, 20, 80)}%`;
               closeupNode.style.top = '82%';
               if (journeyArtwork.current)
                 journeyArtwork.current.style.transform = reducedMotion.current
-                  ? 'none'
-                  : `translate3d(${journey.direction * (0.5 - progress) * 12}%, 0, 0) scale(1.16)`;
+                  ? 'translate3d(-5%, 0, 0)'
+                  : `translate3d(-${(15 + progress * 170) / 3}%, 0, 0)`;
             } else if (journey) {
               closeupNode.style.visibility = 'hidden';
             } else {
@@ -782,8 +813,14 @@ export default function StreetWalk() {
                 (controlled || !dailyActions.current.isInside(actor.id))
                   ? 'visible'
                   : 'hidden';
-              closeupNode.style.left = `${50 + dx / 4.5}%`;
+              closeupNode.style.left = `${clamp(50 + dx / 4.5, 38, 62)}%`;
               closeupNode.style.top = `${82 + dy * 0.07}%`;
+              if (controlled && stillArtwork.current) {
+                const origin = walkingBackdropRef.current?.origin ?? place;
+                stillArtwork.current.style.transform = reducedMotion.current
+                  ? 'none'
+                  : `translate3d(${-clamp((actor.x - origin.x) / 140, -1, 1) * viewport.current.width * 0.15}px, ${-clamp((actor.y - origin.y) / 120, -1, 1) * viewport.current.height * 0.04}px, 0)`;
+              }
             }
             closeupNode.style.zIndex = String(Math.round(actor.y));
           }
@@ -794,11 +831,26 @@ export default function StreetWalk() {
         }
         const selected = actors.current.find((p) => p.id === opts.active)!;
         const journey = streetJourneyRef.current;
+        const manualPosition = journey?.manual ? routePosition(selected, journey.route) : null;
         if (
           journey &&
-          selected.path.length === 0 &&
-          Math.hypot(selected.x - journey.to.x, selected.y - journey.to.y) < 30
-        ) showCloseup(journey.to);
+          (journey.manual || selected.path.length === 0) &&
+          Math.hypot(selected.x - journey.to.x, selected.y - journey.to.y) < (journey.manual ? 75 : 30) &&
+          (!journey.manual || manualPosition!.progress > 0.8)
+        ) {
+          showCloseup(journey.to);
+          const next = streetItinerary.current.shift();
+          if (next) itineraryTimer.current = setTimeout(() => {
+            itineraryTimer.current = null;
+            if (closeupPlaceRef.current?.id === journey.to.id) followStreetTo(next, false, true);
+          }, 300);
+        } else if (
+          journey?.manual &&
+          Math.hypot(selected.x - journey.from.x, selected.y - journey.from.y) < 65 &&
+          manualPosition!.progress < 0.2
+        ) showCloseup(journey.from);
+        else if (journey?.manual && manualPosition!.distance > 90)
+          showCloseup(nearestDistrictLandmark(selected));
         const pending = pendingCloseup.current;
         if (
           pending &&
@@ -809,12 +861,32 @@ export default function StreetWalk() {
           showCloseup(pending);
         }
         const opened = closeupPlaceRef.current;
-        if (
-          opened && !streetJourneyRef.current &&
-          Math.hypot(selected.x - opened.x, selected.y - opened.y) > 155
-        ) {
-          leaveCloseup();
-          setHint('已离开地点近景，返回连续街区道路');
+        if (opened && !streetJourneyRef.current && opts.mode === 'control' &&
+            !pendingCloseup.current &&
+            (walkingInput.x || walkingInput.y || selected.path.length) &&
+            Math.hypot(selected.x - opened.x, selected.y - opened.y) > 90) {
+          const nearby = nearestDistrictLandmark(selected);
+          if (nearby.id !== opened.id && Math.hypot(selected.x - nearby.x, selected.y - nearby.y) < 75)
+            showCloseup(nearby);
+          else {
+            const next = streetLinksFrom(opened.id).map(({ place }) => ({
+              place,
+              ...routePosition(selected, [opened, ...pathTo(opened, place)]),
+            })).filter(({ distance, progress }) => distance < 65 && progress > 0.12)
+              .sort((a, b) => a.distance - b.distance || b.progress - a.progress)[0];
+            if (next) followStreetTo(next.place, true);
+            else {
+              const origin = walkingBackdropRef.current?.origin ?? opened;
+              if (Math.hypot(selected.x - origin.x, selected.y - origin.y) > 150) {
+                const images = [districtSceneImage(opened), ...new Set(streetLinksFrom(opened.id).map(({ image }) => image))];
+                const current = walkingBackdropRef.current?.image ?? images[0];
+                const image = images[(images.indexOf(current) + 1) % images.length];
+                crossfadeFrom(current);
+                walkingBackdropRef.current = { image, origin: { x: selected.x, y: selected.y } };
+                setWalkingBackdrop(walkingBackdropRef.current);
+              }
+            }
+          }
         }
         const near =
           opts.mode === 'control'
@@ -893,7 +965,9 @@ export default function StreetWalk() {
   }, []);
 
   function choose(id: ActorId) {
-    leaveCloseup();
+    streetItinerary.current = [];
+    if (itineraryTimer.current) clearTimeout(itineraryTimer.current);
+    itineraryTimer.current = null;
     if (settings.current.mode === 'control') dailyActions.current.cancel();
     // Watching somebody must not interrupt that person or clear everyone else's route.
     const old = actors.current.find((p) => p.id === settings.current.active)!;
@@ -903,6 +977,9 @@ export default function StreetWalk() {
       const place = nearestDistrictLandmark(selected);
       scenePlaceRef.current = place;
       setScenePlace(place);
+      showCloseup(place);
+    } else {
+      leaveCloseup();
     }
     freeView.current = { x: selected.x, y: selected.y };
     following.current = id;
@@ -919,7 +996,9 @@ export default function StreetWalk() {
       stage.current?.focus({ preventScroll: true });
   }
   function switchMode() {
-    leaveCloseup();
+    streetItinerary.current = [];
+    if (itineraryTimer.current) clearTimeout(itineraryTimer.current);
+    itineraryTimer.current = null;
     dailyActions.current.cancel();
     const next = settings.current.mode === 'control' ? 'observe' : 'control';
     const selected = actors.current.find(
@@ -929,6 +1008,9 @@ export default function StreetWalk() {
       const place = nearestDistrictLandmark(selected);
       scenePlaceRef.current = place;
       setScenePlace(place);
+      showCloseup(place);
+    } else {
+      leaveCloseup();
     }
     freeView.current = { x: selected.x, y: selected.y };
     selected.path = [];
@@ -940,7 +1022,7 @@ export default function StreetWalk() {
     setHint(
       next === 'observe'
         ? '拖动画面或使用右摇杆；点击「开始日常」观察他们的生活'
-        : 'WASD / 方向键在街景中行走；地图可选择远处目的地',
+        : 'WASD / 方向键在街景中行走；地图可选择远处目的地，路线仍在街景中显示',
     );
     stage.current?.focus({ preventScroll: true });
   }
@@ -1074,24 +1156,33 @@ export default function StreetWalk() {
     setSelectedPlace(null);
     keys.current.clear();
     touchKeys.current.clear();
-    setHint('已进入冬木市连续街区；沿道路行走可经过不同区域');
+    showCloseup(place);
+    setHint('已进入冬木市街景；沿道路行走可经过不同区域');
     stage.current?.focus({ preventScroll: true });
   }
   function travelToPlace(destination: DistrictLandmark) {
     if (settings.current.mode === 'observe') switchMode();
     const actor = actors.current.find((a) => a.id === settings.current.active)!;
-    actor.path = pathTo(actor, destination);
-    pendingCloseup.current = destination;
-    const place = nearestDistrictLandmark(actor);
-    scenePlaceRef.current = place;
-    setScenePlace(place);
+    const origin = closeupPlaceRef.current ?? nearestDistrictLandmark(actor);
+    const route = streetRoute(origin.id, destination.id);
+    if (!route.length) {
+      setHint('这处地点尚未接入街景路线');
+      return;
+    }
+    scenePlaceRef.current = origin;
+    setScenePlace(origin);
     settings.current = { ...settings.current, scene: 'street' };
     setScene('street');
     setAtlasOpen(false);
-    setHint('正在前往' + destination.name + ' · 到达后进入可行走街景');
     setSelectedPlace(null);
-    if (Math.hypot(actor.x - destination.x, actor.y - destination.y) < 30)
-      showCloseup(destination);
+    if (!closeupPlaceRef.current) showCloseup(origin);
+    streetItinerary.current = route.slice(2);
+    if (route.length > 1) followStreetTo(route[1], false, true);
+    else {
+      actor.path = pathTo(actor, destination);
+      pendingCloseup.current = destination;
+      setHint(`正在${destination.name}街景中走向入口`);
+    }
     stage.current?.focus({ preventScroll: true });
   }
   function walkToPlace() {
@@ -1137,7 +1228,8 @@ export default function StreetWalk() {
     const rect = e.currentTarget.getBoundingClientRect();
     const closeup = closeupPlaceRef.current;
     if (closeup) {
-      if (streetJourneyRef.current) {
+      const journey = streetJourneyRef.current;
+      if (journey && !journey.manual) {
         setHint('正在沿街前往下一处街景；到达后可继续自由行走');
         return;
       }
@@ -1146,6 +1238,13 @@ export default function StreetWalk() {
         return;
       }
       const actor = actors.current.find((a) => a.id === active)!;
+      if (journey?.manual) {
+        const progress = routePosition(actor, journey.route).progress;
+        const target = pointAlongRoute(journey.route, progress + ((e.clientX - rect.left) / rect.width - 0.5) * 0.55);
+        actor.path = pathTo(actor, target);
+        setHint('正在沿街道前往 · 方向键可随时改变路线');
+        return;
+      }
       const requested = nearestWalkable({
         x: closeup.x + ((e.clientX - rect.left) / rect.width - 0.5) * 300,
         y: actor.y,
@@ -1385,21 +1484,45 @@ export default function StreetWalk() {
                 <Image src={streetTransitionImage} alt="" fill sizes="(max-width: 800px) 100vw, 85vw" draggable={false} className={styles.closeupArtwork} />
               </div>
             )}
-            {shownCloseupImage && (
+            {shownCloseupPlace && (
               <div key={streetJourney ? `${streetJourney.from.id}-${streetJourney.to.id}` : shownCloseupPlace!.id} className={`${styles.closeupScene} ${closeupLight} ${closeupPlace ? styles.closeupEntering : styles.closeupLeaving}`} aria-hidden="true">
-                <Image
-                  ref={streetJourney ? journeyArtwork : null}
-                  src={shownCloseupImage}
-                  alt=""
-                  fill
-                  sizes="(max-width: 800px) 100vw, 85vw"
-                  draggable={false}
-                  className={`${styles.closeupArtwork} ${styles.activeCloseupArtwork} ${loadedSceneImage === shownCloseupImage ? styles.closeupArtworkReady : ''}`}
-                  onLoad={() => {
-                    setLoadedSceneImage(shownCloseupImage);
-                    finishStreetCrossfade();
-                  }}
-                />
+                {streetJourney ? (
+                  <div ref={journeyArtwork} className={styles.closeupPanorama} style={{ transform: 'translate3d(-5%, 0, 0)' }}>
+                    {[
+                      { image: walkingBackdrop?.image ?? districtSceneImage(streetJourney.from), position: styles.panoramaStart },
+                      { image: streetJourney.image, position: styles.panoramaMiddle },
+                      { image: districtSceneImage(streetJourney.to), position: styles.panoramaEnd },
+                    ].map(({ image, position }, index) => (
+                      <div key={`${image}-${index}`} className={`${styles.panoramaPanel} ${position}`}>
+                        <Image
+                          src={image}
+                          alt=""
+                          fill
+                          sizes="(max-width: 800px) 130vw, 110vw"
+                          draggable={false}
+                          loading="eager"
+                          className={styles.closeupArtwork}
+                          onLoad={index === 0 ? finishStreetCrossfade : undefined}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div ref={stillArtwork} className={styles.closeupStill}>
+                    <Image
+                      src={walkingBackdrop?.image ?? districtSceneImage(shownCloseupPlace)}
+                      alt=""
+                      fill
+                      sizes="(max-width: 800px) 130vw, 110vw"
+                      draggable={false}
+                      className={`${styles.closeupArtwork} ${styles.activeCloseupArtwork} ${loadedSceneImage === (walkingBackdrop?.image ?? districtSceneImage(shownCloseupPlace)) ? styles.closeupArtworkReady : ''}`}
+                      onLoad={() => {
+                        setLoadedSceneImage(walkingBackdrop?.image ?? districtSceneImage(shownCloseupPlace));
+                        finishStreetCrossfade();
+                      }}
+                    />
+                  </div>
+                )}
                 <div className={styles.closeupRoad} />
               </div>
             )}
@@ -1462,7 +1585,7 @@ export default function StreetWalk() {
                     leaveCloseup();
                     stage.current?.focus({ preventScroll: true });
                   }}>
-                    返回街区
+                    查看俯瞰街区
                   </button>
                 </div>
               )}
@@ -1552,7 +1675,7 @@ export default function StreetWalk() {
                   )}
                 </div>
               )}
-              {ready && mode === 'control' && !streetJourney && (
+              {ready && mode === 'control' && (!streetJourney || streetJourney.manual) && (
                 <div className={styles.dpad} aria-label="触屏方向键">
                   {[
                     { key: 'arrowup', label: '向上走', Icon: ArrowUp },

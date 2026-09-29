@@ -219,6 +219,37 @@
   object-fit: cover;
   object-position: center bottom;
 }
+.closeupStill {
+  position: absolute;
+  top: -4%;
+  left: -15%;
+  width: 130%;
+  height: 108%;
+  will-change: transform;
+}
+.closeupPanorama {
+  position: absolute;
+  top: -4%;
+  left: 0;
+  width: 300%;
+  height: 108%;
+  will-change: transform;
+}
+.panoramaPanel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 43.333333%;
+  overflow: hidden;
+}
+.panoramaStart { left: 0; }
+.panoramaMiddle,
+.panoramaEnd {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 35%);
+  mask-image: linear-gradient(to right, transparent, #000 35%);
+}
+.panoramaMiddle { left: 28.333333%; }
+.panoramaEnd { left: 56.666667%; }
 .activeCloseupArtwork {
   opacity: 0;
   transition: opacity .72s ease;
@@ -997,6 +1028,10 @@
   }
   .activeCloseupArtwork {
     transition: none;
+  }
+  .closeupStill,
+  .closeupPanorama {
+    will-change: auto;
   }
 }
 .schoolExit {

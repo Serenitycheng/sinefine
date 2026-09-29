@@ -72,6 +72,26 @@ export function streetLinksFrom(placeId: string) {
   });
 }
 
+export function streetRoute(fromId: string, toId: string): DistrictLandmark[] {
+  const origin = DISTRICT_LANDMARKS.find((place) => place.id === fromId);
+  if (!origin || !DISTRICT_LANDMARKS.some((place) => place.id === toId)) return [];
+  const previous = new Map<string, string | null>([[fromId, null]]);
+  const queue = [fromId];
+  while (queue.length && !previous.has(toId)) {
+    const id = queue.shift()!;
+    for (const { place } of streetLinksFrom(id)) {
+      if (previous.has(place.id)) continue;
+      previous.set(place.id, id);
+      queue.push(place.id);
+    }
+  }
+  if (!previous.has(toId)) return [];
+  const route: DistrictLandmark[] = [];
+  for (let id: string | null = toId; id; id = previous.get(id) ?? null)
+    route.unshift(DISTRICT_LANDMARKS.find((place) => place.id === id)!);
+  return route;
+}
+
 // Street artwork lives in one scrollable world. Map coordinates remain the
 // source of truth for movement, schedules and saves.
 export const STREET_SCENE_SCALE = 2;
