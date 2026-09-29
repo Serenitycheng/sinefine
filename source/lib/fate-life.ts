@@ -163,6 +163,12 @@ export type LifeDialogue = {
 export type LifePlan = { action: LifeAction; reason: string };
 export type LifeEvent = {
   item?: ItemEvent;
+  publicVisit?: {
+    person: PartnerId;
+    place: keyof typeof DISTRICT_PLACES;
+    action: 'study' | 'eat' | 'shop' | 'walk' | 'together';
+    target?: PartnerId;
+  };
   schedule?: ScheduleEvent;
   meal?: MealEvent;
   waverStage?: WaverStage;
@@ -1877,6 +1883,31 @@ export function parseDailyLife(value: unknown): DailyLife {
       minute: event.minute,
       text: event.text,
     };
+    if (event.publicVisit !== undefined) {
+      const visit = event.publicVisit;
+      if (
+        !visit ||
+        !isPartner(visit.person) ||
+        !Object.hasOwn(DISTRICT_PLACES, visit.place) ||
+        !['study', 'eat', 'shop', 'walk', 'together'].includes(visit.action) ||
+        (visit.action === 'together'
+          ? visit.place !== 'park' ||
+            !isPartner(visit.target) ||
+            visit.target === visit.person
+          : visit.target !== undefined) ||
+        (visit.action === 'study' && visit.place !== 'school') ||
+        (visit.action === 'eat' && visit.place !== 'cafe') ||
+        (visit.action === 'shop' && visit.place !== 'shops') ||
+        (visit.action === 'walk' && visit.place !== 'park')
+      )
+        throw new Error('公共地点记录无效');
+      clean.publicVisit = {
+        person: visit.person,
+        place: visit.place,
+        action: visit.action,
+        ...(visit.target === undefined ? {} : { target: visit.target }),
+      };
+    }
     if (event.decision !== undefined) {
       const d = event.decision;
       if (

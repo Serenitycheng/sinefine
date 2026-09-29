@@ -162,16 +162,38 @@
 }
 .placeCard {
   position: absolute;
-  bottom: 68px;
+  top: 12px;
   left: 22px;
   width: min(300px, calc(100% - 44px));
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
   padding: 19px;
   border-radius: 8px;
   border: 1px solid #c6b88888;
   background: #172922f5;
   color: #e7ead7;
   box-shadow: 0 12px 32px #14201944;
-  z-index: 3;
+  z-index: 8;
+}
+.placeCard:has(.publicVisit) {
+  display: flex;
+  flex-direction: column;
+}
+.placeCard:has(.publicVisit) .publicVisit {
+  order: 1;
+  margin: 0 0 10px;
+  padding: 0 0 10px;
+  border-top: 0;
+  border-bottom: 1px solid #d2c8ac33;
+}
+.placeCard:has(.publicVisit) > div:not(.publicVisit) {
+  order: 2;
+}
+.placeCard:has(.publicVisit) .placeIllustration {
+  order: 3;
+}
+.placeCard:has(.publicVisit) > p {
+  order: 4;
 }
 .placeCard > small {
   font-size: 10px;
@@ -192,6 +214,9 @@
   border: 1px solid #d2c8ac55;
   border-radius: 5px;
 }
+.placeCard:has(.publicVisit) .placeIllustration {
+  height: 94px;
+}
 .placeCard p {
   font-size: 11px;
   line-height: 1.7;
@@ -201,6 +226,28 @@
 .placeCard > div {
   display: flex;
   gap: 8px;
+}
+.placeCard .publicVisit {
+  display: grid;
+  gap: 7px;
+  margin-top: 13px;
+  padding-top: 12px;
+  border-top: 1px solid #d2c8ac33;
+}
+.publicVisit strong {
+  color: #ecdfb7;
+  font-size: 11px;
+  font-weight: 600;
+}
+.publicVisit span,
+.publicVisit output {
+  color: #c1ccb9;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.placeCard .publicVisit button {
+  width: 100%;
+  text-align: left;
 }
 .placeCard button {
   border: 1px solid #b9aa7790;

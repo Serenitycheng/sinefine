@@ -431,6 +431,35 @@ export function rememberAppointment(
     bond.changes++;
   }
 }
+/** A walk shared on site is a real encounter, without inventing a future appointment. */
+export function rememberSharedWalk(
+  life: DailyLife,
+  a: PartnerId,
+  b: PartnerId,
+  event: LifeEvent,
+) {
+  const bond = ensureBond(life, a, b);
+  if (event.id <= bond.seen) return;
+  beginDay(bond, event.minute);
+  bond.memories = [
+    ...bond.memories,
+    {
+      id: event.id,
+      minute: event.minute,
+      source: 'life' as const,
+      kind: 'fulfilled' as const,
+      quotes: [],
+      impressions: [],
+      text: event.text,
+    },
+  ].slice(-6);
+  bond.seen = event.id;
+  if (bond.changes < 2) {
+    shift(bond, a, 'care');
+    shift(bond, b, 'care');
+    bond.changes++;
+  }
+}
 export function socialAffinity(life: DailyLife, a: PartnerId, b: PartnerId) {
   const s = currentBond(life, a, b);
   return s

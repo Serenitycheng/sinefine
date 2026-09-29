@@ -20,9 +20,14 @@ import {
   recentLifeEvents,
   type LifeEvent,
 } from '@/lib/fate-life';
-import { isPartner } from '@/lib/fate-cast';
+import { isPartner, type PartnerId } from '@/lib/fate-cast';
 import { pairConversationHistory } from '@/lib/fate-state';
 import { commitSocialDialogue } from '@/lib/fate-social';
+import {
+  visitPublicPlace,
+  type PublicPlaceId,
+  type PublicVisitAction,
+} from '@/lib/fate-public-places';
 import type { Actor, ActorId } from '@/lib/street';
 
 export function useStreetLife(
@@ -375,6 +380,24 @@ export function useStreetLife(
     (id: ActorId) => isPartner(id) && lifeIndoors(life.current.people[id]),
     [],
   );
+  const visitPublic = useCallback(
+    (place: PublicPlaceId, action: PublicVisitAction, target?: PartnerId) => {
+      const opt = opts.current;
+      if (!initialized.current || !opt.ready || opt.mode !== 'control')
+        return { ok: false, message: '请先进入角色并等待街区加载。' };
+      const result = visitPublicPlace(
+        life.current,
+        actors.current,
+        opt.active,
+        place,
+        action,
+        target,
+      );
+      if (result.ok) publish();
+      return result;
+    },
+    [actors, publish],
+  );
   function resetPlans() {
     cancel();
     for (const id of LIFE_IDS) life.current.people[id].activity = null;
@@ -398,6 +421,7 @@ export function useStreetLife(
     changeLimit,
     cancel,
     isInside,
+    visitPublic,
     resetPlans,
   };
 }

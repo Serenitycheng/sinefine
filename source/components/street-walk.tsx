@@ -53,6 +53,13 @@ import { useStreetLife } from './use-street-life';
 import { LifeControls, LifePanel } from './street-life-panel';
 import { StreetObserver } from './street-observer';
 import { lifePeriod, lifeStatus, lifeTime } from '@/lib/fate-life';
+import { shoppingChoice, SUPPLIES } from '@/lib/fate-belongings';
+import { SUPPLY_PRICES, canAfford } from '@/lib/fate-economy';
+import {
+  PUBLIC_VISIT_RADIUS,
+  type PublicPlaceId,
+  type PublicVisitAction,
+} from '@/lib/fate-public-places';
 import { FateInterior, type InteriorView } from './fate-interior';
 import { FATE_HOMES } from '@/lib/fate-housing';
 import { DistrictAtlas, DistrictPlaceCard } from './fate-district-map';
@@ -331,6 +338,7 @@ export default function StreetWalk() {
   const [selectedPlace, setSelectedPlace] = useState<DistrictLandmark | null>(
     null,
   );
+  const [publicNotice, setPublicNotice] = useState('');
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -853,6 +861,7 @@ export default function StreetWalk() {
   });
   function selectPlace(place: DistrictLandmark) {
     setSelectedPlace(place);
+    setPublicNotice('');
     setAtlasOpen(false);
     if (settings.current.mode === 'observe') {
       following.current = null;
@@ -902,6 +911,16 @@ export default function StreetWalk() {
   }
   function walkToPlace() {
     if (selectedPlace) travelToPlace(selectedPlace);
+  }
+  function doPublicAction(action: PublicVisitAction, target?: PartnerId) {
+    if (!selectedPlace || selectedPlace.kind === 'home') return;
+    const result = daily.visitPublic(
+      selectedPlace.id as PublicPlaceId,
+      action,
+      target,
+    );
+    setPublicNotice(result.message);
+    setHint(result.message);
   }
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -991,6 +1010,10 @@ export default function StreetWalk() {
     setHint('已回到街道起点');
     stage.current?.focus({ preventScroll: true });
   }
+  const selectedShopItem =
+    selectedPlace?.id === 'shops' && isPartner(active)
+      ? shoppingChoice(daily.view, active)
+      : undefined;
 
   return (
     <main className={styles.shell}>
@@ -1192,7 +1215,7 @@ export default function StreetWalk() {
                   <MapPin size={15} /> 地点目录
                 </button>
               )}
-              {scene === 'street' && (
+              {scene === 'street' && !selectedPlace && (
                 <div className={styles.streetPlaceBadge}>
                   <MapPin size={15} />
                   <span>{scenePlace.name}</span>
@@ -1202,6 +1225,14 @@ export default function StreetWalk() {
                   >
                     沿街前往
                   </button>
+                  {scenePlace.kind !== 'home' && (
+                    <button
+                      type="button"
+                      onClick={() => selectPlace(scenePlace)}
+                    >
+                      到场活动
+                    </button>
+                  )}
                   {scenePlace.kind === 'home' && (
                     <button
                       type="button"
@@ -1320,9 +1351,44 @@ export default function StreetWalk() {
                 Math.hypot(
                   daily.view.positions[active].x - selectedPlace.x,
                   daily.view.positions[active].y - selectedPlace.y,
-                ) < 25
+                ) <= PUBLIC_VISIT_RADIUS
               }
               onWalk={walkToPlace}
+              onPublicAction={doPublicAction}
+              companions={
+                selectedPlace.id === 'park' && isPartner(active)
+                  ? CAST.filter(
+                      (
+                        person,
+                      ): person is (typeof CAST)[number] & { id: PartnerId } =>
+                        isPartner(person.id) &&
+                        person.id !== active &&
+                        Math.hypot(
+                          daily.view.positions[person.id].x -
+                            daily.view.positions[active].x,
+                          daily.view.positions[person.id].y -
+                            daily.view.positions[active].y,
+                        ) <= PUBLIC_VISIT_RADIUS &&
+                        Math.hypot(
+                          daily.view.positions[person.id].x - selectedPlace.x,
+                          daily.view.positions[person.id].y - selectedPlace.y,
+                        ) <= PUBLIC_VISIT_RADIUS &&
+                        !daily.isInside(person.id) &&
+                        daily.view.people[person.id].activity?.kind !== 'sleep',
+                    ).map(({ id, name }) => ({ id, name }))
+                  : []
+              }
+              shopLabel={
+                selectedShopItem
+                  ? `购买${SUPPLIES[selectedShopItem]} · ${SUPPLY_PRICES[selectedShopItem]} 生活点`
+                  : null
+              }
+              shopAffordable={
+                selectedShopItem !== undefined &&
+                isPartner(active) &&
+                canAfford(daily.view.economy, active, selectedShopItem)
+              }
+              notice={publicNotice}
               onVisit={(home) => {
                 setSelectedPlace(null);
                 visitInterior(home);

@@ -9,6 +9,7 @@ import { FATE_HOMES, type HomeId } from '@/lib/fate-housing';
 import { fatePerson, STREET_PARTNERS, type PartnerId } from '@/lib/fate-cast';
 import { lifeStatus, occupiedHome, type DailyLife } from '@/lib/fate-life';
 import { STREET, placeName, type ActorId } from '@/lib/street';
+import type { PublicVisitAction } from '@/lib/fate-public-places';
 import { FateCityScenery } from './fate-city-scenery';
 import styles from './fate-district-map.module.css';
 
@@ -120,6 +121,11 @@ export function DistrictPlaceCard({
   arrived,
   onWalk,
   onVisit,
+  onPublicAction,
+  companions,
+  shopLabel,
+  shopAffordable,
+  notice,
   onClose,
 }: {
   place: DistrictLandmark;
@@ -128,6 +134,11 @@ export function DistrictPlaceCard({
   arrived: boolean;
   onWalk: () => void;
   onVisit: (home: HomeId) => void;
+  onPublicAction: (action: PublicVisitAction, target?: PartnerId) => void;
+  companions: { id: PartnerId; name: string }[];
+  shopLabel: string | null;
+  shopAffordable: boolean;
+  notice: string;
   onClose: () => void;
 }) {
   return (
@@ -182,6 +193,57 @@ export function DistrictPlaceCard({
             : `控制${traveler}沿街前往`}
         </button>
       </div>
+      {place.kind !== 'home' && (
+        <div className={styles.publicVisit}>
+          <strong>到场活动</strong>
+          {control && arrived ? (
+            <>
+              {place.id === 'school' && (
+                <button type="button" onClick={() => onPublicAction('study')}>
+                  在学园自习
+                </button>
+              )}
+              {place.id === 'cafe' && (
+                <button type="button" onClick={() => onPublicAction('eat')}>
+                  吃一份简餐 · 免费
+                </button>
+              )}
+              {place.id === 'shops' && (
+                <button
+                  type="button"
+                  disabled={!shopLabel || !shopAffordable}
+                  onClick={() => onPublicAction('shop')}
+                >
+                  {shopLabel
+                    ? shopAffordable
+                      ? shopLabel
+                      : `${shopLabel} · 生活点不足`
+                    : '随身用品已足'}
+                </button>
+              )}
+              {place.id === 'park' && (
+                <>
+                  <button type="button" onClick={() => onPublicAction('walk')}>
+                    沿河散步
+                  </button>
+                  {companions.map((companion) => (
+                    <button
+                      type="button"
+                      key={companion.id}
+                      onClick={() => onPublicAction('together', companion.id)}
+                    >
+                      与{companion.name}一起散步
+                    </button>
+                  ))}
+                </>
+              )}
+            </>
+          ) : (
+            <span>先进入角色，沿街走到地点附近即可互动。</span>
+          )}
+          {notice && <output>{notice}</output>}
+        </div>
+      )}
       {!control && (
         <p className={styles.tip}>
           将控制{traveler}，镜头会跟随其沿连续道路前往。
