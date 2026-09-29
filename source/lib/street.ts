@@ -82,7 +82,8 @@ export function wasWalkableInDistrict(p: Point) {
   );
 }
 export function nearestWalkable(p: Point): Point {
-  if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return cityPoint({ x: 750, y: 845 });
+  if (!Number.isFinite(p.x) || !Number.isFinite(p.y))
+    return cityPoint({ x: 750, y: 845 });
   return WALK_AREAS.map((r) => ({
     x: clamp(p.x, r.left, r.right),
     y: clamp(p.y, r.top, r.bottom),
@@ -191,24 +192,42 @@ export function routePosition(point: Point, route: Point[]) {
   let length = 0;
   let closest = { distance: Infinity, traveled: 0 };
   for (let i = 1; i < route.length; i++) {
-    const from = route[i - 1], to = route[i];
-    const dx = to.x - from.x, dy = to.y - from.y;
+    const from = route[i - 1],
+      to = route[i];
+    const dx = to.x - from.x,
+      dy = to.y - from.y;
     const segment = Math.hypot(dx, dy);
     if (!segment) continue;
-    const fraction = clamp(((point.x - from.x) * dx + (point.y - from.y) * dy) / (segment * segment), 0, 1);
-    const distance = Math.hypot(point.x - from.x - fraction * dx, point.y - from.y - fraction * dy);
-    if (distance < closest.distance) closest = { distance, traveled: traveled + fraction * segment };
+    const fraction = clamp(
+      ((point.x - from.x) * dx + (point.y - from.y) * dy) / (segment * segment),
+      0,
+      1,
+    );
+    const distance = Math.hypot(
+      point.x - from.x - fraction * dx,
+      point.y - from.y - fraction * dy,
+    );
+    if (distance < closest.distance)
+      closest = { distance, traveled: traveled + fraction * segment };
     traveled += segment;
     length += segment;
   }
-  return { distance: closest.distance, progress: length ? closest.traveled / length : 0 };
+  return {
+    distance: closest.distance,
+    progress: length ? closest.traveled / length : 0,
+  };
 }
 
 export function pointAlongRoute(route: Point[], progress: number): Point {
   if (!route.length) return { x: 0, y: 0 };
-  const distances = route.slice(1).map((point, index) =>
-    Math.hypot(point.x - route[index].x, point.y - route[index].y));
-  let remaining = distances.reduce((sum, distance) => sum + distance, 0) * clamp(progress, 0, 1);
+  const distances = route
+    .slice(1)
+    .map((point, index) =>
+      Math.hypot(point.x - route[index].x, point.y - route[index].y),
+    );
+  let remaining =
+    distances.reduce((sum, distance) => sum + distance, 0) *
+    clamp(progress, 0, 1);
   for (let index = 0; index < distances.length; index++) {
     const length = distances[index];
     if (remaining <= length) {
@@ -253,7 +272,7 @@ export function createStreetActors(): Actor[] {
     frame: 0,
     phase: 0,
     path: [],
-    rest: 3 + i * 2,
+    rest: 0,
     routeIndex: i,
   }));
 }

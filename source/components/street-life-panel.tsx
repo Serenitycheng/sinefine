@@ -69,7 +69,7 @@ export function LifeControls({
         aria-pressed={life.auto}
         disabled={disabled}
         onClick={() => (verified ? life.changeAuto(!life.auto) : onSettings())}
-        title={`开启后使用 DeepSeek 额度，最多 ${life.limit} 次；优先交谈，少量关键行动由 AI 决定，可在日常与记录中调整`}
+        title={`开启后同时启动居民日常；交谈使用 DeepSeek 额度，最多 ${life.limit} 次，平时的行程由人物习惯决定`}
       >
         <Sparkles size={14} />
         {life.auto

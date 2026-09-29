@@ -27,28 +27,90 @@ export const DISTRICT_PLACES = {
   park: { name: '林荫路边 · 河岸公园', x: 1880, y: 907 },
 } as const;
 
-type DistrictPlaceId = keyof typeof DISTRICT_HOMES | keyof typeof DISTRICT_PLACES;
+type DistrictPlaceId =
+  | keyof typeof DISTRICT_HOMES
+  | keyof typeof DISTRICT_PLACES;
 
-// Playable close-up corridors. Each edge uses the same street pathfinding and
-// saved coordinates as the city map; only these edges have matching road art.
+// Earlier painted corridor assets. The playable street now uses the continuous
+// world and WALK_AREAS; retain these links for the original art references.
 export const STREET_CLOSEUP_LINKS = [
-  { from: 'temple', to: 'einzbern', image: '/fate/street/scenes/temple-hill-link.png' },
-  { from: 'einzbern', to: 'emiya', image: '/fate/street/scenes/miyama-residential-link.png' },
-  { from: 'einzbern', to: 'matou', image: '/fate/street/scenes/miyama-south-lane-link.png' },
-  { from: 'emiya', to: 'school', image: '/fate/street/scenes/miyama-residential-link.png' },
-  { from: 'emiya', to: 'tohsaka', image: '/fate/street/scenes/miyama-estate-link.png' },
-  { from: 'school', to: 'fujimura', image: '/fate/street/scenes/miyama-residential-link.png' },
-  { from: 'school', to: 'kayneth', image: '/fate/street/scenes/miyama-south-road-link.png' },
-  { from: 'tohsaka', to: 'fujimura', image: '/fate/street/scenes/miyama-estate-link.png' },
-  { from: 'matou', to: 'natalia', image: '/fate/street/scenes/miyama-south-lane-link.png' },
-  { from: 'natalia', to: 'kayneth', image: '/fate/street/scenes/miyama-south-road-link.png' },
-  { from: 'fujimura', to: 'park', image: '/fate/street/scenes/fuyuki-bridge-link.png' },
+  {
+    from: 'temple',
+    to: 'einzbern',
+    image: '/fate/street/scenes/temple-hill-link.png',
+  },
+  {
+    from: 'einzbern',
+    to: 'emiya',
+    image: '/fate/street/scenes/miyama-residential-link.png',
+  },
+  {
+    from: 'einzbern',
+    to: 'matou',
+    image: '/fate/street/scenes/miyama-south-lane-link.png',
+  },
+  {
+    from: 'emiya',
+    to: 'school',
+    image: '/fate/street/scenes/miyama-residential-link.png',
+  },
+  {
+    from: 'emiya',
+    to: 'tohsaka',
+    image: '/fate/street/scenes/miyama-estate-link.png',
+  },
+  {
+    from: 'school',
+    to: 'fujimura',
+    image: '/fate/street/scenes/miyama-residential-link.png',
+  },
+  {
+    from: 'school',
+    to: 'kayneth',
+    image: '/fate/street/scenes/miyama-south-road-link.png',
+  },
+  {
+    from: 'tohsaka',
+    to: 'fujimura',
+    image: '/fate/street/scenes/miyama-estate-link.png',
+  },
+  {
+    from: 'matou',
+    to: 'natalia',
+    image: '/fate/street/scenes/miyama-south-lane-link.png',
+  },
+  {
+    from: 'natalia',
+    to: 'kayneth',
+    image: '/fate/street/scenes/miyama-south-road-link.png',
+  },
+  {
+    from: 'fujimura',
+    to: 'park',
+    image: '/fate/street/scenes/fuyuki-bridge-link.png',
+  },
   { from: 'park', to: 'shops', image: '/fate/street/scenes/new-city-link.png' },
-  { from: 'park', to: 'waver', image: '/fate/street/scenes/shinto-residential-link.png' },
-  { from: 'waver', to: 'shops', image: '/fate/street/scenes/shinto-residential-link.png' },
-  { from: 'waver', to: 'church', image: '/fate/street/scenes/church-slope-link.png' },
+  {
+    from: 'park',
+    to: 'waver',
+    image: '/fate/street/scenes/shinto-residential-link.png',
+  },
+  {
+    from: 'waver',
+    to: 'shops',
+    image: '/fate/street/scenes/shinto-residential-link.png',
+  },
+  {
+    from: 'waver',
+    to: 'church',
+    image: '/fate/street/scenes/church-slope-link.png',
+  },
   { from: 'shops', to: 'cafe', image: '/fate/street/scenes/new-city-link.png' },
-] as const satisfies ReadonlyArray<{ from: DistrictPlaceId; to: DistrictPlaceId; image: string }>;
+] as const satisfies ReadonlyArray<{
+  from: DistrictPlaceId;
+  to: DistrictPlaceId;
+  image: string;
+}>;
 
 export const DISTRICT_LANDMARKS = [
   ...Object.entries(DISTRICT_HOMES).map(([id, point]) => ({
@@ -66,15 +128,19 @@ export type DistrictLandmark = (typeof DISTRICT_LANDMARKS)[number];
 
 export function streetLinksFrom(placeId: string) {
   return STREET_CLOSEUP_LINKS.flatMap((link) => {
-    const otherId = link.from === placeId ? link.to : link.to === placeId ? link.from : null;
-    const place = otherId && DISTRICT_LANDMARKS.find((candidate) => candidate.id === otherId);
+    const otherId =
+      link.from === placeId ? link.to : link.to === placeId ? link.from : null;
+    const place =
+      otherId &&
+      DISTRICT_LANDMARKS.find((candidate) => candidate.id === otherId);
     return place ? [{ place, image: link.image }] : [];
   });
 }
 
 export function streetRoute(fromId: string, toId: string): DistrictLandmark[] {
   const origin = DISTRICT_LANDMARKS.find((place) => place.id === fromId);
-  if (!origin || !DISTRICT_LANDMARKS.some((place) => place.id === toId)) return [];
+  if (!origin || !DISTRICT_LANDMARKS.some((place) => place.id === toId))
+    return [];
   const previous = new Map<string, string | null>([[fromId, null]]);
   const queue = [fromId];
   while (queue.length && !previous.has(toId)) {
@@ -92,8 +158,8 @@ export function streetRoute(fromId: string, toId: string): DistrictLandmark[] {
   return route;
 }
 
-// Street artwork lives in one scrollable world. Map coordinates remain the
-// source of truth for movement, schedules and saves.
+// The continuous street artwork and actors share the same scrollable world.
+// Map coordinates remain the source of truth for movement, schedules and saves.
 export const STREET_SCENE_SCALE = 2;
 
 export function nearestDistrictLandmark(
@@ -128,6 +194,7 @@ export function districtAt(p: { x: number; y: number }) {
   if (p.x < 1500) return p.y < 850 ? '冬木 · 深山町北丘' : '冬木 · 深山町';
   if (p.x < 1800) return p.y < 1150 ? '冬木 · 冬木大桥' : '冬木 · 未远川南桥';
   if (p.y < 850) return '冬木 · 新都教会区';
-  if (p.y < 1200) return p.x < 2050 ? '冬木 · 新都河岸公园' : '冬木 · 新都住宅区';
+  if (p.y < 1200)
+    return p.x < 2050 ? '冬木 · 新都河岸公园' : '冬木 · 新都住宅区';
   return '冬木 · 新都商业街';
 }

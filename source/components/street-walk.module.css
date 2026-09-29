@@ -193,146 +193,6 @@
   width: 100%;
   height: 100%;
 }
-.closeupScene {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  background: #62716a;
-  pointer-events: none;
-}
-.closeupEntering {
-  animation: closeupEnter .64s cubic-bezier(.22, 1, .36, 1) both;
-  background: transparent;
-}
-.closeupLeaving {
-  animation: closeupLeave .48s ease-in both;
-}
-@keyframes closeupEnter {
-  from { opacity: 0; filter: blur(7px); }
-  to { opacity: 1; filter: blur(0); }
-}
-@keyframes closeupLeave {
-  from { opacity: 1; filter: blur(0); }
-  to { opacity: 0; filter: blur(6px); }
-}
-.closeupArtwork {
-  object-fit: cover;
-  object-position: center bottom;
-}
-.closeupStill {
-  position: absolute;
-  top: -4%;
-  left: -15%;
-  width: 130%;
-  height: 108%;
-  will-change: transform;
-}
-.closeupPanorama {
-  position: absolute;
-  top: -4%;
-  left: 0;
-  width: 300%;
-  height: 108%;
-  will-change: transform;
-}
-.panoramaPanel {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 43.333333%;
-  overflow: hidden;
-}
-.panoramaStart { left: 0; }
-.panoramaMiddle,
-.panoramaEnd {
-  -webkit-mask-image: linear-gradient(to right, transparent, #000 35%);
-  mask-image: linear-gradient(to right, transparent, #000 35%);
-}
-.panoramaMiddle { left: 28.333333%; }
-.panoramaEnd { left: 56.666667%; }
-.activeCloseupArtwork {
-  opacity: 0;
-  transition: opacity .72s ease;
-}
-.closeupArtworkReady {
-  opacity: 1;
-}
-.closeupDusk .closeupArtwork {
-  filter: brightness(.86) sepia(.14);
-}
-.closeupNight .closeupArtwork {
-  filter: brightness(.58) saturate(.78);
-}
-.closeupScene.closeupNight::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(#09172c65, #0a173038 65%, #09182b45);
-  pointer-events: none;
-}
-.closeupActors {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  overflow: hidden;
-  pointer-events: none;
-}
-.closeupActors.closeupNight .sprite {
-  filter: brightness(.78) saturate(.84);
-}
-.closeupRoad {
-  position: absolute;
-  inset: 66% 0 0;
-  background: linear-gradient(transparent, #18252138);
-}
-.closeupActor {
-  position: absolute;
-  top: 82%;
-  height: clamp(112px, 24vh, 190px);
-  transform: translate(-50%, -92%);
-  visibility: hidden;
-  pointer-events: none;
-}
-.closeupActor .actorName {
-  bottom: -2%;
-}
-.closeupControls {
-  position: absolute;
-  z-index: 5;
-  top: 72px;
-  left: 24px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  max-width: calc(100% - 48px);
-  padding: 8px 10px;
-  border: 1px solid #fff4ce6a;
-  border-radius: 6px;
-  background: #14201be8;
-  color: #fff4d5;
-  font-size: 12px;
-}
-.closeupControls .streetLinkButton {
-  background: #e9d2a0;
-  border-color: #f5e8c6;
-  font-weight: 600;
-}
-.closeupControls strong {
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.closeupControls button {
-  flex: none;
-  border: 1px solid #ddc18588;
-  border-radius: 4px;
-  background: #c4a976;
-  color: #16221e;
-  padding: 5px 8px;
-  font-size: 11px;
-}
 .landmark {
   position: absolute;
   transform: translate(-50%, -100%);
@@ -930,12 +790,6 @@
     max-width: calc(100% - 26px);
     font-size: 11px;
   }
-  .closeupControls {
-    top: 103px;
-    left: 13px;
-    max-width: calc(100% - 26px);
-    font-size: 11px;
-  }
   .gamepadStatus {
     left: 13px;
     bottom: 13px;
@@ -1021,17 +875,6 @@
 @media (prefers-reduced-motion: reduce) {
   .shell * {
     scroll-behavior: auto;
-  }
-  .closeupScene,
-  .closeupActors {
-    animation: none;
-  }
-  .activeCloseupArtwork {
-    transition: none;
-  }
-  .closeupStill,
-  .closeupPanorama {
-    will-change: auto;
   }
 }
 .schoolExit {

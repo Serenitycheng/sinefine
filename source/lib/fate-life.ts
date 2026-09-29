@@ -674,6 +674,11 @@ export function advanceDailyLife(
       actor.path = pathTo(actor, lifeDestination(id, 'eat', invitation.home));
     }
     if (!person.activity) {
+      if (actor.rest > 0) {
+        actor.rest = Math.max(0, actor.rest - seconds);
+        actor.frame = 0;
+        continue;
+      }
       const plan = decideLife(life, id),
         kind = plan.action;
       person.activity = {
@@ -1703,9 +1708,8 @@ export function parseDailyLife(value: unknown): DailyLife {
     const p = x.positions?.[id];
     if (!p || !(x.version < 15 ? wasWalkableInDistrict(p) : isWalkable(p)))
       throw new Error('人物位置无效');
-    result.positions[id] = x.version < 15
-      ? nearestWalkable(cityPoint(p))
-      : { x: p.x, y: p.y };
+    result.positions[id] =
+      x.version < 15 ? nearestWalkable(cityPoint(p)) : { x: p.x, y: p.y };
   }
   for (const id of ids) {
     const p = x.people?.[id];

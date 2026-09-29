@@ -125,16 +125,20 @@ export function useStreetLife(
       cancel();
       publish();
     };
-    const hidden = () => {
-      if (document.hidden) stop();
+    const pauseForAbsence = () => {
+      cancel();
+      publish();
     };
-    window.addEventListener('blur', stop);
+    const hidden = () => {
+      if (document.hidden) pauseForAbsence();
+    };
+    window.addEventListener('blur', pauseForAbsence);
     window.addEventListener('pagehide', stop);
     document.addEventListener('visibilitychange', hidden);
     return () => {
       request.current?.abort();
       saveLatest();
-      window.removeEventListener('blur', stop);
+      window.removeEventListener('blur', pauseForAbsence);
       window.removeEventListener('pagehide', stop);
       document.removeEventListener('visibilitychange', hidden);
     };
@@ -331,6 +335,7 @@ export function useStreetLife(
 
   function toggleRunning() {
     const next = !config.current.running;
+    if (next) staggerFirstDepartures();
     config.current.running = next;
     setRunning(next);
     if (!next) cancel();
@@ -340,10 +345,26 @@ export function useStreetLife(
     config.current.speed = value;
     setSpeed(value);
   }
+  function staggerFirstDepartures() {
+    actors.current.forEach((actor, index) => {
+      if (
+        isPartner(actor.id) &&
+        !life.current.people[actor.id].activity &&
+        life.current.people[actor.id].choices === 0
+      )
+        actor.rest = ((index * 7) % 13) * 0.4;
+    });
+  }
   function changeAuto(value: boolean) {
     config.current.auto = value;
     setAuto(value);
     setNotice('');
+    if (value && !config.current.running) {
+      staggerFirstDepartures();
+      config.current.running = true;
+      setRunning(true);
+      publish();
+    }
     if (!value) cancel();
   }
   function changeLimit(value: number) {

@@ -23,7 +23,7 @@ import {
   pairConversationHistory,
   type Exchange,
 } from '../lib/fate-state';
-import { createStreetActors, isWalkable } from '../lib/street';
+import { createStreetActors, isWalkable, stepActor } from '../lib/street';
 
 function offer(life: DailyLife, a: PartnerId = 'rin', b: PartnerId = 'shirou') {
   const turns: DialogueTurn[] = [
@@ -136,6 +136,40 @@ void test('daily life pauses fully, ignores invalid time and caps elapsed time a
   advanceDailyLife(life, actors, 60, { ...options, controlled: 'rin' });
   assert.ok(Math.abs(life.minutes - (before.minutes + 0.4)) < 1e-8);
   assert.deepEqual(life.people.rin, controlledBefore);
+});
+
+void test('one controlled character walks alone while residents keep independent routes', () => {
+  const life = createDailyLife();
+  const actors = createStreetActors();
+  const initial = Object.fromEntries(
+    actors.map(({ id, x, y }) => [id, { x, y }]),
+  );
+  for (let frame = 0; frame < 120; frame++)
+    advanceDailyLife(life, actors, 0.05, {
+      running: true,
+      speed: 1,
+      controlled: 'illya',
+    });
+  const illya = actors.find((actor) => actor.id === 'illya')!;
+  assert.deepEqual({ x: illya.x, y: illya.y }, initial.illya);
+  const moving = actors.filter(
+    (actor) =>
+      actor.id !== 'illya' &&
+      actor.id !== 'admin' &&
+      Math.hypot(actor.x - initial[actor.id].x, actor.y - initial[actor.id].y) >
+        1,
+  );
+  assert.ok(
+    moving.length >= 3,
+    'several residents should leave for their own activities',
+  );
+  const beforeManual = Object.fromEntries(
+    actors.map(({ id, x, y }) => [id, { x, y }]),
+  );
+  stepActor(illya, 0.05, { x: 1, y: 0 });
+  assert.ok(illya.x > beforeManual.illya.x);
+  for (const actor of actors.filter((person) => person.id !== 'illya'))
+    assert.deepEqual({ x: actor.x, y: actor.y }, beforeManual[actor.id]);
 });
 
 void test('an overnight autonomous simulation keeps residents in bounds and remains reloadable', () => {

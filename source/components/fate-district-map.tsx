@@ -1,6 +1,10 @@
 import Image from 'next/image';
 import { MapPin, Navigation, Users, X } from 'lucide-react';
-import { DISTRICT_LANDMARKS, districtSceneImage, type DistrictLandmark } from '@/lib/fate-district';
+import {
+  DISTRICT_LANDMARKS,
+  districtSceneImage,
+  type DistrictLandmark,
+} from '@/lib/fate-district';
 import { FATE_HOMES, type HomeId } from '@/lib/fate-housing';
 import { fatePerson, STREET_PARTNERS, type PartnerId } from '@/lib/fate-cast';
 import { lifeStatus, occupiedHome, type DailyLife } from '@/lib/fate-life';
@@ -172,12 +176,16 @@ export function DistrictPlaceCard({
         )}
         <button type="button" onClick={onWalk}>
           {control
-            ? arrived ? '进入街景' : '前往并进入街景'
-            : `控制${traveler}并进入街景`}
+            ? arrived
+              ? '回到街区'
+              : '沿街前往'
+            : `控制${traveler}沿街前往`}
         </button>
       </div>
       {!control && (
-        <p className={styles.tip}>将控制当前选中的{traveler}，到达后进入可行走街景。</p>
+        <p className={styles.tip}>
+          将控制{traveler}，镜头会跟随其沿连续道路前往。
+        </p>
       )}
     </section>
   );
