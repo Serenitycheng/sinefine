@@ -5,9 +5,11 @@ import { join } from 'node:path';
 import {
   DISTRICT_LANDMARKS,
   DISTRICT_PLACES,
+  STREET_CLOSEUP_LINKS,
   cityPoint,
   districtSceneImage,
   nearestDistrictLandmark,
+  streetLinksFrom,
   streetScenePoint,
 } from '../lib/fate-district';
 import { FATE_HOMES, homeOf } from '../lib/fate-housing';
@@ -43,6 +45,43 @@ void test('every district destination has its own street-level artwork and share
     assert.equal(nearestDistrictLandmark(place).id, place.id);
     assert.deepEqual(streetScenePoint(place), { x: place.x * 2, y: place.y * 2 });
   }
+});
+
+void test('close-up streets form a bidirectional route from Ryudou Temple across Fuyuki Bridge to the cafe', () => {
+  for (const link of STREET_CLOSEUP_LINKS) {
+    const from = DISTRICT_LANDMARKS.find((place) => place.id === link.from)!;
+    const to = DISTRICT_LANDMARKS.find((place) => place.id === link.to)!;
+    assert.ok(from && to, `${link.from} -> ${link.to} has a missing place`);
+    assert.ok(existsSync(join(process.cwd(), 'public', link.image.slice(1))), link.image);
+    assert.ok(streetLinksFrom(from.id).some(({ place }) => place.id === to.id));
+    assert.ok(streetLinksFrom(to.id).some(({ place }) => place.id === from.id));
+    assert.ok(pathTo(from, to).length, `${from.id} -> ${to.id} has no road`);
+  }
+  const visited = new Set(['temple']);
+  const queue = ['temple'];
+  while (queue.length) {
+    for (const { place } of streetLinksFrom(queue.shift()!)) {
+      if (visited.has(place.id)) continue;
+      visited.add(place.id);
+      queue.push(place.id);
+    }
+  }
+  for (const id of ['temple', 'einzbern', 'emiya', 'school', 'fujimura', 'park', 'shops', 'cafe'])
+    assert.ok(visited.has(id), `${id} is disconnected from the close-up street route`);
+  const west = DISTRICT_LANDMARKS.find((place) => place.id === 'fujimura')!;
+  const east = DISTRICT_LANDMARKS.find((place) => place.id === 'park')!;
+  const crossing = createStreetActors()[0];
+  Object.assign(crossing, { x: west.x, y: west.y, path: pathTo(west, east) });
+  let steppedOntoBridge = false;
+  for (let frame = 0; frame < 1200 && crossing.path.length; frame++) {
+    stepActor(crossing, 0.05);
+    if (crossing.x >= 1500 && crossing.x <= 1770) {
+      assert.ok(crossing.y >= 860 && crossing.y <= 955, 'crossing must stay on Fuyuki Bridge');
+      steppedOntoBridge = true;
+    }
+  }
+  assert.ok(steppedOntoBridge);
+  assert.equal(crossing.path.length, 0);
 });
 
 void test('a walk across the river moves through the same continuous street world', () => {

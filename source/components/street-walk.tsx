@@ -66,6 +66,7 @@ import {
   DISTRICT_LANDMARKS,
   districtSceneImage,
   nearestDistrictLandmark,
+  streetLinksFrom,
   STREET_SCENE_SCALE,
   streetScenePoint,
   type DistrictLandmark,
@@ -344,7 +345,9 @@ export default function StreetWalk() {
     from: DistrictLandmark;
     to: DistrictLandmark;
     total: number;
+    image: string;
   } | null>(null);
+  const [streetTransitionImage, setStreetTransitionImage] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
@@ -398,6 +401,7 @@ export default function StreetWalk() {
   const streetJourneyRef = useRef<typeof streetJourney>(null);
   const pendingCloseup = useRef<DistrictLandmark | null>(null);
   const closeupExitTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const streetTransitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const keys = useRef(new Set<string>());
   const touchKeys = useRef(new Set<string>());
   const camera = useRef({ x: 0, y: 0, scale: 1 });
@@ -431,13 +435,19 @@ export default function StreetWalk() {
     leaveInterior: () => void;
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
-  const connectedStreetPlace = closeupPlace?.id === 'shops'
-    ? DISTRICT_LANDMARKS.find((place) => place.id === 'cafe')
-    : closeupPlace?.id === 'cafe'
-      ? DISTRICT_LANDMARKS.find((place) => place.id === 'shops')
-      : null;
+  const connectedStreetPlaces = closeupPlace ? streetLinksFrom(closeupPlace.id) : [];
+
+  function crossfadeFrom(image: string | null) {
+    if (streetTransitionTimer.current) clearTimeout(streetTransitionTimer.current);
+    setStreetTransitionImage(image);
+    streetTransitionTimer.current = image ? setTimeout(() => {
+      setStreetTransitionImage(null);
+      streetTransitionTimer.current = null;
+    }, 720) : null;
+  }
 
   function leaveCloseup() {
+    crossfadeFrom(null);
     if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
     const place = closeupPlaceRef.current;
     if (place) {
@@ -461,6 +471,7 @@ export default function StreetWalk() {
     if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
     closeupExitTimer.current = null;
     setLeavingCloseupPlace(null);
+    crossfadeFrom(streetJourneyRef.current?.image ?? null);
     streetJourneyRef.current = null;
     setStreetJourney(null);
     pendingCloseup.current = null;
@@ -472,9 +483,14 @@ export default function StreetWalk() {
 
   function followStreetTo(destination: DistrictLandmark) {
     const from = closeupPlaceRef.current;
-    if (!from || (from.id !== 'shops' && from.id !== 'cafe')) return;
+    const link = from && streetLinksFrom(from.id).find((candidate) => candidate.place.id === destination.id);
+    if (!from || !link) return;
     const actor = actors.current.find((a) => a.id === settings.current.active)!;
     actor.path = pathTo(actor, destination);
+    if (!actor.path.length) {
+      setHint('当前位置没有可通行的街道路段');
+      return;
+    }
     const total = actor.path.reduce(
       (distance, point, index) => {
         const previous = index ? actor.path[index - 1] : actor;
@@ -482,7 +498,8 @@ export default function StreetWalk() {
       },
       0,
     );
-    const journey = { from, to: destination, total: Math.max(1, total) };
+    const journey = { from, to: destination, total: Math.max(1, total), image: link.image };
+    crossfadeFrom(districtSceneImage(from));
     streetJourneyRef.current = journey;
     setStreetJourney(journey);
     setHint(`沿街前往${destination.name}；到达后直接进入下一处街景`);
@@ -838,6 +855,7 @@ export default function StreetWalk() {
       window.removeEventListener('blur', stop);
       document.removeEventListener('visibilitychange', stop);
       if (closeupExitTimer.current) clearTimeout(closeupExitTimer.current);
+      if (streetTransitionTimer.current) clearTimeout(streetTransitionTimer.current);
     };
   }, []);
 
@@ -912,6 +930,7 @@ export default function StreetWalk() {
     speaker: ActorId = settings.current.active,
     preserveRoutes = settings.current.interior,
   ) {
+    if (streetJourneyRef.current) leaveCloseup();
     dailyActions.current.cancel();
     overlay.current = true;
     keys.current.clear();
@@ -969,7 +988,7 @@ export default function StreetWalk() {
     openDialog(id, 'admin', true);
   }
   function talk() {
-    if (settings.current.mode !== 'control') return;
+    if (settings.current.mode !== 'control' || streetJourneyRef.current) return;
     const near = nearestPartner(
       actors.current.filter(
         (a) =>
@@ -1328,10 +1347,15 @@ export default function StreetWalk() {
 
               <div ref={marker} className={styles.destination} />
             </div>
+            {streetTransitionImage && (
+              <div className={styles.closeupScene} aria-hidden="true">
+                <Image src={streetTransitionImage} alt="" fill sizes="(max-width: 800px) 100vw, 85vw" draggable={false} className={styles.closeupArtwork} />
+              </div>
+            )}
             {(closeupPlace || leavingCloseupPlace) && (
-              <div key={streetJourney ? 'new-city-link' : (closeupPlace || leavingCloseupPlace)!.id} className={`${styles.closeupScene} ${closeupPlace ? styles.closeupEntering : styles.closeupLeaving}`} aria-hidden="true">
+              <div key={streetJourney ? `${streetJourney.from.id}-${streetJourney.to.id}` : (closeupPlace || leavingCloseupPlace)!.id} className={`${styles.closeupScene} ${closeupPlace ? styles.closeupEntering : styles.closeupLeaving}`} aria-hidden="true">
                 <Image
-                  src={streetJourney ? '/fate/street/scenes/new-city-link.png' : districtSceneImage((closeupPlace || leavingCloseupPlace)!)}
+                  src={streetJourney ? streetJourney.image : districtSceneImage((closeupPlace || leavingCloseupPlace)!)}
                   alt=""
                   fill
                   sizes="(max-width: 800px) 100vw, 85vw"
@@ -1387,11 +1411,11 @@ export default function StreetWalk() {
               {closeupPlace && (
                 <div className={styles.closeupControls}>
                   <strong>{streetJourney ? `沿街前往${streetJourney.to.name}` : `${closeupPlace.name} · 街景`}</strong>
-                  {connectedStreetPlace && !streetJourney && (
-                    <button type="button" className={styles.streetLinkButton} onClick={() => followStreetTo(connectedStreetPlace)}>
-                      沿街去{connectedStreetPlace.name}
+                  {!streetJourney && connectedStreetPlaces.map(({ place }) => (
+                    <button key={place.id} type="button" className={styles.streetLinkButton} onClick={() => followStreetTo(place)}>
+                      沿街去{place.name}
                     </button>
-                  )}
+                  ))}
                   <button type="button" onClick={() => {
                     leaveCloseup();
                     stage.current?.focus({ preventScroll: true });
@@ -1432,7 +1456,7 @@ export default function StreetWalk() {
                 <Gamepad2 size={17} aria-hidden="true" />
                 <span>{padStatus}</span>
               </output>
-              {ready && mode === 'control' && (
+              {ready && mode === 'control' && !streetJourney && (
                 <button
                   className={styles.talkButton}
                   onClick={talk}
@@ -1486,7 +1510,7 @@ export default function StreetWalk() {
                   )}
                 </div>
               )}
-              {ready && mode === 'control' && (
+              {ready && mode === 'control' && !streetJourney && (
                 <div className={styles.dpad} aria-label="触屏方向键">
                   {[
                     { key: 'arrowup', label: '向上走', Icon: ArrowUp },

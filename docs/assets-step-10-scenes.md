@@ -24,3 +24,11 @@
 这些是当前 2D 街景背景；真正可自由环视的 3D 人物、场景与动作单列在[后续开发顺序](roadmap.md)第 16—17 条。
 
 补充：`source/public/fate/street/fuyuki-city-miyama.png` 是原创的双岸俯瞰绘景，供地图和街区行走底图共用。`source/public/fate/street/scenes/new-city-link.png` 是咖啡店与商店侧巷之间的近景连接路段。二者也是 imagegen 生成的 2D 概念素材，遵循[地图取舍](fuyuki-geography.md)，并非原作官方地图。
+
+2026-09-29 续作：使用内置 imagegen，以 `new-city-link.png` 作画风参考，生成三张横向行人视角路段。提示统一要求暖色半写实动漫绘景、下方留出无遮挡道路，不含人物、文字或界面：
+
+- `miyama-residential-link.png`：深山町住宅街，连接切嗣新居、卫宫宅、穗群原学园与藤村家。
+- `temple-hill-link.png`：柳洞寺山道与石阶，连接柳洞寺和切嗣新居。
+- `fuyuki-bridge-link.png`：步行经过冬木大桥，河两岸分别呈现深山町与新都，连接藤村家和河岸公园。
+
+这三张图是路段概念绘景，尚需进一步统一道路几何与各地点入口，才能接近无缝连续的街道美术。

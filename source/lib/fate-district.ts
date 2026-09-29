@@ -27,6 +27,20 @@ export const DISTRICT_PLACES = {
   park: { name: '林荫路边 · 河岸公园', x: 1880, y: 907 },
 } as const;
 
+type DistrictPlaceId = keyof typeof DISTRICT_HOMES | keyof typeof DISTRICT_PLACES;
+
+// Playable close-up corridors. Each edge uses the same street pathfinding and
+// saved coordinates as the city map; only these edges have matching road art.
+export const STREET_CLOSEUP_LINKS = [
+  { from: 'temple', to: 'einzbern', image: '/fate/street/scenes/temple-hill-link.png' },
+  { from: 'einzbern', to: 'emiya', image: '/fate/street/scenes/miyama-residential-link.png' },
+  { from: 'emiya', to: 'school', image: '/fate/street/scenes/miyama-residential-link.png' },
+  { from: 'school', to: 'fujimura', image: '/fate/street/scenes/miyama-residential-link.png' },
+  { from: 'fujimura', to: 'park', image: '/fate/street/scenes/fuyuki-bridge-link.png' },
+  { from: 'park', to: 'shops', image: '/fate/street/scenes/new-city-link.png' },
+  { from: 'shops', to: 'cafe', image: '/fate/street/scenes/new-city-link.png' },
+] as const satisfies ReadonlyArray<{ from: DistrictPlaceId; to: DistrictPlaceId; image: string }>;
+
 export const DISTRICT_LANDMARKS = [
   ...Object.entries(DISTRICT_HOMES).map(([id, point]) => ({
     id,
@@ -40,6 +54,14 @@ export const DISTRICT_LANDMARKS = [
   })),
 ];
 export type DistrictLandmark = (typeof DISTRICT_LANDMARKS)[number];
+
+export function streetLinksFrom(placeId: string) {
+  return STREET_CLOSEUP_LINKS.flatMap((link) => {
+    const otherId = link.from === placeId ? link.to : link.to === placeId ? link.from : null;
+    const place = otherId && DISTRICT_LANDMARKS.find((candidate) => candidate.id === otherId);
+    return place ? [{ place, image: link.image }] : [];
+  });
+}
 
 // Street artwork lives in one scrollable world. Map coordinates remain the
 // source of truth for movement, schedules and saves.
