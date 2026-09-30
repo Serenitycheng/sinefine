@@ -168,6 +168,14 @@ export type LifeDialogue = {
 };
 export type LifePlan = { action: LifeAction; reason: string };
 export type LifeEvent = {
+  interaction?: {
+    exchangeId: string;
+    speaker: ActorId;
+    target: PartnerId;
+    message: string;
+    reply: string;
+    source: 'preset' | 'deepseek';
+  };
   item?: ItemEvent;
   publicVisit?: {
     person: PartnerId;
@@ -253,6 +261,8 @@ export function recentLifeEvents(life: DailyLife, id: PartnerId) {
         e.decision?.person === id ||
         e.dialogue?.speaker === id ||
         e.dialogue?.target === id ||
+        e.interaction?.speaker === id ||
+        e.interaction?.target === id ||
         e.meal?.participants.includes(id);
       const hasWaver =
         e.item?.person === 'waver' ||
@@ -262,6 +272,8 @@ export function recentLifeEvents(life: DailyLife, id: PartnerId) {
         e.decision?.person === 'waver' ||
         e.dialogue?.speaker === 'waver' ||
         e.dialogue?.target === 'waver' ||
+        e.interaction?.speaker === 'waver' ||
+        e.interaction?.target === 'waver' ||
         e.meal?.participants.includes('waver');
       return (
         belongs &&
@@ -1932,6 +1944,34 @@ export function parseDailyLife(value: unknown): DailyLife {
       clean.decision = {
         person: d.person,
         ...parseLifePlan(d),
+        source: d.source,
+      };
+    }
+    if (event.interaction !== undefined) {
+      const d = event.interaction;
+      if (
+        !d ||
+        typeof d.exchangeId !== 'string' ||
+        !d.exchangeId.trim() ||
+        d.exchangeId.length > 120 ||
+        !(d.speaker === 'admin' || isPartner(d.speaker)) ||
+        !isPartner(d.target) ||
+        d.speaker === d.target ||
+        typeof d.message !== 'string' ||
+        !d.message.trim() ||
+        d.message.length > 1200 ||
+        typeof d.reply !== 'string' ||
+        !d.reply.trim() ||
+        d.reply.length > 2400 ||
+        !['preset', 'deepseek'].includes(d.source)
+      )
+        throw new Error('现场交谈记录无效');
+      clean.interaction = {
+        exchangeId: d.exchangeId,
+        speaker: d.speaker,
+        target: d.target,
+        message: d.message,
+        reply: d.reply,
         source: d.source,
       };
     }

@@ -21,7 +21,12 @@ import {
   type LifeEvent,
 } from '@/lib/fate-life';
 import { isPartner, type PartnerId } from '@/lib/fate-cast';
-import { pairConversationHistory } from '@/lib/fate-state';
+import { pairConversationHistory, type Exchange } from '@/lib/fate-state';
+import {
+  interactionStatus,
+  nearbyResident,
+  recordOnsiteConversation,
+} from '@/lib/fate-interaction';
 import { commitSocialDialogue } from '@/lib/fate-social';
 import {
   visitPublicPlace,
@@ -478,6 +483,56 @@ export function useStreetLife(
     },
     [actors, publish],
   );
+  const interaction = useCallback(
+    (target: PartnerId) => {
+      const opt = opts.current;
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return { ok: false, message: '请等待场景加载，或先处理存档提示。' };
+      return interactionStatus(
+        life.current,
+        actors.current,
+        opt.mode === 'control' ? opt.active : null,
+        target,
+      );
+    },
+    [actors],
+  );
+  const nearestResident = useCallback(() => {
+    const opt = opts.current;
+    return opt.ready && opt.mode === 'control'
+      ? nearbyResident(life.current, actors.current, opt.active)
+      : null;
+  }, [actors]);
+  const commitConversation = useCallback(
+    (entry: Exchange) => {
+      const status = interaction(entry.target);
+      if (!status.ok) return status;
+      const opt = opts.current;
+      const next = snapshotLife(life.current, actors.current);
+      const result = recordOnsiteConversation(
+        next,
+        actors.current,
+        opt.mode === 'control' ? opt.active : null,
+        entry,
+      );
+      if (!result.ok) return result;
+      if (!ctx.current.append(entry, next, engineRevision.current))
+        return {
+          ok: false,
+          message: '进度已改变，本次交谈未写入；请先处理存档提示。',
+        };
+      life.current = next;
+      setView(next);
+      sincePublish.current = 0;
+      return result;
+    },
+    [actors, interaction],
+  );
   function resetPlans() {
     cancel();
     for (const id of LIFE_IDS) life.current.people[id].activity = null;
@@ -506,6 +561,9 @@ export function useStreetLife(
     leaveHome,
     moveInside,
     visitPublic,
+    interaction,
+    nearestResident,
+    commitConversation,
     resetPlans,
   };
 }

@@ -17,7 +17,17 @@ import {
 } from 'lucide-react';
 import { fateArtwork, fatePerson, type PartnerId } from '@/lib/fate-cast';
 import { FATE_HOMES, type HomeId } from '@/lib/fate-housing';
-import { interiorResidents, type InteriorZone } from '@/lib/fate-interior';
+import {
+  interiorResidents,
+  interiorResidentPoint,
+  type InteriorZone,
+} from '@/lib/fate-interior';
+import {
+  interactionStatus,
+  nearbyResident,
+  liveEncounter,
+  liveSpeech,
+} from '@/lib/fate-interaction';
 import {
   lifePeriod,
   lifeTime,
@@ -68,6 +78,7 @@ function IndoorWalk({
   onDirection,
   onSelect,
   onReturn,
+  onTalk,
 }: {
   home: HomeId;
   position: IndoorPosition;
@@ -79,9 +90,20 @@ function IndoorWalk({
   onDirection: (key: string, pressed: boolean) => void;
   onSelect: (id: PartnerId) => void;
   onReturn: () => void;
+  onTalk: (id: PartnerId) => void;
 }) {
   const [lounge, table, study, rest] = homeRooms[home];
   const zoneNames = { lounge, table, study, rest, hall: '走廊' };
+  const actors = Object.entries(life.positions).map(([id, point]) => ({
+    id: id as ActorId,
+    ...point,
+  }));
+  const nearby = nearbyResident(life, actors, position.actor);
+  const status = nearby
+    ? interactionStatus(life, actors, position.actor, nearby)
+    : null;
+  const encounter = liveEncounter(life)?.dialogue;
+  const speech = liveSpeech(life);
   function mapClick(event: MouseEvent<HTMLButtonElement>) {
     if (event.detail === 0) {
       onWalkTo({ x: 360, y: 230 });
@@ -111,23 +133,21 @@ function IndoorWalk({
           aria-label={`${FATE_HOMES[home].name}室内地面，点击前往；按回车前往走廊`}
           onClick={mapClick}
         />
-        {residents.map((resident, index) => {
-          const anchors = {
-            lounge: [238, 186],
-            table: [620, 190],
-            study: [240, 390],
-            rest: [565, 395],
-          } as const;
-          const [baseX, baseY] = anchors[resident.zone];
-          const offset = (index % 3) * 26 - 26;
+        {residents.map((resident) => {
+          const point = interiorResidentPoint(
+            life,
+            home,
+            resident.id,
+            position.actor,
+          )!;
           return (
             <button
               key={resident.id}
               type="button"
-              className={styles.walkResident}
+              className={`${styles.walkResident} ${nearby === resident.id ? styles.nearbyResident : ''}`}
               style={{
-                left: `${((baseX + offset) / INDOOR_SIZE.width) * 100}%`,
-                top: `${(baseY / INDOOR_SIZE.height) * 100}%`,
+                left: `${(point.x / INDOOR_SIZE.width) * 100}%`,
+                top: `${(point.y / INDOOR_SIZE.height) * 100}%`,
               }}
               onClick={() => onSelect(resident.id)}
               aria-label={`查看${fatePerson(resident.id, life.waverStage)!.name}：${resident.status}`}
@@ -136,6 +156,28 @@ function IndoorWalk({
                 <PersonPortrait id={resident.id} life={life} />
               </span>
               <small>{fatePerson(resident.id, life.waverStage)!.name}</small>
+              <small>
+                {life.people[resident.id].activity?.kind === 'sleep'
+                  ? 'Zzz · 睡眠中'
+                  : encounter &&
+                      [encounter.speaker, encounter.target].includes(
+                        resident.id,
+                      )
+                    ? '交谈中'
+                    : resident.status}
+              </small>
+              {speech?.speaker === resident.id && (
+                <em
+                  className={styles.residentSpeech}
+                  title={
+                    speech.source === 'deepseek'
+                      ? 'AI 现场交谈'
+                      : '预设现场交谈'
+                  }
+                >
+                  {speech.text}
+                </em>
+              )}
             </button>
           );
         })}
@@ -164,6 +206,21 @@ function IndoorWalk({
           aria-label="从玄关返回街道"
         >
           出门
+        </button>
+      </div>
+      <div className={styles.nearbyTalk}>
+        <button
+          type="button"
+          disabled={!nearby || !status?.ok}
+          onClick={() => nearby && onTalk(nearby)}
+        >
+          <MessageCircle size={15} />
+          {nearby
+            ? status?.ok
+              ? `与${fatePerson(nearby, life.waverStage)!.name}交谈`
+              : status?.message
+            : '走近同一房间里的人物即可交谈'}
+          <kbd>E / A</kbd>
         </button>
       </div>
       <div className={styles.walkDirections} aria-label="室内方向控制">
@@ -275,8 +332,17 @@ export function FateInterior({
     inside[0];
   const person = selected ? fatePerson(selected.id, life.waverStage)! : null;
   const state = selected ? life.people[selected.id] : null;
-  const sleeping =
-    state?.activity?.kind === 'sleep' && selected?.presence === 'inside';
+  const talkStatus = selected
+    ? interactionStatus(
+        life,
+        Object.entries(life.positions).map(([id, point]) => ({
+          id: id as ActorId,
+          ...point,
+        })),
+        controlled,
+        selected.id,
+      )
+    : null;
   const meal = life.meals.find(
     (item) => item.home === view && activeMeal(life, item.id),
   );
@@ -419,6 +485,7 @@ export function FateInterior({
                   onDirection={onDirection}
                   onSelect={selectResident}
                   onReturn={onReturn}
+                  onTalk={onTalk}
                 />
               ) : (
                 <div className={styles.floorplan} aria-label="房间与当前活动">
@@ -582,21 +649,36 @@ export function FateInterior({
                         <button
                           className={styles.talk}
                           type="button"
-                          disabled={sleeping}
+                          disabled={!talkStatus?.ok}
                           onClick={() => onTalk(selected.id)}
                         >
-                          {sleeping ? (
+                          {state.activity?.kind === 'sleep' ? (
                             <Moon size={15} />
                           ) : (
                             <MessageCircle size={15} />
                           )}
-                          {sleeping ? '暂不打扰休息' : '以管理员身份交谈'}
+                          {talkStatus?.ok ? '面对面交谈' : '暂时不能交谈'}
                         </button>
                         <small className={styles.talkHint}>
-                          {sleeping
-                            ? '可以静静观察，醒来后再聊。'
-                            : '交谈时日常暂歇，结束后沿用当前进度。'}
+                          {talkStatus?.message}
                         </small>
+                        {playable && !talkStatus?.ok && (
+                          <button
+                            className={styles.talk}
+                            type="button"
+                            onClick={() => {
+                              const point = interiorResidentPoint(
+                                life,
+                                indoor.home,
+                                selected.id,
+                                indoor.actor,
+                              );
+                              if (point) onWalkTo(point);
+                            }}
+                          >
+                            走近{person.name}
+                          </button>
+                        )}
                       </>
                     ) : (
                       <button

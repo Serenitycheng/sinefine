@@ -45,7 +45,11 @@ import {
   type Point,
 } from '@/lib/street';
 import { pickGamepad, readGamepad, type PadHistory } from '@/lib/gamepad';
-import { nearestPartner } from '@/lib/fate-state';
+import {
+  liveEncounter,
+  liveSpeech,
+  type InteractionStatus,
+} from '@/lib/fate-interaction';
 import { fatePerson, isPartner, type PartnerId } from '@/lib/fate-cast';
 import { FateAISettings, FateConversation } from './fate-conversation';
 import { useFate } from './fate-provider';
@@ -73,7 +77,6 @@ import {
   streetScenePoint,
   type DistrictLandmark,
 } from '@/lib/fate-district';
-import { interiorResidents } from '@/lib/fate-interior';
 import interiorStyles from './fate-interior.module.css';
 import styles from './street-walk.module.css';
 
@@ -327,6 +330,9 @@ export default function StreetWalk({
     [waverStage],
   );
   const [nearby, setNearby] = useState<PartnerId | null>(null);
+  const [nearbyStatus, setNearbyStatus] = useState<InteractionStatus | null>(
+    null,
+  );
   const [dialog, setDialog] = useState<'settings' | PartnerId | null>(null);
   const [dialogSpeaker, setDialogSpeaker] = useState<ActorId>('admin');
   const [interiorView, setInteriorView] = useState<InteriorView | null>(null);
@@ -385,6 +391,8 @@ export default function StreetWalk({
     cancel: daily.cancel,
     currentIndoor: daily.currentIndoor,
     moveInside: daily.moveInside,
+    nearestResident: daily.nearestResident,
+    interaction: daily.interaction,
   });
   useEffect(() => {
     dailyActions.current = {
@@ -393,6 +401,8 @@ export default function StreetWalk({
       cancel: daily.cancel,
       currentIndoor: daily.currentIndoor,
       moveInside: daily.moveInside,
+      nearestResident: daily.nearestResident,
+      interaction: daily.interaction,
     };
   }, [
     daily.advance,
@@ -400,6 +410,8 @@ export default function StreetWalk({
     daily.cancel,
     daily.currentIndoor,
     daily.moveInside,
+    daily.nearestResident,
+    daily.interaction,
   ]);
   const actorElements = useRef(new Map<ActorId, HTMLDivElement>());
   const spriteElements = useRef(new Map<ActorId, HTMLDivElement>());
@@ -529,6 +541,10 @@ export default function StreetWalk({
       const key = e.key.toLowerCase();
       if (overlay.current) return;
       if (settings.current.interior) {
+        if (key === 'e' && !e.repeat && settings.current.mode === 'control') {
+          e.preventDefault();
+          padActions.current?.talk();
+        }
         if (key === 'escape' && !e.repeat) {
           e.preventDefault();
           padActions.current?.leaveInterior();
@@ -566,7 +582,8 @@ export default function StreetWalk({
       reported = '';
     let reportedPad = '';
     let reportedIndoorMoving = false;
-    let reportedPartner: PartnerId | null = null;
+    let reportedInteraction = '',
+      interactionCheckedAt = 0;
     const tick = (now: number) => {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
@@ -608,6 +625,7 @@ export default function StreetWalk({
           }
           if (settings.current.interior) {
             if (action === 'back') padActions.current?.leaveInterior();
+            if (action === 'talk') padActions.current?.talk();
             continue;
           }
           if (action === 'talk') {
@@ -719,20 +737,16 @@ export default function StreetWalk({
           }
         }
         const selected = actors.current.find((p) => p.id === opts.active)!;
-        const near =
-          opts.mode === 'control'
-            ? nearestPartner(
-                actors.current.filter(
-                  (a) =>
-                    a.id === opts.active ||
-                    !dailyActions.current.isInside(a.id),
-                ),
-                opts.active,
-              )
-            : null;
-        if (near !== reportedPartner) {
-          reportedPartner = near;
-          setNearby(near);
+        if (now - interactionCheckedAt >= 120) {
+          interactionCheckedAt = now;
+          const near = dailyActions.current.nearestResident();
+          const status = near ? dailyActions.current.interaction(near) : null;
+          const signature = `${near ?? ''}:${status?.message ?? ''}`;
+          if (signature !== reportedInteraction) {
+            reportedInteraction = signature;
+            setNearby(near);
+            setNearbyStatus(status);
+          }
         }
         const followed = following.current
           ? actors.current.find((p) => p.id === following.current)
@@ -760,8 +774,10 @@ export default function StreetWalk({
             : { x: STREET.width, y: STREET.height },
         );
         camera.current = next;
-        if (world.current)
+        if (world.current) {
           world.current.style.transform = `translate(${-next.x * next.scale}px,${-next.y * next.scale}px) scale(${next.scale})`;
+          world.current.style.setProperty('--world-scale', String(next.scale));
+        }
         if (marker.current) {
           const destination =
             opts.mode === 'control' ? selected.path.at(-1) : null;
@@ -930,6 +946,7 @@ export default function StreetWalk({
     const position = daily.currentIndoor();
     if (!position) return;
     indoorPath.current = indoorRoute(position, point);
+    interiorSurface.current?.focus({ preventScroll: true });
   }
   function indoorDirection(key: string, pressed: boolean) {
     if (pressed) {
@@ -939,31 +956,26 @@ export default function StreetWalk({
   }
   function talkInside(id: PartnerId) {
     if (!interiorView || interiorView === 'directory') return;
-    const person = interiorResidents(
-      daily.view,
-      interiorView,
-      mode === 'control' ? active : null,
-    ).find((item) => item.id === id && item.presence === 'inside');
-    if (
-      !person ||
-      !dailyActions.current.isInside(id) ||
-      daily.view.people[id].activity?.kind === 'sleep'
-    )
+    const status = daily.interaction(id);
+    if (!status.ok) {
+      setHint(status.message);
       return;
-    openDialog(id, 'admin', true);
+    }
+    openDialog(id, settings.current.active, true);
   }
   function talk() {
     if (settings.current.mode !== 'control') return;
-    const near = nearestPartner(
-      actors.current.filter(
-        (a) =>
-          a.id === settings.current.active ||
-          !dailyActions.current.isInside(a.id),
-      ),
-      settings.current.active,
-    );
-    if (near) openDialog(near);
-    else setHint('靠近街道上的人物后，按 E 或点击交谈');
+    const near = dailyActions.current.nearestResident();
+    if (!near) {
+      setHint('先靠近同一房间或道路上的人物，再按 E 或点击交谈。');
+      return;
+    }
+    const status = dailyActions.current.interaction(near);
+    if (!status.ok) {
+      setHint(status.message);
+      return;
+    }
+    openDialog(near, settings.current.active, settings.current.interior);
   }
   useEffect(() => {
     padActions.current = {
@@ -1131,6 +1143,8 @@ export default function StreetWalk({
       ? shoppingChoice(daily.view, active)
       : undefined;
 
+  const encounter = liveEncounter(daily.view)?.dialogue;
+  const speech = liveSpeech(daily.view);
   return (
     <main className={styles.shell}>
       <header className={styles.header}>
@@ -1276,13 +1290,25 @@ export default function StreetWalk({
                         if (node) actorElements.current.set(person.id, node);
                         else actorElements.current.delete(person.id);
                       }}
-                      className={`${styles.actor} ${person.id === 'iskandar' ? styles.mounted : ''} ${person.id === active && mode === 'control' ? styles.controlled : ''}`}
+                      className={`${styles.actor} ${person.id === 'iskandar' ? styles.mounted : ''} ${person.id === active && mode === 'control' ? styles.controlled : ''} ${person.id === nearby ? styles.nearbyActor : ''}`}
                       style={{
                         width: height * person.aspect,
                         height,
                       }}
                     >
                       <div className={styles.groundShadow} />
+                      {speech?.speaker === person.id && (
+                        <span
+                          className={styles.speechBubble}
+                          title={
+                            speech.source === 'deepseek'
+                              ? 'AI 现场交谈'
+                              : '预设现场交谈'
+                          }
+                        >
+                          {speech.text}
+                        </span>
+                      )}
                       <div
                         ref={(node) => {
                           if (node) spriteElements.current.set(person.id, node);
@@ -1300,7 +1326,13 @@ export default function StreetWalk({
                           <small className={styles.actorActivity}>
                             {mode === 'control' && person.id === active
                               ? '由你控制'
-                              : lifeStatus(daily.view.people[person.id])}
+                              : encounter &&
+                                  [
+                                    encounter.speaker,
+                                    encounter.target,
+                                  ].includes(person.id)
+                                ? '停下脚步 · 交谈中'
+                                : lifeStatus(daily.view.people[person.id])}
                           </small>
                         )}
                       </span>
@@ -1384,11 +1416,14 @@ export default function StreetWalk({
                 <button
                   className={styles.talkButton}
                   onClick={talk}
-                  disabled={!nearby || !fate.loaded}
+                  disabled={!nearby || !fate.loaded || !nearbyStatus?.ok}
+                  title={nearbyStatus?.message}
                 >
                   <MessageCircle size={16} />
                   {nearby
-                    ? `与${fatePerson(nearby, waverStage)!.name}交谈`
+                    ? nearbyStatus?.ok
+                      ? `与${fatePerson(nearby, waverStage)!.name}交谈`
+                      : nearbyStatus?.message
                     : '靠近街道上的人物交谈'}
                   <kbd>E / A</kbd>
                 </button>
@@ -1683,6 +1718,10 @@ export default function StreetWalk({
           speaker={dialogSpeaker}
           onClose={closeDialog}
           onSettings={() => openDialog('settings')}
+          onsite={{
+            check: () => daily.interaction(dialog),
+            commit: daily.commitConversation,
+          }}
         />
       ) : null}
     </main>

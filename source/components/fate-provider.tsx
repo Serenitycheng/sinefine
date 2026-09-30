@@ -66,7 +66,7 @@ type FateContextValue = ReturnType<typeof useDeepSeekConnection> & {
   tokens: number;
   reserveRequest: () => boolean;
   trackTokens: (n: number) => void;
-  append: (entry: Exchange) => void;
+  append: (entry: Exchange, life?: DailyLife, revision?: number) => boolean;
   updateSettings: (settings: FateSettings) => void;
   saveLife: (life: DailyLife, revision: number, final?: boolean) => void;
   saveRevision: number;
@@ -209,14 +209,14 @@ export function FateProvider({ children }: { children: ReactNode }) {
       !canMutate() ||
       revision !== revisionRef.current
     )
-      return;
+      return false;
     const next = {
       ...libraryRef.current,
       current: transform(libraryRef.current.current),
     };
     if (statusRef.current === 'temporary') {
       accept(next);
-      return;
+      return true;
     }
     try {
       accept(persist(next));
@@ -224,7 +224,9 @@ export function FateProvider({ children }: { children: ReactNode }) {
       // Keep unsaved life/dialogue available for export, but never adopt another page's version.
       if (!(error instanceof FateStorageConflict)) accept(next);
       reportFailure(error);
+      return !(error instanceof FateStorageConflict);
     }
+    return true;
   }
   function commitLibrary(next: FateLibrary, restoring = false) {
     if (!mounted.current || !hydrated.current)
@@ -394,14 +396,18 @@ export function FateProvider({ children }: { children: ReactNode }) {
         trackTokens: (n) => {
           if (mounted.current) setTokens((total) => total + n);
         },
-        append: (entry) =>
-          updateCurrent((previous) => ({
-            ...previous,
-            history: [
-              ...previous.history.filter((e) => e.id !== entry.id),
-              entry,
-            ].slice(-120),
-          })),
+        append: (entry, life, revision) =>
+          updateCurrent(
+            (previous) => ({
+              ...previous,
+              ...(life ? { life } : {}),
+              history: [
+                ...previous.history.filter((e) => e.id !== entry.id),
+                entry,
+              ].slice(-120),
+            }),
+            revision,
+          ),
         saveLife: (life, revision, final) =>
           updateCurrent((previous) => ({ ...previous, life }), revision, final),
         updateSettings: (settings) => {

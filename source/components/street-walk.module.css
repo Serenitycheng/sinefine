@@ -112,6 +112,40 @@
   padding-left: 10px;
 }
 .talkButton:disabled {
+  opacity: 0.75;
+  cursor: default;
+  max-width: calc(100% - 26px);
+  white-space: normal;
+}
+.nearbyActor .groundShadow {
+  outline: 2px solid #f2d68e;
+  outline-offset: 3px;
+}
+.nearbyActor .actorName {
+  border-color: #f2d68e;
+}
+.speechBubble {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%) scale(calc(1 / var(--world-scale, 1)));
+  transform-origin: bottom center;
+  width: 190px;
+  padding: 9px 12px;
+  border: 1px solid #e6d5a9;
+  border-radius: 12px 12px 12px 2px;
+  background: #fff5dcf2;
+  color: #263e35;
+  box-shadow: 0 3px 9px #0005;
+  font-size: 13px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  pointer-events: none;
+}
+.talkButton:disabled {
   opacity: 0.65;
 }
 .stageWrap {

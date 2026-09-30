@@ -17,7 +17,8 @@ import {
   type PartnerId,
   type TopicId,
 } from '@/lib/fate-cast';
-import { conversationHistory } from '@/lib/fate-state';
+import { conversationHistory, type Exchange } from '@/lib/fate-state';
+import type { InteractionStatus } from '@/lib/fate-interaction';
 import { lifeScene } from '@/lib/fate-life';
 import { familyTopic } from '@/lib/fate-relationships';
 import { dialogueLines } from '@/lib/fate-dialogue';
@@ -31,11 +32,16 @@ export function FateConversation({
   speaker,
   onClose,
   onSettings,
+  onsite,
 }: {
   target: PartnerId;
   speaker: ActorId;
   onClose: () => void;
   onSettings: () => void;
+  onsite?: {
+    check: () => InteractionStatus;
+    commit: (entry: Exchange) => InteractionStatus;
+  };
 }) {
   const ctx = useFate(),
     person = fatePerson(target, ctx.save.life?.waverStage ?? 'young')!;
@@ -61,7 +67,7 @@ export function FateConversation({
     reply: string,
     source: 'preset' | 'deepseek',
   ) {
-    ctx.append({
+    const entry: Exchange = {
       id: crypto.randomUUID(),
       ...([speaker, target].includes('waver') ? { waverStage } : {}),
       target,
@@ -70,9 +76,24 @@ export function FateConversation({
       reply,
       source,
       createdAt: new Date().toISOString(),
-    });
+    };
+    const result = onsite
+      ? onsite.commit(entry)
+      : { ok: ctx.append(entry), message: '暂时无法保存这次交谈。' };
+    if (!result.ok) setError(result.message);
+    return result.ok;
+  }
+  function canTalk() {
+    const status = onsite?.check();
+    if (status && !status.ok) {
+      setError(status.message);
+      return false;
+    }
+    return true;
   }
   function chooseTopic(topic: TopicId) {
+    if (!canTalk()) return;
+    setError('');
     const specific = familyTopic(speaker, target, topic);
     remember(
       specific?.message ?? TOPICS.find((t) => t.id === topic)!.text,
@@ -91,6 +112,7 @@ export function FateConversation({
       ctx.requests >= 20
     )
       return;
+    if (!canTalk()) return;
     if (!ctx.reserveRequest()) return;
     const controller = new AbortController();
     running.current = controller;
@@ -103,7 +125,9 @@ export function FateConversation({
         signal: controller.signal,
         body: JSON.stringify({
           mode: 'chat',
-          ...(ctx.cloudMode ? { connection: 'cloud' } : { key: ctx.apiKey.trim() }),
+          ...(ctx.cloudMode
+            ? { connection: 'cloud' }
+            : { key: ctx.apiKey.trim() }),
           model: ctx.model,
           target,
           speaker,
@@ -133,9 +157,8 @@ export function FateConversation({
       if (!response.ok || typeof data.reply !== 'string')
         throw new Error(data.error || '没有收到回复，请重试。');
       if (controller.signal.aborted) return;
-      remember(message, data.reply, 'deepseek');
-      setDraft('');
       if (typeof data.tokens === 'number') ctx.trackTokens(data.tokens);
+      if (remember(message, data.reply, 'deepseek')) setDraft('');
     } catch (error) {
       if (!controller.signal.aborted)
         setError(
@@ -176,7 +199,7 @@ export function FateConversation({
             {ctx.save.characterNotes[target]
               ? '使用你调整后的人物设定'
               : person.traits.join(' · ')}{' '}
-            · 交谈时街道暂歇
+            · {onsite ? '现场交谈 · ' : ''}交谈时街道暂歇
           </DialogDescription>
           <div className={styles.channels}>
             <button
@@ -247,7 +270,7 @@ export function FateConversation({
               {TOPICS.map((topic) => (
                 <button
                   key={topic.id}
-                  disabled={!ctx.loaded}
+                  disabled={!ctx.loaded || busy}
                   onClick={() => chooseTopic(topic.id)}
                 >
                   {topic.text}
@@ -302,7 +325,8 @@ export function FateConversation({
           )}
           {error && (
             <p className={styles.error} role="alert">
-              {error} 输入内容已保留。
+              {error}
+              {channel === 'deepseek' ? ' 输入内容已保留。' : ''}
             </p>
           )}
           <p className={styles.note}>
@@ -314,4 +338,3 @@ export function FateConversation({
     </Dialog>
   );
 }
-
