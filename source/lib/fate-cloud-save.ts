@@ -58,7 +58,7 @@ function databaseText(value: string): boolean {
   }
   return true;
 }
-function databaseStrings(value: unknown): boolean {
+export function databaseStrings(value: unknown): boolean {
   if (typeof value === 'string') return databaseText(value);
   if (!value || typeof value !== 'object') return true;
   return Object.entries(value).every(
@@ -96,7 +96,9 @@ export function parseCloudSaveView(value: unknown): CloudSaveView {
   };
 }
 
-async function readUpload(request: Request): Promise<Record<string, unknown>> {
+export async function readCloudUpload(
+  request: Request,
+): Promise<Record<string, unknown>> {
   if (
     request.headers
       .get('content-type')
@@ -191,7 +193,7 @@ export function createCloudSaveHandlers(connect: CloudSaveBackend) {
       try {
         checkOrigin(request, true);
         const session = await connect(request);
-        const body = await readUpload(request);
+        const body = await readCloudUpload(request);
         if (
           typeof body.expectedAccount !== 'string' ||
           !usernamePattern.test(body.expectedAccount)

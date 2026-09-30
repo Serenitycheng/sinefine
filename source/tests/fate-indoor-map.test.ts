@@ -43,10 +43,10 @@ function follow(from: Point, destination: Point): Point {
 
 void test('a character can cross the corridor between all four rooms and return to the door', () => {
   const rooms: Point[] = [
-    { x: 170, y: 165 },
-    { x: 550, y: 165 },
-    { x: 170, y: 350 },
-    { x: 550, y: 350 },
+    { x: 234, y: 182 },
+    { x: 615, y: 182 },
+    { x: 235, y: 379 },
+    { x: 618, y: 387 },
   ];
   let position = INDOOR_ENTRY;
   for (const room of [...rooms, INDOOR_ENTRY]) {
@@ -64,6 +64,24 @@ void test('indoor movement is bounded and a floor click outside the building sna
   });
   assert.ok(isIndoorWalkable(nearestIndoorPoint({ x: -500, y: 999 })));
   assert.ok(!isIndoorWalkable({ x: 4, y: 200 }));
+  assert.ok(
+    !isIndoorWalkable({ x: 160, y: 152 }),
+    'the coffee table blocks walking',
+  );
+  assert.ok(isIndoorWalkable(nearestIndoorPoint({ x: 160, y: 152 })));
+  const approaching = stepIndoor({ x: 219, y: 155 }, { x: -1, y: 0 }, 0.05);
+  const stopped = stepIndoor(approaching, { x: -1, y: 0 }, 0.05);
+  assert.equal(stopped.x, approaching.x, 'movement stops at furniture');
+});
+
+void test('an indoor save from before furniture collisions moves only its indoor footpoint to nearby free floor', () => {
+  const life = createDailyLife();
+  life.positions.shirou = { x: FATE_HOMES.emiya.x, y: FATE_HOMES.emiya.y };
+  life.indoor = { actor: 'shirou', home: 'emiya', x: 160, y: 152 };
+  const restored = parseDailyLife(life);
+  assert.equal(restored.indoor?.home, 'emiya');
+  assert.ok(isIndoorWalkable(restored.indoor!));
+  assert.deepEqual(restored.positions.shirou, life.positions.shirou);
 });
 
 void test('all ten homes restore the same indoor room and coordinate without changing outdoor position', () => {
@@ -80,8 +98,8 @@ void test('all ten homes restore the same indoor room and coordinate without cha
     life.indoor = {
       actor: 'shirou',
       home: home as keyof typeof FATE_HOMES,
-      x: 550,
-      y: 350,
+      x: 235,
+      y: 379,
     };
     const restored = parseDailyLife(JSON.parse(JSON.stringify(life)));
     assert.deepEqual(restored.indoor, life.indoor, home);

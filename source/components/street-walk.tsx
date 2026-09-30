@@ -302,7 +302,11 @@ function spriteStyle(
   };
 }
 
-export default function StreetWalk() {
+export default function StreetWalk({
+  suspended = false,
+}: {
+  suspended?: boolean;
+}) {
   const fate = useFate();
   const waverStage = fate.save.life?.waverStage ?? 'young';
   const CAST = useMemo(
@@ -372,8 +376,8 @@ export default function StreetWalk() {
   const daily = useStreetLife(actors, {
     active,
     mode,
-    overlay: Boolean(dialog),
-    ready,
+    overlay: Boolean(dialog) || suspended,
+    ready: ready && !suspended,
   });
   const dailyActions = useRef({
     advance: daily.advance,
@@ -443,10 +447,10 @@ export default function StreetWalk() {
       mode,
       scene,
       zoom,
-      ready,
+      ready: ready && !suspended,
       interior: Boolean(interiorView),
     };
-  }, [active, mode, scene, zoom, ready, interiorView]);
+  }, [active, mode, scene, zoom, ready, interiorView, suspended]);
   useEffect(() => {
     if (!fate.loaded || restoredIndoor.current) return;
     const saved = fate.save.life?.indoor;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, type CSSProperties, type MouseEvent } from 'react';
+import { useRef, useState, type MouseEvent } from 'react';
 import Image from 'next/image';
 import {
   ArrowLeft,
@@ -33,6 +33,7 @@ import {
   indoorRoom,
   type IndoorPosition,
 } from '@/lib/fate-indoor-map';
+import { FateIndoorScene } from './fate-indoor-scene';
 import styles from './fate-interior.module.css';
 
 export type InteriorView = HomeId | 'directory';
@@ -43,18 +44,6 @@ export type IndoorSprite = {
   aspect: number;
 };
 
-const homeColors: Record<HomeId, [string, string, string]> = {
-  einzbern: ['#d9dce0', '#9eaeb1', '#647a7f'],
-  emiya: ['#d5c6a9', '#b7966f', '#6a7869'],
-  tohsaka: ['#d7c6ac', '#9f7768', '#744d59'],
-  matou: ['#c9c2ae', '#827b71', '#59645d'],
-  waver: ['#d2c7b2', '#a98d6c', '#5a6e77'],
-  temple: ['#d2c7ac', '#9a8a6b', '#5d7665'],
-  church: ['#d7d0ba', '#988c78', '#647782'],
-  kayneth: ['#dbd1bb', '#a38670', '#755e69'],
-  fujimura: ['#e0cfad', '#b99c72', '#71846a'],
-  natalia: ['#c9c6bc', '#887b70', '#596f78'],
-};
 const homeRooms: Record<HomeId, [string, string, string, string]> = {
   einzbern: ['会客厅', '厨房与餐桌', '书房', '休息间'],
   emiya: ['起居间', '厨房与餐桌', '工作台', '休息间'],
@@ -91,14 +80,8 @@ function IndoorWalk({
   onSelect: (id: PartnerId) => void;
   onReturn: () => void;
 }) {
-  const [wall, floor, accent] = homeColors[home];
   const [lounge, table, study, rest] = homeRooms[home];
   const zoneNames = { lounge, table, study, rest, hall: '走廊' };
-  const css = {
-    '--indoor-wall': wall,
-    '--indoor-floor': floor,
-    '--indoor-accent': accent,
-  } as CSSProperties;
   function mapClick(event: MouseEvent<HTMLButtonElement>) {
     if (event.detail === 0) {
       onWalkTo({ x: 360, y: 230 });
@@ -111,82 +94,17 @@ function IndoorWalk({
     });
   }
   return (
-    <div className={styles.indoorWalk} style={css}>
+    <div className={styles.indoorWalk}>
       <div className={styles.walkHeading}>
         <span>正在室内行走 · {zoneNames[indoorRoom(position)]}</span>
         <small>WASD / 方向键移动，也可点击房间地面前往</small>
       </div>
       <div className={styles.walkMap}>
-        <svg
-          viewBox="0 0 720 460"
-          aria-hidden="true"
-          preserveAspectRatio="none"
-        >
-          <rect x="18" y="18" width="684" height="424" rx="14" fill={wall} />
-          <rect x="44" y="44" width="632" height="370" rx="8" fill={floor} />
-          <rect x="326" y="44" width="68" height="386" fill="#e5ddc9" />
-          <rect x="44" y="202" width="632" height="56" fill="#e5ddc9" />
-          <path
-            d="M44 202h632M44 258h632M326 44v386M394 44v386"
-            stroke={accent}
-            strokeWidth="5"
-            opacity=".55"
-          />
-          <rect
-            x="97"
-            y="93"
-            width="133"
-            height="55"
-            rx="15"
-            fill={accent}
-            opacity=".45"
-          />
-          <rect
-            x="504"
-            y="82"
-            width="103"
-            height="74"
-            rx="8"
-            fill={accent}
-            opacity=".5"
-          />
-          <rect
-            x="91"
-            y="291"
-            width="146"
-            height="45"
-            rx="6"
-            fill={accent}
-            opacity=".45"
-          />
-          <rect
-            x="506"
-            y="309"
-            width="120"
-            height="65"
-            rx="8"
-            fill={accent}
-            opacity=".46"
-          />
-          <path
-            d="M331 430h58"
-            stroke="#f3e6be"
-            strokeWidth="13"
-            strokeLinecap="round"
-          />
-          <text x="70" y="73">
-            {lounge}
-          </text>
-          <text x="420" y="73">
-            {table}
-          </text>
-          <text x="70" y="283">
-            {study}
-          </text>
-          <text x="420" y="283">
-            {rest}
-          </text>
-        </svg>
+        <FateIndoorScene
+          home={home}
+          rooms={homeRooms[home]}
+          night={lifePeriod(life.minutes) === '夜间'}
+        />
         <button
           type="button"
           className={styles.walkHitArea}
@@ -195,13 +113,13 @@ function IndoorWalk({
         />
         {residents.map((resident, index) => {
           const anchors = {
-            lounge: [170, 170],
-            table: [550, 170],
-            study: [170, 370],
-            rest: [550, 383],
+            lounge: [238, 186],
+            table: [620, 190],
+            study: [240, 390],
+            rest: [565, 395],
           } as const;
           const [baseX, baseY] = anchors[resident.zone];
-          const offset = (index % 3) * 42 - 42;
+          const offset = (index % 3) * 26 - 26;
           return (
             <button
               key={resident.id}

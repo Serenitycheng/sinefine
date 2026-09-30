@@ -289,10 +289,13 @@
   min-width: 0;
 }
 .indoorWalk {
-  border: 1px solid #c7b69388;
+  border: 1px solid #c7b693aa;
   border-radius: 10px;
   padding: 12px;
-  background: #283730;
+  background: radial-gradient(circle at 50% 0, #435345, #1b2825 78%);
+  box-shadow:
+    inset 0 1px 0 #f7e6b334,
+    0 15px 35px #07131055;
 }
 .walkHeading {
   display: flex;
@@ -313,9 +316,12 @@
   aspect-ratio: 720 / 460;
   margin-inline: auto;
   overflow: hidden;
-  border: 2px solid #dac9a477;
+  border: 2px solid #d9bd86;
   border-radius: 8px;
-  background: var(--indoor-wall);
+  background: #2b332e;
+  box-shadow:
+    0 6px 25px #0008,
+    inset 0 0 0 1px #f9e8bd77;
   cursor: crosshair;
   touch-action: manipulation;
 }
@@ -331,12 +337,6 @@
   border: 0;
   background: transparent;
   cursor: crosshair;
-}
-.walkMap text {
-  fill: #3f4c46;
-  font-size: 17px;
-  font-weight: 650;
-  letter-spacing: 1px;
 }
 .walkPlayer,
 .walkResident {
@@ -429,9 +429,6 @@
   background: #44594b;
   font-size: 18px !important;
   touch-action: none;
-}
-.night .walkMap {
-  filter: brightness(0.78);
 }
 @media (prefers-reduced-motion: reduce) {
   .walkSprite.walking {

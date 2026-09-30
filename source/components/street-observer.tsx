@@ -36,9 +36,7 @@ export function StreetObserver({
         </div>
         <small>{selected === null ? '随日常更新' : '回看记录'}</small>
       </div>
-      <p className={styles.intro}>
-        他们的交谈会出现在这里，你可以静静旁听。
-      </p>
+      <p className={styles.intro}>他们的交谈会出现在这里，你可以静静旁听。</p>
       {dialogue && event ? (
         <>
           <div className={styles.listenNames}>
@@ -149,7 +147,7 @@ export function StreetObserver({
         <Link href="/fate/world#homes">调整姐妹同住与从者住处 ↗</Link>
       </details>
       <p className={styles.fine}>
-        离开页面或切到其他窗口时，日常会暂停。这里记录的内容可随存档一起保留。
+        本地日常在离开页面或切到其他窗口时暂停；开启上方「后台代管」后，云端会继续推进。这里的记录随存档保留。
       </p>
     </aside>
   );

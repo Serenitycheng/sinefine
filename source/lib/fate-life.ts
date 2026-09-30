@@ -104,7 +104,11 @@ import {
   type ActorId,
   type Point,
 } from './street';
-import { isIndoorWalkable, type IndoorPosition } from './fate-indoor-map';
+import {
+  isIndoorFloor,
+  nearestIndoorPoint,
+  type IndoorPosition,
+} from './fate-indoor-map';
 
 export const LIFE_PLACES = {
   school: SCHOOL_GATE,
@@ -1986,7 +1990,7 @@ export function parseDailyLife(value: unknown): DailyLife {
       !indoor ||
       !isActorId(indoor.actor) ||
       !isHomeId(indoor.home) ||
-      !isIndoorWalkable(indoor) ||
+      !isIndoorFloor(indoor) ||
       Math.hypot(
         result.positions[indoor.actor].x - FATE_HOMES[indoor.home].x,
         result.positions[indoor.actor].y - FATE_HOMES[indoor.home].y,
@@ -1996,8 +2000,7 @@ export function parseDailyLife(value: unknown): DailyLife {
     result.indoor = {
       actor: indoor.actor,
       home: indoor.home,
-      x: indoor.x,
-      y: indoor.y,
+      ...nearestIndoorPoint(indoor),
     };
   }
   return {
