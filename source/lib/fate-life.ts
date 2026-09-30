@@ -93,6 +93,7 @@ import {
 import {
   clamp,
   createStreetActors,
+  isActorId,
   isWalkable,
   nearestWalkable,
   pathTo,
@@ -103,6 +104,7 @@ import {
   type ActorId,
   type Point,
 } from './street';
+import { isIndoorWalkable, type IndoorPosition } from './fate-indoor-map';
 
 export const LIFE_PLACES = {
   school: SCHOOL_GATE,
@@ -200,6 +202,8 @@ export type DailyLife = {
   minutes: number;
   people: Record<PartnerId, LifePerson>;
   positions: Record<ActorId, Point>;
+  /** Present only while the controlled character is walking inside a home. */
+  indoor?: IndoorPosition;
   events: LifeEvent[];
   nextId: number;
   nextEncounter: number;
@@ -239,6 +243,8 @@ export function recentLifeEvents(life: DailyLife, id: PartnerId) {
     .filter((e) => {
       const belongs =
         e.item?.person === id ||
+        e.publicVisit?.person === id ||
+        e.publicVisit?.target === id ||
         e.schedule?.person === id ||
         e.decision?.person === id ||
         e.dialogue?.speaker === id ||
@@ -246,6 +252,8 @@ export function recentLifeEvents(life: DailyLife, id: PartnerId) {
         e.meal?.participants.includes(id);
       const hasWaver =
         e.item?.person === 'waver' ||
+        e.publicVisit?.person === 'waver' ||
+        e.publicVisit?.target === 'waver' ||
         e.schedule?.person === 'waver' ||
         e.decision?.person === 'waver' ||
         e.dialogue?.speaker === 'waver' ||
@@ -1042,6 +1050,7 @@ export function advanceDailyLife(
 }
 
 export function occupiedHome(life: DailyLife, id: PartnerId): HomeId | null {
+  if (life.indoor?.actor === id) return life.indoor.home;
   const activity = life.people[id].activity;
   return activity?.phase === 'doing' &&
     !activity.school &&
@@ -1970,6 +1979,26 @@ export function parseDailyLife(value: unknown): DailyLife {
       result.lastEncounters[key] ?? 0,
       event.minute,
     );
+  }
+  if (x.indoor !== undefined) {
+    const indoor = x.indoor;
+    if (
+      !indoor ||
+      !isActorId(indoor.actor) ||
+      !isHomeId(indoor.home) ||
+      !isIndoorWalkable(indoor) ||
+      Math.hypot(
+        result.positions[indoor.actor].x - FATE_HOMES[indoor.home].x,
+        result.positions[indoor.actor].y - FATE_HOMES[indoor.home].y,
+      ) > 75
+    )
+      throw new Error('室内位置无效');
+    result.indoor = {
+      actor: indoor.actor,
+      home: indoor.home,
+      x: indoor.x,
+      y: indoor.y,
+    };
   }
   return {
     ...result,

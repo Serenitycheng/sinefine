@@ -61,6 +61,7 @@ import {
   type PublicVisitAction,
 } from '@/lib/fate-public-places';
 import { FateInterior, type InteriorView } from './fate-interior';
+import { INDOOR_SPEED, indoorRoute } from '@/lib/fate-indoor-map';
 import { FATE_HOMES } from '@/lib/fate-housing';
 import { DistrictAtlas, DistrictPlaceCard } from './fate-district-map';
 import { FateStreetScenery } from './fate-street-scenery';
@@ -325,7 +326,9 @@ export default function StreetWalk() {
   const [dialog, setDialog] = useState<'settings' | PartnerId | null>(null);
   const [dialogSpeaker, setDialogSpeaker] = useState<ActorId>('admin');
   const [interiorView, setInteriorView] = useState<InteriorView | null>(null);
+  const [indoorMoving, setIndoorMoving] = useState(false);
   const interiorSurface = useRef<HTMLDivElement>(null);
+  const indoorPath = useRef<Point[]>([]);
   const overlay = useRef(false);
   const [active, setActive] = useState<ActorId>('illya');
   const [mode, setMode] = useState<'control' | 'observe'>('observe');
@@ -376,14 +379,24 @@ export default function StreetWalk() {
     advance: daily.advance,
     isInside: daily.isInside,
     cancel: daily.cancel,
+    currentIndoor: daily.currentIndoor,
+    moveInside: daily.moveInside,
   });
   useEffect(() => {
     dailyActions.current = {
       advance: daily.advance,
       isInside: daily.isInside,
       cancel: daily.cancel,
+      currentIndoor: daily.currentIndoor,
+      moveInside: daily.moveInside,
     };
-  }, [daily.advance, daily.isInside, daily.cancel]);
+  }, [
+    daily.advance,
+    daily.isInside,
+    daily.cancel,
+    daily.currentIndoor,
+    daily.moveInside,
+  ]);
   const actorElements = useRef(new Map<ActorId, HTMLDivElement>());
   const spriteElements = useRef(new Map<ActorId, HTMLDivElement>());
   const keys = useRef(new Set<string>());
@@ -422,6 +435,7 @@ export default function StreetWalk() {
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
   const period = lifePeriod(daily.view.minutes);
+  const restoredIndoor = useRef(false);
 
   useEffect(() => {
     settings.current = {
@@ -433,6 +447,30 @@ export default function StreetWalk() {
       interior: Boolean(interiorView),
     };
   }, [active, mode, scene, zoom, ready, interiorView]);
+  useEffect(() => {
+    if (!fate.loaded || restoredIndoor.current) return;
+    const saved = fate.save.life?.indoor;
+    if (!saved) return;
+    let alive = true;
+    queueMicrotask(() => {
+      if (!alive || restoredIndoor.current) return;
+      restoredIndoor.current = true;
+      setActive(saved.actor);
+      setMode('control');
+      setScene('street');
+      setInteriorView(saved.home);
+      settings.current = {
+        ...settings.current,
+        active: saved.actor,
+        mode: 'control',
+        scene: 'street',
+        interior: true,
+      };
+    });
+    return () => {
+      alive = false;
+    };
+  }, [fate.loaded, fate.save.life]);
   useEffect(() => {
     if (interiorView) interiorSurface.current?.focus({ preventScroll: true });
     else stage.current?.focus({ preventScroll: true });
@@ -491,6 +529,10 @@ export default function StreetWalk() {
           e.preventDefault();
           padActions.current?.leaveInterior();
         }
+        if (MOVE_KEYS.has(key) && settings.current.mode === 'control') {
+          e.preventDefault();
+          keys.current.add(key);
+        }
         return;
       }
       if (
@@ -519,6 +561,7 @@ export default function StreetWalk() {
       last = 0,
       reported = '';
     let reportedPad = '';
+    let reportedIndoorMoving = false;
     let reportedPartner: PartnerId | null = null;
     const tick = (now: number) => {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
@@ -586,11 +629,48 @@ export default function StreetWalk() {
         }
         opts = settings.current;
         if (opts.interior) {
-          // Keep the same daily simulation alive while the street surface is covered.
-          // Only direct street controls are suspended; nobody is moved into this view.
           dailyActions.current.advance(dt);
+          const keyboard = directionFromKeys(
+            new Set([...keys.current, ...touchKeys.current]),
+          );
+          const manual = keyboard.x || keyboard.y ? keyboard : sampled.move;
+          if (manual.x || manual.y) indoorPath.current = [];
+          const position = dailyActions.current.currentIndoor();
+          let input = manual;
+          if (position && !manual.x && !manual.y) {
+            while (
+              indoorPath.current.length &&
+              Math.hypot(
+                indoorPath.current[0].x - position.x,
+                indoorPath.current[0].y - position.y,
+              ) < 2
+            )
+              indoorPath.current.shift();
+            const next = indoorPath.current[0];
+            if (next && dt) {
+              input = {
+                x: (next.x - position.x) / (INDOOR_SPEED * dt),
+                y: (next.y - position.y) / (INDOOR_SPEED * dt),
+              };
+            }
+          }
+          dailyActions.current.moveInside(dt, input);
+          const updated = dailyActions.current.currentIndoor();
+          const walking = Boolean(
+            position &&
+            updated &&
+            (position.x !== updated.x || position.y !== updated.y),
+          );
+          if (walking !== reportedIndoorMoving) {
+            reportedIndoorMoving = walking;
+            setIndoorMoving(walking);
+          }
           raf = requestAnimationFrame(tick);
           return;
+        }
+        if (reportedIndoorMoving) {
+          reportedIndoorMoving = false;
+          setIndoorMoving(false);
         }
         const keyboard = directionFromKeys(
           new Set([...keys.current, ...touchKeys.current]),
@@ -806,20 +886,52 @@ export default function StreetWalk() {
     else stage.current?.focus({ preventScroll: true });
   }
   function visitInterior(value: InteriorView) {
+    if (daily.currentIndoor()) daily.leaveHome();
     keys.current.clear();
     touchKeys.current.clear();
+    indoorPath.current = [];
     pointer.current = null;
     setAtlasOpen(false);
     setSelectedPlace(null);
     settings.current = { ...settings.current, interior: true };
     setInteriorView(value);
   }
-  function leaveInterior() {
+  function enterInterior(home: keyof typeof FATE_HOMES) {
+    if (!daily.enterHome(home)) {
+      setHint('请先进入角色，沿街走到住宅门前。');
+      return;
+    }
     keys.current.clear();
     touchKeys.current.clear();
+    indoorPath.current = [];
+    pointer.current = null;
+    setAtlasOpen(false);
+    setSelectedPlace(null);
+    settings.current = { ...settings.current, interior: true, scene: 'street' };
+    setScene('street');
+    setInteriorView(home);
+    setHint(`已进入${FATE_HOMES[home].name}，可在室内沿走廊移动。`);
+  }
+  function leaveInterior() {
+    daily.leaveHome();
+    keys.current.clear();
+    touchKeys.current.clear();
+    indoorPath.current = [];
+    setIndoorMoving(false);
     pointer.current = null;
     settings.current = { ...settings.current, interior: false };
     setInteriorView(null);
+  }
+  function walkInside(point: Point) {
+    const position = daily.currentIndoor();
+    if (!position) return;
+    indoorPath.current = indoorRoute(position, point);
+  }
+  function indoorDirection(key: string, pressed: boolean) {
+    if (pressed) {
+      indoorPath.current = [];
+      touchKeys.current.add(key);
+    } else touchKeys.current.delete(key);
   }
   function talkInside(id: PartnerId) {
     if (!interiorView || interiorView === 'directory') return;
@@ -1244,7 +1356,13 @@ export default function StreetWalk() {
                         ) > 75
                       }
                       onClick={() =>
-                        visitInterior(scenePlace.id as keyof typeof FATE_HOMES)
+                        mode === 'control'
+                          ? enterInterior(
+                              scenePlace.id as keyof typeof FATE_HOMES,
+                            )
+                          : visitInterior(
+                              scenePlace.id as keyof typeof FATE_HOMES,
+                            )
                       }
                     >
                       {mode === 'control' ? '进入住宅' : '观察住宅'}
@@ -1393,6 +1511,10 @@ export default function StreetWalk() {
                 setSelectedPlace(null);
                 visitInterior(home);
               }}
+              onEnter={(home) => {
+                setSelectedPlace(null);
+                enterInterior(home);
+              }}
               onClose={() => setSelectedPlace(null)}
             />
           )}
@@ -1415,6 +1537,11 @@ export default function StreetWalk() {
                   if (settings.current.mode === 'control') switchMode();
                   choose(id);
                 }}
+                indoor={daily.view.indoor}
+                sprite={current}
+                moving={indoorMoving}
+                onWalkTo={walkInside}
+                onDirection={indoorDirection}
               />
             </div>
           )}

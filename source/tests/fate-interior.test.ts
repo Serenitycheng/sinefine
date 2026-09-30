@@ -76,6 +76,26 @@ void test('school attendance and a controlled resident never appear in a room ev
   assert.ok(!residents.some((person) => person.presence === 'inside'));
 });
 
+void test('a controlled visitor is listed once in the entered home and stays out of the NPC room markers', () => {
+  const life = createDailyLife();
+  life.indoor = { actor: 'shirou', home: 'tohsaka', x: 170, y: 165 };
+  const residents = interiorResidents(life, 'tohsaka', 'shirou');
+  assert.equal(residents.filter((person) => person.id === 'shirou').length, 1);
+  assert.equal(
+    residents.find((person) => person.id === 'shirou')?.presence,
+    'controlled',
+  );
+  assert.ok(
+    !residents
+      .filter((person) => person.presence === 'inside')
+      .some((person) => person.id === 'shirou'),
+  );
+  assert.match(
+    residents.find((person) => person.id === 'shirou')?.status ?? '',
+    /室内行走/,
+  );
+});
+
 void test('household membership follows sisters and servant housing while preserving a guest actual location', () => {
   const life = createDailyLife();
   life.housing.sistersTogether = true;

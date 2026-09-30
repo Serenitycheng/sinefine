@@ -288,6 +288,156 @@
 .roomsColumn {
   min-width: 0;
 }
+.indoorWalk {
+  border: 1px solid #c7b69388;
+  border-radius: 10px;
+  padding: 12px;
+  background: #283730;
+}
+.walkHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+  margin-bottom: 10px;
+  color: #ead9b1;
+  font-size: 12px;
+}
+.walkHeading small {
+  color: #a9bcaa;
+  font-size: 10px;
+}
+.walkMap {
+  position: relative;
+  width: min(100%, 85dvh);
+  aspect-ratio: 720 / 460;
+  margin-inline: auto;
+  overflow: hidden;
+  border: 2px solid #dac9a477;
+  border-radius: 8px;
+  background: var(--indoor-wall);
+  cursor: crosshair;
+  touch-action: manipulation;
+}
+.walkMap > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.walkHitArea {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  background: transparent;
+  cursor: crosshair;
+}
+.walkMap text {
+  fill: #3f4c46;
+  font-size: 17px;
+  font-weight: 650;
+  letter-spacing: 1px;
+}
+.walkPlayer,
+.walkResident {
+  position: absolute;
+  transform: translate(-50%, -95%);
+  width: 6%;
+  height: 16%;
+  z-index: 2;
+}
+.walkPlayer {
+  width: 10%;
+  height: 23%;
+  pointer-events: none;
+  filter: drop-shadow(0 3px 3px #1b1e1a99);
+}
+.walkSprite {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background-repeat: no-repeat;
+  background-position-x: 0;
+}
+.walkSprite.walking {
+  animation: indoorStride 0.6s steps(3) infinite;
+}
+@keyframes indoorStride {
+  to {
+    background-position-x: 100%;
+  }
+}
+.walkResident {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: end;
+  width: 9%;
+  height: auto;
+  min-height: 11%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #27342c;
+  cursor: pointer;
+}
+.walkResident > span {
+  position: relative;
+  display: block;
+  width: 65%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid #fbefce;
+  border-radius: 50%;
+  background: #7c8c7b;
+  box-shadow: 0 2px 6px #17221b88;
+}
+.walkResident small {
+  max-width: 120%;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #f6ebceee;
+  color: #33473d;
+  font-size: 9px;
+  white-space: nowrap;
+}
+.walkExit {
+  position: absolute;
+  left: 50%;
+  bottom: 1%;
+  transform: translateX(-50%);
+  border: 1px solid #d9c187;
+  border-radius: 4px;
+  padding: 3px 10px;
+  background: #283b33;
+  color: #f2e5bb;
+  font-size: 10px !important;
+  z-index: 3;
+}
+.walkDirections {
+  display: flex;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 11px;
+}
+.walkDirections button {
+  min-width: 36px;
+  min-height: 36px;
+  border: 1px solid #d1c08b77;
+  border-radius: 5px;
+  color: #eee3c1;
+  background: #44594b;
+  font-size: 18px !important;
+  touch-action: none;
+}
+.night .walkMap {
+  filter: brightness(0.78);
+}
+@media (prefers-reduced-motion: reduce) {
+  .walkSprite.walking {
+    animation: none;
+  }
+}
 .floorplan {
   display: grid;
   grid-template-columns: 1fr 1fr;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, type CSSProperties, type MouseEvent } from 'react';
 import Image from 'next/image';
 import {
   ArrowLeft,
@@ -27,9 +27,255 @@ import {
 import { activeMeal, homeMealSummary } from '@/lib/fate-meals';
 import { BOOKS } from '@/lib/fate-belongings';
 import type { ActorId } from '@/lib/street';
+import type { Point } from '@/lib/street';
+import {
+  INDOOR_SIZE,
+  indoorRoom,
+  type IndoorPosition,
+} from '@/lib/fate-indoor-map';
 import styles from './fate-interior.module.css';
 
 export type InteriorView = HomeId | 'directory';
+export type IndoorSprite = {
+  image: string;
+  row: number;
+  rows: number;
+  aspect: number;
+};
+
+const homeColors: Record<HomeId, [string, string, string]> = {
+  einzbern: ['#d9dce0', '#9eaeb1', '#647a7f'],
+  emiya: ['#d5c6a9', '#b7966f', '#6a7869'],
+  tohsaka: ['#d7c6ac', '#9f7768', '#744d59'],
+  matou: ['#c9c2ae', '#827b71', '#59645d'],
+  waver: ['#d2c7b2', '#a98d6c', '#5a6e77'],
+  temple: ['#d2c7ac', '#9a8a6b', '#5d7665'],
+  church: ['#d7d0ba', '#988c78', '#647782'],
+  kayneth: ['#dbd1bb', '#a38670', '#755e69'],
+  fujimura: ['#e0cfad', '#b99c72', '#71846a'],
+  natalia: ['#c9c6bc', '#887b70', '#596f78'],
+};
+const homeRooms: Record<HomeId, [string, string, string, string]> = {
+  einzbern: ['会客厅', '厨房与餐桌', '书房', '休息间'],
+  emiya: ['起居间', '厨房与餐桌', '工作台', '休息间'],
+  tohsaka: ['会客厅', '餐厅', '书房', '休息间'],
+  matou: ['起居间', '厨房', '书桌', '休息间'],
+  waver: ['起居间', '厨房', '资料室', '休息间'],
+  temple: ['本堂', '厨房', '讲经室', '休息间'],
+  church: ['会客室', '厨房', '阅览室', '休息间'],
+  kayneth: ['会客厅', '餐厅', '研究室', '休息间'],
+  fujimura: ['起居间', '厨房', '书桌', '休息间'],
+  natalia: ['起居间', '厨房', '工作间', '休息间'],
+};
+
+function IndoorWalk({
+  home,
+  position,
+  sprite,
+  moving,
+  life,
+  residents,
+  onWalkTo,
+  onDirection,
+  onSelect,
+  onReturn,
+}: {
+  home: HomeId;
+  position: IndoorPosition;
+  sprite: IndoorSprite;
+  moving: boolean;
+  life: DailyLife;
+  residents: ReturnType<typeof interiorResidents>;
+  onWalkTo: (point: Point) => void;
+  onDirection: (key: string, pressed: boolean) => void;
+  onSelect: (id: PartnerId) => void;
+  onReturn: () => void;
+}) {
+  const [wall, floor, accent] = homeColors[home];
+  const [lounge, table, study, rest] = homeRooms[home];
+  const zoneNames = { lounge, table, study, rest, hall: '走廊' };
+  const css = {
+    '--indoor-wall': wall,
+    '--indoor-floor': floor,
+    '--indoor-accent': accent,
+  } as CSSProperties;
+  function mapClick(event: MouseEvent<HTMLButtonElement>) {
+    if (event.detail === 0) {
+      onWalkTo({ x: 360, y: 230 });
+      return;
+    }
+    const rect = event.currentTarget.getBoundingClientRect();
+    onWalkTo({
+      x: ((event.clientX - rect.left) / rect.width) * INDOOR_SIZE.width,
+      y: ((event.clientY - rect.top) / rect.height) * INDOOR_SIZE.height,
+    });
+  }
+  return (
+    <div className={styles.indoorWalk} style={css}>
+      <div className={styles.walkHeading}>
+        <span>正在室内行走 · {zoneNames[indoorRoom(position)]}</span>
+        <small>WASD / 方向键移动，也可点击房间地面前往</small>
+      </div>
+      <div className={styles.walkMap}>
+        <svg
+          viewBox="0 0 720 460"
+          aria-hidden="true"
+          preserveAspectRatio="none"
+        >
+          <rect x="18" y="18" width="684" height="424" rx="14" fill={wall} />
+          <rect x="44" y="44" width="632" height="370" rx="8" fill={floor} />
+          <rect x="326" y="44" width="68" height="386" fill="#e5ddc9" />
+          <rect x="44" y="202" width="632" height="56" fill="#e5ddc9" />
+          <path
+            d="M44 202h632M44 258h632M326 44v386M394 44v386"
+            stroke={accent}
+            strokeWidth="5"
+            opacity=".55"
+          />
+          <rect
+            x="97"
+            y="93"
+            width="133"
+            height="55"
+            rx="15"
+            fill={accent}
+            opacity=".45"
+          />
+          <rect
+            x="504"
+            y="82"
+            width="103"
+            height="74"
+            rx="8"
+            fill={accent}
+            opacity=".5"
+          />
+          <rect
+            x="91"
+            y="291"
+            width="146"
+            height="45"
+            rx="6"
+            fill={accent}
+            opacity=".45"
+          />
+          <rect
+            x="506"
+            y="309"
+            width="120"
+            height="65"
+            rx="8"
+            fill={accent}
+            opacity=".46"
+          />
+          <path
+            d="M331 430h58"
+            stroke="#f3e6be"
+            strokeWidth="13"
+            strokeLinecap="round"
+          />
+          <text x="70" y="73">
+            {lounge}
+          </text>
+          <text x="420" y="73">
+            {table}
+          </text>
+          <text x="70" y="283">
+            {study}
+          </text>
+          <text x="420" y="283">
+            {rest}
+          </text>
+        </svg>
+        <button
+          type="button"
+          className={styles.walkHitArea}
+          aria-label={`${FATE_HOMES[home].name}室内地面，点击前往；按回车前往走廊`}
+          onClick={mapClick}
+        />
+        {residents.map((resident, index) => {
+          const anchors = {
+            lounge: [170, 170],
+            table: [550, 170],
+            study: [170, 370],
+            rest: [550, 383],
+          } as const;
+          const [baseX, baseY] = anchors[resident.zone];
+          const offset = (index % 3) * 42 - 42;
+          return (
+            <button
+              key={resident.id}
+              type="button"
+              className={styles.walkResident}
+              style={{
+                left: `${((baseX + offset) / INDOOR_SIZE.width) * 100}%`,
+                top: `${(baseY / INDOOR_SIZE.height) * 100}%`,
+              }}
+              onClick={() => onSelect(resident.id)}
+              aria-label={`查看${fatePerson(resident.id, life.waverStage)!.name}：${resident.status}`}
+            >
+              <span>
+                <PersonPortrait id={resident.id} life={life} />
+              </span>
+              <small>{fatePerson(resident.id, life.waverStage)!.name}</small>
+            </button>
+          );
+        })}
+        <div
+          className={styles.walkPlayer}
+          style={{
+            left: `${(position.x / INDOOR_SIZE.width) * 100}%`,
+            top: `${(position.y / INDOOR_SIZE.height) * 100}%`,
+          }}
+          aria-label="当前控制人物"
+        >
+          <span
+            className={`${styles.walkSprite} ${moving ? styles.walking : ''}`}
+            style={{
+              backgroundImage: `url(${sprite.image})`,
+              backgroundSize: `400% ${sprite.rows * 100}%`,
+              backgroundPositionY: `${sprite.row * 100}%`,
+              aspectRatio: String(sprite.aspect),
+            }}
+          />
+        </div>
+        <button
+          type="button"
+          className={styles.walkExit}
+          onClick={onReturn}
+          aria-label="从玄关返回街道"
+        >
+          出门
+        </button>
+      </div>
+      <div className={styles.walkDirections} aria-label="室内方向控制">
+        {(
+          [
+            ['arrowup', '向上走', '↑'],
+            ['arrowleft', '向左走', '←'],
+            ['arrowdown', '向下走', '↓'],
+            ['arrowright', '向右走', '→'],
+          ] as const
+        ).map(([key, label, arrow]) => (
+          <button
+            key={key}
+            type="button"
+            aria-label={label}
+            onPointerDown={(event) => {
+              event.currentTarget.setPointerCapture(event.pointerId);
+              onDirection(key, true);
+            }}
+            onPointerUp={() => onDirection(key, false)}
+            onPointerCancel={() => onDirection(key, false)}
+            onLostPointerCapture={() => onDirection(key, false)}
+          >
+            {arrow}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 const rooms = [
   { id: 'lounge', name: '起居间', detail: '坐下来，聊一会儿', Icon: Armchair },
@@ -69,6 +315,11 @@ export function FateInterior({
   onReturn,
   onTalk,
   onStreet,
+  indoor,
+  sprite,
+  moving,
+  onWalkTo,
+  onDirection,
 }: {
   view: InteriorView;
   life: DailyLife;
@@ -78,6 +329,11 @@ export function FateInterior({
   onReturn: () => void;
   onTalk: (id: PartnerId) => void;
   onStreet: (id: PartnerId) => void;
+  indoor?: IndoorPosition;
+  sprite: IndoorSprite;
+  moving: boolean;
+  onWalkTo: (point: Point) => void;
+  onDirection: (key: string, pressed: boolean) => void;
 }) {
   const [selectedId, setSelectedId] = useState<PartnerId | null>(null);
   const detail = useRef<HTMLElement>(null);
@@ -88,9 +344,17 @@ export function FateInterior({
   const residents =
     view === 'directory' ? [] : interiorResidents(life, view, controlled);
   const inside = residents.filter((person) => person.presence === 'inside');
-  const away = residents.filter((person) => person.presence !== 'inside');
+  const playable = indoor?.home === view;
+  const away = residents.filter(
+    (person) =>
+      person.presence !== 'inside' && !(playable && person.id === indoor.actor),
+  );
   const selected =
-    residents.find((person) => person.id === selectedId) ?? inside[0];
+    residents.find((person) => person.id === selectedId) ??
+    (playable
+      ? residents.find((person) => person.id === indoor.actor)
+      : undefined) ??
+    inside[0];
   const person = selected ? fatePerson(selected.id, life.waverStage)! : null;
   const state = selected ? life.people[selected.id] : null;
   const sleeping =
@@ -198,85 +462,104 @@ export function FateInterior({
         </div>
       ) : (
         <div className={styles.homeView}>
-          <div className={styles.homeToolbar}>
-            <button type="button" onClick={() => visit('directory')}>
-              <House size={15} />
-              所有住宅
-            </button>
-            <label className={styles.homeSelect}>
-              <span className={styles.srOnly}>选择住宅</span>
-              <select
-                value={view}
-                onChange={(event) => visit(event.target.value as HomeId)}
-              >
-                {homes.map(([id, home]) => (
-                  <option key={id} value={id}>
-                    {home.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <span>
-              <Users size={14} />
-              {inside.length} 人在屋内
-            </span>
-          </div>
+          {!playable && (
+            <div className={styles.homeToolbar}>
+              <button type="button" onClick={() => visit('directory')}>
+                <House size={15} />
+                所有住宅
+              </button>
+              <label className={styles.homeSelect}>
+                <span className={styles.srOnly}>选择住宅</span>
+                <select
+                  value={view}
+                  onChange={(event) => visit(event.target.value as HomeId)}
+                >
+                  {homes.map(([id, home]) => (
+                    <option key={id} value={id}>
+                      {home.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <span>
+                <Users size={14} />
+                {inside.length} 人在屋内
+              </span>
+            </div>
+          )}
           <div className={styles.homeContent}>
             <div className={styles.roomsColumn}>
-              <div className={styles.floorplan} aria-label="房间与当前活动">
-                {rooms.map(({ id, name, detail, Icon }) => {
-                  const occupants = inside.filter((item) => item.zone === id);
-                  return (
-                    <section
-                      key={id}
-                      className={`${styles.room} ${styles[id]}`}
-                      aria-label={name}
-                    >
-                      <div className={styles.roomWall} aria-hidden="true">
-                        <span />
-                      </div>
-                      <div className={styles.furniture} aria-hidden="true" />
-                      <header>
-                        <Icon size={16} />
-                        <h3>{name}</h3>
-                      </header>
-                      <div className={styles.roomPeople}>
-                        {occupants.map((item) => (
-                          <button
-                            type="button"
-                            key={item.id}
-                            className={styles.resident}
-                            aria-pressed={selected?.id === item.id}
-                            aria-label={`观察${fatePerson(item.id, life.waverStage)!.name}：${item.status}`}
-                            onClick={() => selectResident(item.id)}
-                          >
-                            <span className={styles.residentArt}>
-                              <PersonPortrait id={item.id} life={life} />
-                            </span>
-                            <strong>
-                              {fatePerson(item.id, life.waverStage)!.name}
-                            </strong>
-                            <small>
-                              {item.visitor ? '来访 · ' : ''}
-                              {life.people[item.id].activity?.kind === 'sleep'
-                                ? '正在睡觉'
-                                : item.status.split(' · ')[0]}
-                            </small>
-                          </button>
-                        ))}
-                        {!occupants.length && (
-                          <p className={styles.emptyRoom}>
-                            {detail}
-                            <small>此刻无人</small>
-                          </p>
-                        )}
-                      </div>
-                    </section>
-                  );
-                })}
-              </div>
+              {playable ? (
+                <IndoorWalk
+                  home={view}
+                  position={indoor}
+                  sprite={sprite}
+                  moving={moving}
+                  life={life}
+                  residents={inside}
+                  onWalkTo={onWalkTo}
+                  onDirection={onDirection}
+                  onSelect={selectResident}
+                  onReturn={onReturn}
+                />
+              ) : (
+                <div className={styles.floorplan} aria-label="房间与当前活动">
+                  {rooms.map(({ id, name, detail, Icon }) => {
+                    const occupants = inside.filter((item) => item.zone === id);
+                    return (
+                      <section
+                        key={id}
+                        className={`${styles.room} ${styles[id]}`}
+                        aria-label={name}
+                      >
+                        <div className={styles.roomWall} aria-hidden="true">
+                          <span />
+                        </div>
+                        <div className={styles.furniture} aria-hidden="true" />
+                        <header>
+                          <Icon size={16} />
+                          <h3>{name}</h3>
+                        </header>
+                        <div className={styles.roomPeople}>
+                          {occupants.map((item) => (
+                            <button
+                              type="button"
+                              key={item.id}
+                              className={styles.resident}
+                              aria-pressed={selected?.id === item.id}
+                              aria-label={`观察${fatePerson(item.id, life.waverStage)!.name}：${item.status}`}
+                              onClick={() => selectResident(item.id)}
+                            >
+                              <span className={styles.residentArt}>
+                                <PersonPortrait id={item.id} life={life} />
+                              </span>
+                              <strong>
+                                {fatePerson(item.id, life.waverStage)!.name}
+                              </strong>
+                              <small>
+                                {item.visitor ? '来访 · ' : ''}
+                                {life.people[item.id].activity?.kind === 'sleep'
+                                  ? '正在睡觉'
+                                  : item.status.split(' · ')[0]}
+                              </small>
+                            </button>
+                          ))}
+                          {!occupants.length && (
+                            <p className={styles.emptyRoom}>
+                              {detail}
+                              <small>此刻无人</small>
+                            </p>
+                          )}
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              )}
               <p className={styles.sceneNote}>
-                点击房间里的人物，看看近况。他们会按自己的日常进出。
+                {playable
+                  ? '沿室内走廊进入各房间；人物会按自己的日常进出。点击屋内人物查看近况。'
+                  : '点击房间里的人物，看看近况。他们会按自己的日常进出。'}
               </p>
               {meal && (
                 <p className={styles.mealNote}>
@@ -339,11 +622,13 @@ export function FateInterior({
                   </div>
                   <div className={styles.detailCopy}>
                     <span className={styles.presence}>
-                      {selected.presence === 'inside'
-                        ? selected.visitor
-                          ? '来家里作客'
-                          : '此刻在屋内'
-                        : '此刻不在屋内'}
+                      {playable && selected.id === indoor.actor
+                        ? '你正在屋内'
+                        : selected.presence === 'inside'
+                          ? selected.visitor
+                            ? '来家里作客'
+                            : '此刻在屋内'
+                          : '此刻不在屋内'}
                     </span>
                     <h3>{person.name}</h3>
                     <p className={styles.status}>{selected.status}</p>
@@ -370,7 +655,11 @@ export function FateInterior({
                         {Math.round(book.progress)}%
                       </p>
                     )}
-                    {selected.presence === 'inside' ? (
+                    {playable && selected.id === indoor.actor ? (
+                      <small className={styles.talkHint}>
+                        你正在这处住宅里行走。
+                      </small>
+                    ) : selected.presence === 'inside' ? (
                       <>
                         <button
                           className={styles.talk}

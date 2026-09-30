@@ -29,6 +29,14 @@ import {
   type PublicVisitAction,
 } from '@/lib/fate-public-places';
 import type { Actor, ActorId } from '@/lib/street';
+import type { HomeId } from '@/lib/fate-housing';
+import {
+  INDOOR_ENTRY,
+  nearHomeEntrance,
+  stepIndoor,
+  type IndoorPosition,
+} from '@/lib/fate-indoor-map';
+import type { Point } from '@/lib/street';
 
 export function useStreetLife(
   actors: RefObject<Actor[]>,
@@ -66,6 +74,8 @@ export function useStreetLife(
   });
   const request = useRef<AbortController | null>(null);
   const sincePublish = useRef(0);
+  const sinceIndoorView = useRef(0);
+  const sinceIndoorSave = useRef(0);
   useEffect(() => {
     ctx.current = fate;
     opts.current = options;
@@ -380,6 +390,76 @@ export function useStreetLife(
     (id: ActorId) => isPartner(id) && lifeIndoors(life.current.people[id]),
     [],
   );
+  const currentIndoor = useCallback(
+    (): IndoorPosition | undefined => life.current.indoor,
+    [],
+  );
+  const enterHome = useCallback(
+    (home: HomeId) => {
+      const opt = opts.current;
+      const actor = actors.current.find(
+        (candidate) => candidate.id === opt.active,
+      );
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        opt.mode !== 'control' ||
+        !actor ||
+        life.current.indoor
+      )
+        return false;
+      if (!nearHomeEntrance(actor, home)) return false;
+      if (isPartner(actor.id)) life.current.people[actor.id].activity = null;
+      actor.path = [];
+      life.current.indoor = {
+        actor: actor.id,
+        home,
+        ...INDOOR_ENTRY,
+      };
+      publish();
+      return true;
+    },
+    [actors, publish],
+  );
+  const leaveHome = useCallback(() => {
+    if (!life.current.indoor) return false;
+    delete life.current.indoor;
+    sinceIndoorView.current = 0;
+    sinceIndoorSave.current = 0;
+    publish();
+    return true;
+  }, [publish]);
+  const moveInside = useCallback(
+    (dt: number, input: Point) => {
+      const position = life.current.indoor;
+      const opt = opts.current;
+      if (
+        !position ||
+        opt.mode !== 'control' ||
+        opt.active !== position.actor ||
+        !opt.ready
+      )
+        return;
+      const next = stepIndoor(position, input, dt);
+      if (next.x !== position.x || next.y !== position.y) {
+        life.current.indoor = { ...position, ...next };
+        sinceIndoorView.current += dt;
+        if (sinceIndoorView.current >= 0.08) {
+          setView(snapshotLife(life.current, actors.current));
+          sinceIndoorView.current = 0;
+        }
+        sinceIndoorSave.current = Math.max(sinceIndoorSave.current, 0.001);
+      }
+      if (sinceIndoorSave.current > 0) {
+        sinceIndoorSave.current += dt;
+        if (sinceIndoorSave.current >= 0.4) {
+          publish();
+          sinceIndoorSave.current = 0;
+        }
+      }
+    },
+    [actors, publish],
+  );
   const visitPublic = useCallback(
     (place: PublicPlaceId, action: PublicVisitAction, target?: PartnerId) => {
       const opt = opts.current;
@@ -421,6 +501,10 @@ export function useStreetLife(
     changeLimit,
     cancel,
     isInside,
+    currentIndoor,
+    enterHome,
+    leaveHome,
+    moveInside,
     visitPublic,
     resetPlans,
   };

@@ -121,6 +121,7 @@ export function DistrictPlaceCard({
   arrived,
   onWalk,
   onVisit,
+  onEnter,
   onPublicAction,
   companions,
   shopLabel,
@@ -134,6 +135,7 @@ export function DistrictPlaceCard({
   arrived: boolean;
   onWalk: () => void;
   onVisit: (home: HomeId) => void;
+  onEnter: (home: HomeId) => void;
   onPublicAction: (action: PublicVisitAction, target?: PartnerId) => void;
   companions: { id: PartnerId; name: string }[];
   shopLabel: string | null;
@@ -181,9 +183,16 @@ export function DistrictPlaceCard({
       </p>
       <div>
         {place.kind === 'home' && (
-          <button type="button" onClick={() => onVisit(place.id as HomeId)}>
-            观察住宅
-          </button>
+          <>
+            <button type="button" onClick={() => onVisit(place.id as HomeId)}>
+              观察住宅
+            </button>
+            {control && arrived && (
+              <button type="button" onClick={() => onEnter(place.id as HomeId)}>
+                进入住宅
+              </button>
+            )}
+          </>
         )}
         <button type="button" onClick={onWalk}>
           {control

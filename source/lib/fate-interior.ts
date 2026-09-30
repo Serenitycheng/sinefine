@@ -33,13 +33,14 @@ export function interiorResidents(
   return STREET_PARTNERS.flatMap((id) => {
     const person = life.people[id];
     const assigned = homeOf(id, life.housing) === home;
+    const playerInside = life.indoor?.actor === id && life.indoor.home === home;
     const inside = id !== controlled && occupiedHome(life, id) === home;
     const arriving =
       id !== controlled &&
       person.activity?.phase === 'going' &&
       !person.activity.school &&
       person.activity.home === home;
-    if (!assigned && !inside && !arriving) return [];
+    if (!assigned && !playerInside && !inside && !arriving) return [];
     return [
       {
         id,
@@ -53,7 +54,12 @@ export function interiorResidents(
                 : ('away' as const),
         visitor: !assigned,
         zone: interiorZone(person.activity),
-        status: id === controlled ? '由你接管 · 留在街道' : lifeStatus(person),
+        status:
+          id === controlled
+            ? life.indoor?.actor === id && life.indoor.home === home
+              ? '由你控制 · 室内行走'
+              : '由你接管 · 留在街道'
+            : lifeStatus(person),
       },
     ];
   });
