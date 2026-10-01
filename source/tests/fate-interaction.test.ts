@@ -156,9 +156,9 @@ void test('resident footpoints are shared by drawing and rules and lie on usable
         };
       for (const id of STREET_PARTNERS) {
         const p = interiorResidentPoint(life, home, id, 'admin')!;
-        assert.ok(isIndoorWalkable(p), `${home}: ${id}: ${kind}`);
+        assert.ok(isIndoorWalkable(p, home), `${home}: ${id}: ${kind}`);
         assert.equal(
-          indoorRoom(p),
+          indoorRoom(p, home),
           kind === 'visit'
             ? 'lounge'
             : kind === 'cook'

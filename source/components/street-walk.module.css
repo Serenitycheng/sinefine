@@ -221,6 +221,12 @@
   overflow: hidden;
   background: #a1b2a4;
 }
+.mapScenery {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
 .sceneryWorld {
   position: absolute;
   inset: 0;
@@ -229,21 +235,39 @@
 }
 .landmark {
   position: absolute;
-  transform: translate(-50%, -100%);
+  transform: translate(-50%, -100%) scale(calc(0.8 / var(--world-scale, 1)));
+  transform-origin: 50% 100%;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 0;
   white-space: nowrap;
   pointer-events: auto;
   border: 1px solid #566e5366;
-  border-radius: 5px;
-  padding: 7px 9px;
+  border-radius: 50%;
+  padding: 6px;
   background: #f8f3dfe8;
   color: #354f45;
   font-size: 13px;
   cursor: pointer;
   z-index: 940;
 }
+.landmark span {
+  position: absolute;
+  display: none;
+  left: 50%;
+  top: calc(100% + 5px);
+  transform: translateX(-50%);
+  padding: 5px 8px;
+  border-radius: 5px;
+  background: #203a38f0;
+  color: #fff4d5;
+  font-size: 12px;
+}
+.landmark:hover span,
+.landmark:focus-visible span { display: block; }
+.mapWorld .actorName { display: none; }
+.mapWorld .selectedActor .actorName { display: flex; }
+.mapWorld .actorActivity { display: none; }
 .landmark:hover,
 .landmark:focus-visible {
   background: #fff9e6;

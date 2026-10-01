@@ -109,6 +109,8 @@ import {
   nearestIndoorPoint,
   type IndoorPosition,
 } from './fate-indoor-map';
+import { roomPoint } from './fate-indoor-layout';
+import { indoorRoom } from './fate-indoor-map';
 
 export const LIFE_PLACES = {
   school: SCHOOL_GATE,
@@ -2031,16 +2033,21 @@ export function parseDailyLife(value: unknown): DailyLife {
       !isActorId(indoor.actor) ||
       !isHomeId(indoor.home) ||
       !isIndoorFloor(indoor) ||
+      (indoor.layout !== undefined && indoor.layout !== 2) ||
       Math.hypot(
         result.positions[indoor.actor].x - FATE_HOMES[indoor.home].x,
         result.positions[indoor.actor].y - FATE_HOMES[indoor.home].y,
       ) > 75
     )
       throw new Error('室内位置无效');
+    const legacyRoom = indoor.layout === 2 ? null : indoorRoom(indoor);
+    const point = legacyRoom && legacyRoom !== 'hall'
+      ? roomPoint(indoor.home, legacyRoom, indoor) : indoor;
     result.indoor = {
       actor: indoor.actor,
       home: indoor.home,
-      ...nearestIndoorPoint(indoor),
+      ...nearestIndoorPoint(point, indoor.home),
+      layout: 2,
     };
   }
   return {

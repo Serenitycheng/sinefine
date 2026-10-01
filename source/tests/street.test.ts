@@ -8,6 +8,7 @@ import {
   nearestWalkable,
   pathTo,
   stepActor,
+  WALK_SPEED,
 } from '../lib/street';
 
 void test('movement stays on the street, slides along walls and cannot jump between disconnected alleys', () => {
@@ -52,6 +53,6 @@ void test('keyboard movement normalizes diagonals, cancels click paths and caps 
   stepActor(actor, 60, { x: -1, y: 0 });
   assert.equal(actor.path.length, 0);
   assert.equal(actor.facing, -1);
-  assert.ok(Math.abs(actor.x - (start.x - 90 * 0.05)) < 1e-6);
+  assert.ok(Math.abs(actor.x - (start.x - WALK_SPEED * 0.05)) < 1e-6);
   assert.equal(actor.y, start.y);
 });

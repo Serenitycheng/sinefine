@@ -58,7 +58,7 @@ export const ROUTE_STOPS: Point[] = [
   { x: 390, y: 837 },
   { x: 670, y: 886 },
 ].map(cityPoint);
-export const WALK_SPEED = 90;
+export const WALK_SPEED = 70;
 
 export function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));

@@ -7,7 +7,7 @@ import {
 } from '@/lib/fate-district';
 import { FATE_HOMES, type HomeId } from '@/lib/fate-housing';
 import { fatePerson, STREET_PARTNERS, type PartnerId } from '@/lib/fate-cast';
-import { lifeStatus, occupiedHome, type DailyLife } from '@/lib/fate-life';
+import { lifePeriod, lifeStatus, occupiedHome, type DailyLife } from '@/lib/fate-life';
 import { STREET, placeName, type ActorId } from '@/lib/street';
 import type { PublicVisitAction } from '@/lib/fate-public-places';
 import { FateCityScenery } from './fate-city-scenery';
@@ -38,7 +38,7 @@ export function DistrictAtlas({
         </button>
       </header>
       <div className={styles.miniature}>
-        <FateCityScenery miniature />
+        <FateCityScenery miniature period={lifePeriod(life.minutes)} />
         <svg
           viewBox={`0 0 ${STREET.width} ${STREET.height}`}
           className={styles.dots}

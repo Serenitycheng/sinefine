@@ -76,7 +76,7 @@ function proximity(
       return { ok: false, message: '此人已离开这处住宅。' };
     const point = interiorResidentPoint(life, indoors.home, target, speaker);
     if (!point) return { ok: false, message: '此人目前不在屋内。' };
-    if (indoorRoom(indoors) !== interiorZone(life.people[target].activity))
+    if (indoorRoom(indoors, indoors.home) !== interiorZone(life.people[target].activity))
       return { ok: false, message: '先走进人物所在的房间，再靠近交谈。' };
     if (Math.hypot(point.x - indoors.x, point.y - indoors.y) > 85)
       return { ok: false, message: '再走近一些，才能面对面交谈。' };

@@ -118,7 +118,7 @@ function IndoorWalk({
   return (
     <div className={styles.indoorWalk}>
       <div className={styles.walkHeading}>
-        <span>正在室内行走 · {zoneNames[indoorRoom(position)]}</span>
+        <span>正在室内行走 · {zoneNames[indoorRoom(position, home)]}</span>
         <small>WASD / 方向键移动，也可点击房间地面前往</small>
       </div>
       <div className={styles.walkMap}>

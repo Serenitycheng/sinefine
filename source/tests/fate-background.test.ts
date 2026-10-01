@@ -117,7 +117,7 @@ void test('quiet sleeping rounds do not force billable conversations or move the
   const original = backup(),
     life = original.save.life!;
   life.minutes = 23 * 60;
-  life.indoor = { actor: 'shirou', home: 'emiya', x: 235, y: 379 };
+  life.indoor = { actor: 'shirou', home: 'emiya', x: 235, y: 379, layout: 2 };
   life.positions.shirou = { x: FATE_HOMES.emiya.x, y: FATE_HOMES.emiya.y };
   for (const id of LIFE_IDS) {
     life.people[id].activity = {

@@ -31,7 +31,6 @@ import {
 } from 'lucide-react';
 import {
   STREET,
-  cameraFor,
   clamp,
   createStreetActors,
   directionFromKeys,
@@ -45,6 +44,8 @@ import {
   type Point,
 } from '@/lib/street';
 import { pickGamepad, readGamepad, type PadHistory } from '@/lib/gamepad';
+import { sceneCameraFor, easeCamera } from '@/lib/fate-camera';
+import { BUILDING_ATLAS } from '@/lib/fate-environment';
 import {
   liveEncounter,
   liveSpeech,
@@ -281,7 +282,7 @@ const BASE_CAST = [
     aspect: 0.75,
   },
 ];
-const ASSETS = [...new Set(BASE_CAST.map((p) => p.image))];
+const ASSETS = [BUILDING_ATLAS, ...new Set(BASE_CAST.map((p) => p.image))];
 const MOVE_KEYS = new Set([
   'w',
   'a',
@@ -418,6 +419,7 @@ export default function StreetWalk({
   const keys = useRef(new Set<string>());
   const touchKeys = useRef(new Set<string>());
   const camera = useRef({ x: 0, y: 0, scale: 1 });
+  const cameraScene = useRef<'street' | 'map' | null>(null);
   const viewport = useRef({ width: 1000, height: 600 });
   const freeView = useRef<Point>({
     ...DISTRICT_LANDMARKS.find((place) => place.id === 'cafe')!,
@@ -430,6 +432,10 @@ export default function StreetWalk({
     y: number;
     world: Point;
     dragged: boolean;
+  } | null>(null);
+  const pinch = useRef<{
+    first: number; second: number; firstPoint: Point; secondPoint: Point;
+    distance: number; zoom: number;
   } | null>(null);
   const settings = useRef({
     active,
@@ -524,13 +530,22 @@ export default function StreetWalk({
     const resize = new ResizeObserver((entries) => {
       const r = entries[0].contentRect;
       viewport.current = { width: r.width, height: r.height };
+      cameraScene.current = null;
     });
     resize.observe(host);
     const stop = () => {
       keys.current.clear();
       touchKeys.current.clear();
       padHistory.current = null;
+      pinch.current = null;
+      pointer.current = null;
     };
+    const wheel = (event: WheelEvent) => {
+      if (!settings.current.ready || settings.current.interior) return;
+      event.preventDefault();
+      setZoom((current) => clamp(current - Math.sign(event.deltaY) * 0.1, 1, 1.8));
+    };
+    host.addEventListener('wheel', wheel, { passive: false });
     const keyDown = (e: KeyboardEvent) => {
       if (
         (e.target as HTMLElement)?.closest(
@@ -761,18 +776,11 @@ export default function StreetWalk({
             setScenePlace(place);
           }
         }
-        const next = cameraFor(
-          opts.scene === 'street' ? streetScenePoint(point) : point,
-          viewport.current.width,
-          viewport.current.height,
-          opts.zoom,
-          opts.scene === 'street'
-            ? {
-                x: STREET.width * STREET_SCENE_SCALE,
-                y: STREET.height * STREET_SCENE_SCALE,
-              }
-            : { x: STREET.width, y: STREET.height },
-        );
+        const target = sceneCameraFor(point, viewport.current.width,
+          viewport.current.height, opts.zoom, opts.scene);
+        const next = easeCamera(camera.current, target, dt,
+          cameraScene.current !== opts.scene || window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+        cameraScene.current = opts.scene;
         camera.current = next;
         if (world.current) {
           world.current.style.transform = `translate(${-next.x * next.scale}px,${-next.y * next.scale}px) scale(${next.scale})`;
@@ -812,6 +820,7 @@ export default function StreetWalk({
       window.removeEventListener('keyup', keyUp);
       window.removeEventListener('blur', stop);
       document.removeEventListener('visibilitychange', stop);
+      host.removeEventListener('wheel', wheel);
     };
   }, []);
 
@@ -945,7 +954,7 @@ export default function StreetWalk({
   function walkInside(point: Point) {
     const position = daily.currentIndoor();
     if (!position) return;
-    indoorPath.current = indoorRoute(position, point);
+    indoorPath.current = indoorRoute(position, point, position.home);
     interiorSurface.current?.focus({ preventScroll: true });
   }
   function indoorDirection(key: string, pressed: boolean) {
@@ -1055,6 +1064,18 @@ export default function StreetWalk({
     if (e.button !== 0 || !ready) return;
     stage.current?.focus({ preventScroll: true });
     e.currentTarget.setPointerCapture(e.pointerId);
+    if (e.pointerType === 'touch' && pointer.current) {
+      const first = pointer.current;
+      first.dragged = true;
+      pinch.current = {
+        first: first.id, second: e.pointerId,
+        firstPoint: { x: first.x, y: first.y },
+        secondPoint: { x: e.clientX, y: e.clientY },
+        distance: Math.max(1, Math.hypot(first.x - e.clientX, first.y - e.clientY)),
+        zoom: settings.current.zoom,
+      };
+      return;
+    }
     pointer.current = {
       id: e.pointerId,
       x: e.clientX,
@@ -1064,6 +1085,16 @@ export default function StreetWalk({
     };
   }
   function onPointerMove(e: PointerEvent<HTMLDivElement>) {
+    const gesture = pinch.current;
+    if (gesture && (e.pointerId === gesture.first || e.pointerId === gesture.second)) {
+      const point = { x: e.clientX, y: e.clientY };
+      if (e.pointerId === gesture.first) gesture.firstPoint = point;
+      else gesture.secondPoint = point;
+      const distance = Math.hypot(gesture.firstPoint.x - gesture.secondPoint.x,
+        gesture.firstPoint.y - gesture.secondPoint.y);
+      setZoom(clamp(gesture.zoom * distance / gesture.distance, 1, 1.8));
+      return;
+    }
     const p = pointer.current;
     if (!p || p.id !== e.pointerId) return;
     if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 6) p.dragged = true;
@@ -1090,6 +1121,11 @@ export default function StreetWalk({
     }
   }
   function onPointerUp(e: PointerEvent<HTMLDivElement>) {
+    if (pinch.current) {
+      pinch.current = null;
+      pointer.current = null;
+      return;
+    }
     const p = pointer.current;
     pointer.current = null;
     if (!p || p.dragged || mode !== 'control') return;
@@ -1239,11 +1275,12 @@ export default function StreetWalk({
             onPointerUp={onPointerUp}
             onPointerCancel={() => {
               pointer.current = null;
+              pinch.current = null;
             }}
           >
             <div
               ref={world}
-              className={styles.world}
+              className={`${styles.world} ${scene === 'map' ? styles.mapWorld : ''}`}
               style={{
                 width:
                   STREET.width * (scene === 'street' ? STREET_SCENE_SCALE : 1),
@@ -1255,7 +1292,7 @@ export default function StreetWalk({
                 <FateStreetScenery period={period} />
               ) : (
                 <div className={styles.background}>
-                  <FateCityScenery />
+                  <FateCityScenery period={period} />
                 </div>
               )}
               {ready &&
@@ -1265,12 +1302,17 @@ export default function StreetWalk({
                     type="button"
                     key={place.id}
                     className={styles.landmark}
-                    style={{ left: place.x, top: place.y - 147 }}
+                    style={{ left: place.x, top: place.y - 64 }}
                     aria-label={'查看' + place.name}
                     onClick={() => selectPlace(place)}
                   >
                     <MapPin size={13} />
-                    {place.name}
+                    <span>{place.id === 'einzbern' ? '切嗣新居' :
+                      place.id === 'temple' ? '柳洞寺' :
+                      place.id === 'school' ? '穗群原学园' :
+                      place.id === 'shops' ? '商店侧巷' :
+                      place.id === 'park' ? '河岸公园' :
+                      place.name.split(' · ')[0].replace('士郎的家', '')}</span>
                   </button>
                 ))}
               {ready &&
@@ -1290,7 +1332,7 @@ export default function StreetWalk({
                         if (node) actorElements.current.set(person.id, node);
                         else actorElements.current.delete(person.id);
                       }}
-                      className={`${styles.actor} ${person.id === 'iskandar' ? styles.mounted : ''} ${person.id === active && mode === 'control' ? styles.controlled : ''} ${person.id === nearby ? styles.nearbyActor : ''}`}
+                      className={`${styles.actor} ${person.id === 'iskandar' ? styles.mounted : ''} ${person.id === active ? styles.selectedActor : ''} ${person.id === active && mode === 'control' ? styles.controlled : ''} ${person.id === nearby ? styles.nearbyActor : ''}`}
                       style={{
                         width: height * person.aspect,
                         height,

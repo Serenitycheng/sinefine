@@ -13,6 +13,7 @@ import {
 import { FATE_HOMES } from '../lib/fate-housing';
 import { createDailyLife, parseDailyLife } from '../lib/fate-life';
 import type { Point } from '../lib/street';
+import { roomPoint, HOME_ROOMS, type RoomZone } from '../lib/fate-indoor-layout';
 
 function follow(from: Point, destination: Point): Point {
   let position = from;
@@ -54,7 +55,7 @@ void test('a character can cross the corridor between all four rooms and return 
     assert.ok(Math.hypot(position.x - room.x, position.y - room.y) < 1);
   }
   assert.ok(nearIndoorDoor(position));
-  assert.deepEqual(rooms.map(indoorRoom), ['lounge', 'table', 'study', 'rest']);
+  assert.deepEqual(rooms.map((point) => indoorRoom(point)), ['lounge', 'table', 'study', 'rest']);
 });
 
 void test('indoor movement is bounded and a floor click outside the building snaps to the floor', () => {
@@ -84,7 +85,7 @@ void test('an indoor save from before furniture collisions moves only its indoor
   assert.deepEqual(restored.positions.shirou, life.positions.shirou);
 });
 
-void test('all ten homes restore the same indoor room and coordinate without changing outdoor position', () => {
+void test('all ten homes migrate legacy positions into their distinct room layout without changing outdoor position', () => {
   for (const [home, door] of Object.entries(FATE_HOMES)) {
     assert.ok(nearHomeEntrance(door, home as keyof typeof FATE_HOMES));
     assert.ok(
@@ -102,11 +103,35 @@ void test('all ten homes restore the same indoor room and coordinate without cha
       y: 379,
     };
     const restored = parseDailyLife(JSON.parse(JSON.stringify(life)));
-    assert.deepEqual(restored.indoor, life.indoor, home);
+    assert.equal(restored.indoor?.layout, 2, home);
+    assert.equal(indoorRoom(restored.indoor!, home as keyof typeof FATE_HOMES), 'study', home);
+    assert.ok(isIndoorWalkable(restored.indoor!, home as keyof typeof FATE_HOMES), home);
     assert.deepEqual(restored.positions.shirou, life.positions.shirou, home);
     delete life.indoor;
     assert.equal(parseDailyLife(life).indoor, undefined, home);
   }
+});
+
+void test('all ten home layouts keep four rooms accessible and preserve current save coordinates', () => {
+  const arrangements = new Set<string>();
+  for (const [home, door] of Object.entries(FATE_HOMES)) {
+    const homeId = home as keyof typeof FATE_HOMES;
+    arrangements.add(HOME_ROOMS[homeId].join(','));
+    const life = createDailyLife();
+    life.positions.shirou = { x: door.x, y: door.y };
+    for (const [zone, canonical] of Object.entries({
+      lounge: { x: 238, y: 186 }, table: { x: 620, y: 190 },
+      study: { x: 240, y: 390 }, rest: { x: 565, y: 395 },
+    }) as Array<[RoomZone, Point]>) {
+      const destination = roomPoint(homeId, zone, canonical);
+      assert.equal(indoorRoom(destination, homeId), zone);
+      assert.ok(isIndoorWalkable(destination, homeId));
+      assert.ok(indoorRoute(INDOOR_ENTRY, destination, homeId).length > 0);
+      life.indoor = { actor: 'shirou', home: homeId, ...destination, layout: 2 };
+      assert.deepEqual(parseDailyLife(life).indoor, life.indoor);
+    }
+  }
+  assert.equal(arrangements.size, 10);
 });
 
 void test('invalid indoor saves cannot place a character beyond their entry door or inside a wall', () => {

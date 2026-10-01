@@ -1,4 +1,5 @@
 import type { HomeId } from '@/lib/fate-housing';
+import { HOME_ROOMS, roomOffset, roomTranslation } from '@/lib/fate-indoor-layout';
 
 type Palette = {
   wall: string;
@@ -338,14 +339,15 @@ export function FateIndoorScene({
       <rect x="44" y="44" width="632" height="370" fill={p.floor} />
       <rect x="44" y="44" width="632" height="370" fill="url(#indoor-planks)" />
       <rect
-        x="394"
-        y="44"
+        x={394 + roomOffset(home, 'table').x}
+        y={44 + roomOffset(home, 'table').y}
         width="282"
         height="158"
         fill="#d6c8aa"
         opacity=".55"
       />
-      <rect x="394" y="44" width="282" height="158" fill="url(#indoor-tile)" />
+      <rect x={394 + roomOffset(home, 'table').x} y={44 + roomOffset(home, 'table').y}
+        width="282" height="158" fill="url(#indoor-tile)" />
       {japanese && (
         <>
           <rect
@@ -434,6 +436,7 @@ export function FateIndoorScene({
       />
 
       {/* Lounge: upholstered seating, woven rug, table and a lived-in sideboard. */}
+      <g transform={roomTranslation(home, 'lounge')}>
       <rect
         x="82"
         y="87"
@@ -493,8 +496,10 @@ export function FateIndoorScene({
       />
       <Books x={262} y={104} count={2} />
       <Plant x={281} y={182} />
+      </g>
 
       {/* Kitchen: cupboards, sink, stove, dining table, plates and chairs. */}
+      <g transform={roomTranslation(home, 'table')}>
       <rect
         x="413"
         y="83"
@@ -590,8 +595,10 @@ export function FateIndoorScene({
         strokeWidth="2"
       />
       <Plant x={648} y={178} />
+      </g>
 
       {/* Study: shelves have individual book spines; desk retains open floor around it. */}
+      <g transform={roomTranslation(home, 'study')}>
       <rect
         x="63"
         y="285"
@@ -654,8 +661,10 @@ export function FateIndoorScene({
         </>
       )}
       <Plant x={275} y={388} />
+      </g>
 
       {/* Bedroom: layered bedding, folded blanket, bedside lamp and storage. */}
+      <g transform={roomTranslation(home, 'rest')}>
       <rect
         x="474"
         y="282"
@@ -729,6 +738,7 @@ export function FateIndoorScene({
       />
       <path d="M422 328h27M422 351h27" stroke="#dec08b" strokeWidth="2" />
       <Plant x={650} y={389} />
+      </g>
 
       {/* Open thresholds line up with the walkable cross; walls frame the rooms. */}
       <path
@@ -806,14 +816,13 @@ export function FateIndoorScene({
           opacity=".28"
         />
       )}
-      <Lamp x={220} y={178} night={night} />
-      <Lamp x={608} y={178} night={night} />
-      <Lamp x={205} y={389} night={night} />
-      <Lamp x={642} y={369} night={night} />
-      <RoomTag x={65} y={50} label={rooms[0]} />
-      <RoomTag x={414} y={50} label={rooms[1]} />
-      <RoomTag x={65} y={264} label={rooms[2]} />
-      <RoomTag x={414} y={264} label={rooms[3]} />
+      <g transform={roomTranslation(home, 'lounge')}><Lamp x={220} y={178} night={night} /></g>
+      <g transform={roomTranslation(home, 'table')}><Lamp x={608} y={178} night={night} /></g>
+      <g transform={roomTranslation(home, 'study')}><Lamp x={205} y={389} night={night} /></g>
+      <g transform={roomTranslation(home, 'rest')}><Lamp x={642} y={369} night={night} /></g>
+      {HOME_ROOMS[home].map((zone, index) => <RoomTag key={zone}
+        x={[65, 414, 65, 414][index]} y={[50, 50, 264, 264][index]}
+        label={rooms[['lounge', 'table', 'study', 'rest'].indexOf(zone)]} />)}
     </svg>
   );
 }

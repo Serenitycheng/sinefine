@@ -7,6 +7,7 @@ import {
   type LifePerson,
 } from './fate-life';
 import type { ActorId, Point } from './street';
+import { roomPoint } from './fate-indoor-layout';
 
 export type InteriorZone = 'lounge' | 'table' | 'study' | 'rest';
 export type InteriorResident = {
@@ -36,7 +37,8 @@ export function interiorResidentPoint(
     rest: { x: 565, y: 395 },
   };
   const base = anchors[residents[index].zone];
-  return { x: base.x + (index % 3) * 26 - 26, y: base.y };
+  return roomPoint(home, residents[index].zone,
+    { x: base.x + (index % 3) * 26 - 26, y: base.y });
 }
 
 export function interiorZone(activity: LifePerson['activity']): InteriorZone {

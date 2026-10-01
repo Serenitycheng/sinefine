@@ -1,479 +1,116 @@
+'use client';
+
+import { memo, useId } from 'react';
 import { DISTRICT_LANDMARKS, STREET_SCENE_SCALE } from '@/lib/fate-district';
+import { ATLAS_SIZE, BUILDING_ATLAS, BUILDING_FRAMES, LANDMARK_WIDTH,
+  NEIGHBOURHOOD_BUILDINGS, overlapsStreet, type BuildingFrame } from '@/lib/fate-environment';
 import { STREET, WALK_AREAS, type Rect } from '@/lib/street';
 import styles from './street-walk.module.css';
 
-function overlapsRoad(x: number, y: number, width: number, height: number) {
-  return WALK_AREAS.some(
-    (road) =>
-      x < road.right + 12 &&
-      x + width > road.left - 12 &&
-      y < road.bottom + 12 &&
-      y + height > road.top - 12,
-  );
+function PaintedBuilding({ frame, x, bottom, width, height }: {
+  frame: BuildingFrame; x: number; bottom: number; width: number; height?: number;
+}) {
+  const [sx, sy, sw, sh] = BUILDING_FRAMES[frame];
+  const h = height ?? width * sh / sw;
+  return <svg x={x - width / 2} y={bottom - h} width={width} height={h}
+    viewBox={`${sx} ${sy} ${sw} ${sh}`} overflow="hidden" preserveAspectRatio="xMidYMax meet">
+    <image href={BUILDING_ATLAS} width={ATLAS_SIZE} height={ATLAS_SIZE} />
+  </svg>;
 }
 
-const buildings = Array.from({ length: 18 * 10 }, (_, index) => {
-  const column = index % 18;
-  const row = Math.floor(index / 18);
-  const x = 95 + column * 168 + (row % 2) * 22;
-  const y = 100 + row * 155;
-  const width = 110 + ((index * 17) % 34);
-  const height = 78 + ((index * 23) % 28);
-  if ((x > 1500 && x < 1760) || overlapsRoad(x, y, width, height)) return null;
-  return { x, y, width, height, variant: (index * 7 + row) % 5 };
-}).filter((building): building is NonNullable<typeof building> =>
-  Boolean(building),
-);
-
-const horizontalRoads = WALK_AREAS.filter(
-  (road) => road.right - road.left > road.bottom - road.top,
-);
-const verticalRoads = WALK_AREAS.filter(
-  (road) => road.right - road.left <= road.bottom - road.top,
-);
-
-function Road({ road, horizontal }: { road: Rect; horizontal: boolean }) {
-  const width = road.right - road.left;
-  const height = road.bottom - road.top;
-  return (
-    <g>
-      <rect
-        x={road.left - 9}
-        y={road.top - 9}
-        width={width + 18}
-        height={height + 18}
-        rx="11"
-        fill="#d5d1bd"
-      />
-      <rect
-        x={road.left}
-        y={road.top}
-        width={width}
-        height={height}
-        rx="5"
-        fill="#626d6c"
-      />
-      {horizontal ? (
-        <>
-          <path
-            d={`M ${road.left + 12} ${road.top + 9} H ${road.right - 12} M ${road.left + 12} ${road.bottom - 9} H ${road.right - 12}`}
-            stroke="#b1aca0"
-            strokeWidth="2"
-            opacity=".6"
-          />
-          <path
-            d={`M ${road.left + 22} ${(road.top + road.bottom) / 2} H ${road.right - 22}`}
-            stroke="#efe4ba"
-            strokeWidth="2"
-            strokeDasharray="25 28"
-            opacity=".72"
-          />
-        </>
-      ) : (
-        <>
-          <path
-            d={`M ${road.left + 9} ${road.top + 12} V ${road.bottom - 12} M ${road.right - 9} ${road.top + 12} V ${road.bottom - 12}`}
-            stroke="#b1aca0"
-            strokeWidth="2"
-            opacity=".6"
-          />
-          <path
-            d={`M ${(road.left + road.right) / 2} ${road.top + 22} V ${road.bottom - 22}`}
-            stroke="#efe4ba"
-            strokeWidth="2"
-            strokeDasharray="25 28"
-            opacity=".72"
-          />
-        </>
-      )}
-    </g>
-  );
+function Road({ road, prefix }: { road: Rect; prefix: string }) {
+  const w = road.right - road.left;
+  const h = road.bottom - road.top;
+  const horizontal = w > h;
+  const bridge = road.left === 1500;
+  return <g>
+    <rect x={road.left - 10} y={road.top - 10} width={w + 20} height={h + 20}
+      fill={bridge ? '#c7c3b0' : `url(#${prefix}-paving)`} rx="5" />
+    <rect x={road.left} y={road.top} width={w} height={h} rx="3" fill={`url(#${prefix}-asphalt)`} />
+    <rect x={road.left} y={road.top} width={w} height={h} rx="3" fill={`url(#${prefix}-grain)`} opacity=".25" />
+    {horizontal ? <>
+      <path d={`M${road.left} ${road.top + 6}h${w}M${road.left} ${road.bottom - 6}h${w}`}
+        stroke="#e3dcc3" strokeWidth="2" opacity=".7" />
+      <path d={`M${road.left} ${road.top + h / 2}h${w}`} stroke="#dfd7b6"
+        strokeWidth="2" strokeDasharray="22 22" opacity=".5" />
+    </> : <path d={`M${road.left + 5} ${road.top}v${h}M${road.right - 5} ${road.top}v${h}`}
+      stroke="#ddd6ba" strokeWidth="2" opacity=".6" />}
+    {bridge && <g stroke="#53646a" strokeWidth="4">
+      <path d={`M1500 ${road.top - 7}h270M1500 ${road.bottom + 7}h270`} />
+      {Array.from({length: 10}, (_, i) => <path key={i}
+        d={`M${1503 + i * 29} ${road.top - 14}v14M${1503 + i * 29} ${road.bottom}v14`} />)}
+    </g>}
+  </g>;
 }
 
-function Building({
-  x,
-  y,
-  width,
-  height,
-  variant,
-}: NonNullable<(typeof buildings)[number]>) {
-  const wall = ['#dccbb2', '#b9c6ba', '#d7c5b7', '#b5bdc0', '#d1c5a3'][variant];
-  const roof = ['#667a78', '#657484', '#896e6c', '#687764', '#866f62'][variant];
-  return (
-    <g>
-      <rect
-        x={x + 8}
-        y={y + 12}
-        width={width}
-        height={height}
-        rx="5"
-        fill="#172b2b"
-        opacity=".22"
-      />
-      <rect
-        x={x}
-        y={y + 16}
-        width={width}
-        height={height - 16}
-        rx="3"
-        fill={wall}
-        stroke="#465957"
-        strokeWidth="2"
-      />
-      <path
-        d={`M ${x - 7} ${y + 18} L ${x + width / 2} ${y - 13} L ${x + width + 7} ${y + 18} Z`}
-        fill={roof}
-        stroke="#394d4c"
-        strokeWidth="4"
-      />
-      <path
-        d={`M ${x + 10} ${y + 29} H ${x + width - 10}`}
-        stroke="#f3e8cd"
-        strokeWidth="3"
-        opacity=".55"
-      />
-      {[0, 1, 2].map((pane) => (
-        <rect
-          key={pane}
-          x={x + 13 + pane * ((width - 30) / 3)}
-          y={y + 39}
-          width="19"
-          height="20"
-          rx="2"
-          fill="#7baba9"
-          stroke="#eddbbd"
-          strokeWidth="3"
-        />
-      ))}
-      <rect
-        x={x + width / 2 - 13}
-        y={y + height - 24}
-        width="26"
-        height="24"
-        fill="#756c5d"
-        stroke="#e5d3ad"
-        strokeWidth="3"
-      />
-    </g>
-  );
-}
+const TREES = Array.from({ length: 110 }, (_, i) => ({
+  x: 85 + (i * 337) % 2920, y: 165 + (i * 257) % 1390, size: 18 + i % 7,
+})).filter((p) => !(p.x > 1470 && p.x < 1800) && !overlapsStreet(p.x, p.y, 45, 52) &&
+  !DISTRICT_LANDMARKS.some((l) => Math.abs(l.x - p.x) < 150 && p.y > l.y - 270 && p.y < l.y + 30));
+const LAMPS = WALK_AREAS.filter((r) => r.right - r.left > 1000).flatMap((r) =>
+  Array.from({ length: 5 }, (_, i) => ({x: r.left + 115 + i * 245, y: r.top - 12})));
 
-function LandmarkFront({ id }: { id: string }) {
-  if (id === 'park')
-    return (
-      <g>
-        <ellipse
-          cx="0"
-          cy="-82"
-          rx="85"
-          ry="48"
-          fill="#7fa182"
-          stroke="#d5d1b2"
-          strokeWidth="7"
-        />
-        <ellipse cx="9" cy="-88" rx="35" ry="19" fill="#7caaa9" />
-        <circle cx="-55" cy="-103" r="24" fill="#42705d" />
-        <circle cx="60" cy="-100" r="25" fill="#507964" />
-        <path
-          d="M -72 -39 Q 0 -59 72 -39"
-          stroke="#d1bc8d"
-          strokeWidth="5"
-          fill="none"
-        />
-      </g>
-    );
-  if (id === 'temple')
-    return (
-      <g>
-        <path
-          d="M -73 -44 V -110 M 73 -44 V -110 M -93 -106 H 93 M -75 -119 H 75"
-          stroke="#9a4c3f"
-          strokeWidth="12"
-          fill="none"
-        />
-        <path
-          d="M -100 -117 Q 0 -153 100 -117"
-          fill="none"
-          stroke="#5b6560"
-          strokeWidth="11"
-        />
-        <path d="M -13 -44 V -71 H 13 V -44" fill="#a6a69a" />
-      </g>
-    );
-  if (id === 'church')
-    return (
-      <g>
-        <rect
-          x="-72"
-          y="-122"
-          width="144"
-          height="81"
-          fill="#d1cbb8"
-          stroke="#647270"
-          strokeWidth="4"
-        />
-        <path
-          d="M -84 -122 L 0 -166 L 84 -122 Z"
-          fill="#62707a"
-          stroke="#3d5254"
-          strokeWidth="5"
-        />
-        <path
-          d="M 0 -177 V -143 M -12 -167 H 12"
-          stroke="#e7d6a4"
-          strokeWidth="5"
-        />
-        <path d="M -14 -41 V -81 H 14 V -41" fill="#526362" />
-        <circle
-          cx="0"
-          cy="-112"
-          r="14"
-          fill="#9db8b4"
-          stroke="#e5d9bc"
-          strokeWidth="4"
-        />
-      </g>
-    );
-  if (id === 'cafe' || id === 'shops')
-    return (
-      <g>
-        <rect
-          x="-76"
-          y="-119"
-          width="152"
-          height="80"
-          rx="3"
-          fill={id === 'cafe' ? '#c8b19c' : '#bac2b6'}
-          stroke="#55625c"
-          strokeWidth="4"
-        />
-        <path
-          d="M -81 -122 L -63 -144 H 66 L 81 -122 Z"
-          fill="#6a7775"
-          stroke="#425451"
-          strokeWidth="4"
-        />
-        <path
-          d="M -76 -81 H 76 L 69 -63 H -69 Z"
-          fill={id === 'cafe' ? '#7c9a94' : '#a8826d'}
-          stroke="#ebe1c6"
-          strokeWidth="4"
-        />
-        <path
-          d="M -51 -82 V -65 M -18 -82 V -65 M 16 -82 V -65 M 50 -82 V -65"
-          stroke="#efe6cd"
-          strokeWidth="4"
-        />
-        <rect
-          x="-56"
-          y="-60"
-          width="36"
-          height="21"
-          fill="#739796"
-          stroke="#efe6cd"
-          strokeWidth="3"
-        />
-        <rect
-          x="22"
-          y="-60"
-          width="35"
-          height="21"
-          fill="#739796"
-          stroke="#efe6cd"
-          strokeWidth="3"
-        />
-        <rect
-          x="-11"
-          y="-60"
-          width="24"
-          height="21"
-          fill="#665d52"
-          stroke="#e4d7b8"
-          strokeWidth="3"
-        />
-      </g>
-    );
-  if (id === 'school')
-    return (
-      <g>
-        <rect
-          x="-91"
-          y="-130"
-          width="182"
-          height="90"
-          fill="#e0d4b8"
-          stroke="#606e69"
-          strokeWidth="5"
-        />
-        <path d="M -97 -131 H 97 L 78 -148 H -77 Z" fill="#6a7672" />
-        {[-64, -32, 0, 32, 64].map((x) => (
-          <rect
-            key={x}
-            x={x - 9}
-            y="-111"
-            width="18"
-            height="22"
-            fill="#8bb4ae"
-            stroke="#f7e9c8"
-            strokeWidth="3"
-          />
-        ))}
-        <rect x="-13" y="-67" width="26" height="27" fill="#776c59" />
-      </g>
-    );
-  return null;
-}
-
-export function FateStreetScenery({ period }: { period: string }) {
-  return (
-    <div
-      className={styles.continuousScenery}
-      style={{
-        width: STREET.width * STREET_SCENE_SCALE,
-        height: STREET.height * STREET_SCENE_SCALE,
-        filter:
-          period === '夜间'
-            ? 'brightness(.52) saturate(.8)'
-            : period === '傍晚'
-              ? 'brightness(.83) sepia(.14)'
-              : undefined,
-      }}
-      aria-hidden="true"
-    >
-      <svg
-        className={styles.sceneryWorld}
-        viewBox={`0 0 ${STREET.width} ${STREET.height}`}
-        preserveAspectRatio="none"
-      >
-        <defs>
-          <pattern
-            id="fuyuki-ground"
-            width="32"
-            height="32"
-            patternUnits="userSpaceOnUse"
-          >
-            <rect width="32" height="32" fill="#9caa8e" />
-            <path
-              d="M 0 31 H 32 M 31 0 V 32"
-              stroke="#dde0c0"
-              strokeWidth="1"
-              opacity=".17"
-            />
-          </pattern>
-          <pattern
-            id="fuyuki-water"
-            width="38"
-            height="48"
-            patternUnits="userSpaceOnUse"
-          >
-            <rect width="38" height="48" fill="#6996a0" />
-            <path
-              d="M 4 14 Q 17 9 29 14 M 10 35 Q 22 30 38 35"
-              fill="none"
-              stroke="#c3d7c9"
-              strokeWidth="3"
-              opacity=".38"
-            />
-          </pattern>
-        </defs>
-        <rect
-          width={STREET.width}
-          height={STREET.height}
-          fill="url(#fuyuki-ground)"
-        />
-        <path
-          d="M 0 0 H 1480 V 275 Q 1070 205 710 265 Q 360 312 0 230 Z"
-          fill="#6f8b72"
-        />
-        <path
-          d="M 0 0 H 1480 V 150 Q 800 105 0 165 Z"
-          fill="#4b6f65"
-          opacity=".65"
-        />
-        <rect
-          x="1512"
-          y="0"
-          width="247"
-          height={STREET.height}
-          fill="#ced1b6"
-        />
-        <rect
-          x="1530"
-          y="0"
-          width="210"
-          height={STREET.height}
-          fill="url(#fuyuki-water)"
-        />
-        <path
-          d="M 1518 0 V 1660 M 1752 0 V 1660"
-          stroke="#e9e1c7"
-          strokeWidth="8"
-        />
-        {buildings.map((building, index) => (
-          <Building key={index} {...building} />
-        ))}
-        {horizontalRoads.map((road, index) => (
-          <Road key={`h${index}`} road={road} horizontal />
-        ))}
-        {verticalRoads.map((road, index) => (
-          <Road key={`v${index}`} road={road} horizontal={false} />
-        ))}
-        {Array.from({ length: 52 }, (_, index) => {
-          const bank = index < 26 ? 0 : 1;
-          const x = bank
-            ? 1810 + ((index * 179) % 1120)
-            : 170 + ((index * 211) % 1290);
-          const y = 245 + ((index * 257) % 1180);
-          if (overlapsRoad(x - 19, y - 19, 38, 38)) return null;
-          return (
-            <g key={index}>
-              <ellipse
-                cx={x + 5}
-                cy={y + 8}
-                rx="22"
-                ry="14"
-                fill="#253e3e"
-                opacity=".23"
-              />
-              <circle
-                cx={x}
-                cy={y}
-                r="19"
-                fill="#4e745d"
-                stroke="#315b52"
-                strokeWidth="4"
-              />
-              <circle cx={x - 6} cy={y - 6} r="8" fill="#9cba8d" opacity=".7" />
-            </g>
-          );
-        })}
-        {DISTRICT_LANDMARKS.map((place) => (
-          <g key={place.id} transform={`translate(${place.x} ${place.y})`}>
-            <LandmarkFront id={place.id} />
-            <circle r="22" fill="#263d3a" stroke="#f0d294" strokeWidth="3" />
-            <circle r="7" fill="#f0d294" />
-            <rect
-              x={-Math.max(122, place.name.length * 17 + 16) / 2}
-              y="-65"
-              width={Math.max(122, place.name.length * 17 + 16)}
-              height="28"
-              rx="5"
-              fill="#203a38"
-              opacity=".94"
-            />
-            <text
-              y="-46"
-              textAnchor="middle"
-              fontSize="15"
-              fontWeight="700"
-              fill="#fff4d5"
-              fontFamily="Arial, Microsoft YaHei, sans-serif"
-            >
-              {place.name}
-            </text>
-          </g>
-        ))}
-      </svg>
-    </div>
-  );
-}
+export const FateStreetScenery = memo(function FateStreetScenery({
+  period = '午后', map = false, miniature = false, labels = true,
+}: { period?: string; map?: boolean; miniature?: boolean; labels?: boolean }) {
+  const prefix = useId().replace(/:/g, '');
+  const night = period === '夜间';
+  const sunset = period === '傍晚';
+  return <div className={map ? styles.mapScenery : styles.continuousScenery} aria-hidden="true"
+    style={map ? undefined : {width: STREET.width * STREET_SCENE_SCALE, height: STREET.height * STREET_SCENE_SCALE}}>
+    <svg className={styles.sceneryWorld} viewBox={`0 0 ${STREET.width} ${STREET.height}`} preserveAspectRatio="none">
+      <defs>
+        <linearGradient id={`${prefix}-land`} x2="0" y2="1"><stop stopColor="#a9b693"/><stop offset="1" stopColor="#c4c1a1"/></linearGradient>
+        <linearGradient id={`${prefix}-asphalt`} x2="0" y2="1"><stop stopColor="#778181"/><stop offset="1" stopColor="#89908b"/></linearGradient>
+        <linearGradient id={`${prefix}-river`} x2="1" y2="0"><stop stopColor="#799e9d"/><stop offset=".5" stopColor="#8db7ad"/><stop offset="1" stopColor="#6e9296"/></linearGradient>
+        <radialGradient id={`${prefix}-glow`}><stop stopColor="#ffd697" stopOpacity=".65"/><stop offset="1" stopColor="#ffc774" stopOpacity="0"/></radialGradient>
+        <pattern id={`${prefix}-paving`} width="24" height="18" patternUnits="userSpaceOnUse">
+          <rect width="24" height="18" fill="#c0bda5"/><path d="M0 0h24M0 9h24M12 0v9M0 9v9M24 9v9" stroke="#a8aa97" strokeWidth=".7"/>
+        </pattern>
+        <pattern id={`${prefix}-grain`} width="37" height="29" patternUnits="userSpaceOnUse">
+          <path d="M3 4h2m13 4h1m-5 15h2m17-6h1" stroke="#ddd9c6" strokeWidth=".7"/>
+        </pattern>
+        <pattern id={`${prefix}-water`} width="97" height="73" patternUnits="userSpaceOnUse">
+          <path d="M3 18q16-4 31 0m23 26q15-4 26 0m-72 22q10-3 24 0" stroke="#c5ddd1" strokeWidth="1.4" fill="none" opacity=".5"/>
+        </pattern>
+      </defs>
+      <rect width="3100" height="1660" fill={`url(#${prefix}-land)`}/>
+      <path d="M0 0h1410l-135 100-240 20-200-45-310 80-290-30L0 180Z" fill="#718c6f" opacity=".5"/>
+      <path d="M0 18q220 75 400 10t340 30 300-5 380 50" fill="none" stroke="#b3c49e" strokeWidth="24" opacity=".45"/>
+      <rect x="1505" width="258" height="1660" fill={`url(#${prefix}-paving)`}/>
+      <rect x="1530" width="210" height="1660" fill={`url(#${prefix}-river)`}/>
+      <rect x="1530" width="210" height="1660" fill={`url(#${prefix}-water)`}/>
+      <path d="M1526 0v1660M1744 0v1660" stroke="#667b73" strokeWidth="6"/>
+      {NEIGHBOURHOOD_BUILDINGS.map((b, i) => <PaintedBuilding key={i} {...b} bottom={b.y}/>)}
+      {WALK_AREAS.map((road, i) => <Road key={i} road={road} prefix={prefix}/>)}
+      {[490, 890, 1255, 1880, 2245, 2685].flatMap((x) => [495, 907, 1390].map((y) =>
+        <g key={`${x}-${y}`} opacity=".75">
+          {Array.from({length: 5}, (_, i) => <rect key={i} x={x - 25 + i * 12} y={y - 40} width="6" height="22" fill="#e8e3ce"/>)}
+        </g>))}
+      {TREES.map((p, i) => <g key={i} transform={`translate(${p.x} ${p.y})`}>
+        <ellipse cy="7" cx="9" rx={p.size * 1.2} ry="12" fill="#3e534a" opacity=".24"/>
+        <path d="M0 0v-19" stroke="#6d6650" strokeWidth="5"/>
+        <path d={`M-${p.size} -15q-9-17 4-29q9-12 23-7q18-8 27 8q13 21-9 33q-24 13-45-5Z`} fill={i % 3 === 0 ? '#789668' : '#658869'} stroke="#536f58" strokeWidth="1.5"/>
+        <path d="M-15-28q-2-17 15-18m5 7q15-7 20 6m-28 14q13 8 24-1" stroke="#b4c795" strokeWidth="4" strokeLinecap="round" fill="none" opacity=".5"/>
+      </g>)}
+      {DISTRICT_LANDMARKS.map((p) => <g key={p.id}>
+        <path d={`M${p.x - 17} ${p.y - 58}h34v58h-34Z`} fill={`url(#${prefix}-paving)`}/>
+        <PaintedBuilding frame={p.id as BuildingFrame} x={p.x} bottom={p.y - 54} width={LANDMARK_WIDTH[p.id as BuildingFrame] ?? 235}/>
+        <ellipse cx={p.x} cy={p.y - 2} rx="12" ry="6" fill="#ece2bc" stroke="#7b8c77" strokeWidth="1.5"/>
+      </g>)}
+      {(night || sunset) && <rect width="3100" height="1660" fill={night ? '#152c47' : '#db9c61'} opacity={night ? '.52' : '.15'}/>}
+      {LAMPS.map((p, i) => <g key={i}>
+        {night && <ellipse cx={p.x} cy={p.y + 12} rx="75" ry="46" fill={`url(#${prefix}-glow)`}/>}
+        <path d={`M${p.x} ${p.y}v-35h9`} stroke="#58665c" strokeWidth="3"/>
+        <rect x={p.x + 4} y={p.y - 39} width="10" height="7" rx="2" fill={night ? '#ffe1a2' : '#eee1b8'} stroke="#667065"/>
+      </g>)}
+      {night && DISTRICT_LANDMARKS.map((p) => <ellipse key={p.id} cx={p.x} cy={p.y - 37} rx="39" ry="40" fill={`url(#${prefix}-glow)`}/>)}
+      {map && labels && <g fontFamily="Arial, Microsoft YaHei, sans-serif" fill="#f7edcd"
+        stroke="#3d5850" strokeWidth="5" paintOrder="stroke" fontWeight="650" letterSpacing="5">
+        <text x="185" y="110" fontSize={miniature ? 65 : 40}>深山町</text>
+        <text x="2070" y="110" fontSize={miniature ? 65 : 40}>新都</text>
+        <text x="1610" y="650" fontSize={miniature ? 50 : 28} transform="rotate(90 1610 650)">未远川</text>
+      </g>}
+    </svg>
+  </div>;
+});

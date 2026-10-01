@@ -1,10 +1,11 @@
 import { FATE_HOMES, type HomeId } from './fate-housing';
 import type { ActorId, Point, Rect } from './street';
+import { roomAt, roomPoint, type RoomZone } from './fate-indoor-layout';
 
 export const INDOOR_SIZE = { width: 720, height: 460 } as const;
 export const INDOOR_ENTRY: Point = { x: 360, y: 422 };
 export const INDOOR_SPEED = 104;
-export type IndoorPosition = Point & { home: HomeId; actor: ActorId };
+export type IndoorPosition = Point & { home: HomeId; actor: ActorId; layout?: 2 };
 export type IndoorRoom = 'lounge' | 'table' | 'study' | 'rest' | 'hall';
 
 export function nearHomeEntrance(point: Point, home: HomeId): boolean {
@@ -34,6 +35,20 @@ const FURNITURE: Rect[] = [
   { left: 493, right: 612, top: 289, bottom: 367 },
   { left: 626, right: 663, top: 301, bottom: 346 },
 ];
+const FURNITURE_ZONES: RoomZone[] = [
+  'lounge', 'lounge', 'lounge', 'table', 'table',
+  'study', 'study', 'rest', 'rest', 'rest',
+];
+function furnitureFor(home: HomeId): Rect[] {
+  return FURNITURE.map((rect, index) => {
+    const origin = roomPoint(home, FURNITURE_ZONES[index], { x: rect.left, y: rect.top });
+    return { left: origin.x, right: origin.x + rect.right - rect.left,
+      top: origin.y, bottom: origin.y + rect.bottom - rect.top };
+  });
+}
+const FURNITURE_BY_HOME = Object.fromEntries(
+  (Object.keys(FATE_HOMES) as HomeId[]).map((home) => [home, furnitureFor(home)]),
+) as Record<HomeId, Rect[]>;
 const CELL = 10;
 const COLUMNS = INDOOR_SIZE.width / CELL;
 const ROWS = INDOOR_SIZE.height / CELL;
@@ -48,12 +63,12 @@ const cellPoint = (index: number): Point => ({
   y: Math.floor(index / COLUMNS) * CELL + CELL / 2,
 });
 
-function nearestCell(point: Point): number {
+function nearestCell(point: Point, home: HomeId): number {
   let best = -1;
   let distance = Infinity;
   for (let index = 0; index < GRID_LENGTH; index++) {
     const candidate = cellPoint(index);
-    if (!isIndoorWalkable(candidate)) continue;
+    if (!isIndoorWalkable(candidate, home)) continue;
     const next = Math.hypot(candidate.x - point.x, candidate.y - point.y);
     if (next < distance) {
       best = index;
@@ -71,40 +86,40 @@ export function isIndoorFloor(point: Point): boolean {
   );
 }
 
-export function isIndoorWalkable(point: Point): boolean {
+export function isIndoorWalkable(point: Point, home: HomeId = 'emiya'): boolean {
   return (
-    isIndoorFloor(point) && !FURNITURE.some((item) => contains(item, point))
+    isIndoorFloor(point) && !FURNITURE_BY_HOME[home].some((item) => contains(item, point))
   );
 }
 
-export function nearestIndoorPoint(point: Point): Point {
+export function nearestIndoorPoint(point: Point, home: HomeId = 'emiya'): Point {
   if (!Number.isFinite(point.x) || !Number.isFinite(point.y))
     return { ...INDOOR_ENTRY };
-  if (isIndoorWalkable(point)) return point;
-  const index = nearestCell(point);
+  if (isIndoorWalkable(point, home)) return point;
+  const index = nearestCell(point, home);
   return index < 0 ? { ...INDOOR_ENTRY } : cellPoint(index);
 }
 
 /** Axis sliding keeps the character on a floor when a wall blocks a diagonal. */
-export function stepIndoor(point: Point, input: Point, dt: number): Point {
+export function stepIndoor(point: Point, input: Point, dt: number, home: HomeId = 'emiya'): Point {
   const length = Math.hypot(input.x, input.y);
   if (!length || !Number.isFinite(length) || !Number.isFinite(dt) || dt <= 0)
     return point;
   const speed = (INDOOR_SPEED * Math.min(dt, 0.05)) / Math.max(1, length);
   const x = point.x + input.x * speed;
   const y = point.y + input.y * speed;
-  if (isIndoorWalkable({ x, y })) return { x, y };
-  if (isIndoorWalkable({ x, y: point.y })) return { x, y: point.y };
-  if (isIndoorWalkable({ x: point.x, y })) return { x: point.x, y };
+  if (isIndoorWalkable({ x, y }, home)) return { x, y };
+  if (isIndoorWalkable({ x, y: point.y }, home)) return { x, y: point.y };
+  if (isIndoorWalkable({ x: point.x, y }, home)) return { x: point.x, y };
   return point;
 }
 
 /** Find an unobstructed path through the open thresholds and around furniture. */
-export function indoorRoute(from: Point, requested: Point): Point[] {
-  if (!isIndoorWalkable(from)) return [];
-  const to = nearestIndoorPoint(requested);
-  const start = nearestCell(from);
-  const goal = nearestCell(to);
+export function indoorRoute(from: Point, requested: Point, home: HomeId = 'emiya'): Point[] {
+  if (!isIndoorWalkable(from, home)) return [];
+  const to = nearestIndoorPoint(requested, home);
+  const start = nearestCell(from, home);
+  const goal = nearestCell(to, home);
   if (start < 0 || goal < 0) return [];
   const scores = new Float64Array(GRID_LENGTH).fill(Infinity);
   const previous = new Int32Array(GRID_LENGTH).fill(-1);
@@ -138,7 +153,7 @@ export function indoorRoute(from: Point, requested: Point): Point[] {
       const ny = y + dy;
       if (nx < 0 || ny < 0 || nx >= COLUMNS || ny >= ROWS) continue;
       const next = ny * COLUMNS + nx;
-      if (visited[next] || !isIndoorWalkable(cellPoint(next))) continue;
+      if (visited[next] || !isIndoorWalkable(cellPoint(next), home)) continue;
       const cost = scores[current] + 1;
       if (cost < scores[next]) {
         scores[next] = cost;
@@ -168,11 +183,8 @@ export function indoorRoute(from: Point, requested: Point): Point[] {
   return route;
 }
 
-export function indoorRoom(point: Point): IndoorRoom {
-  if (point.y >= 202 && point.y <= 258) return 'hall';
-  if (point.x >= 326 && point.x <= 394) return 'hall';
-  if (point.y < 202) return point.x < 360 ? 'lounge' : 'table';
-  return point.x < 360 ? 'study' : 'rest';
+export function indoorRoom(point: Point, home: HomeId = 'emiya'): IndoorRoom {
+  return roomAt(point, home);
 }
 
 export function nearIndoorDoor(point: Point): boolean {

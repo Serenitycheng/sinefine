@@ -420,6 +420,7 @@ export function useStreetLife(
         actor: actor.id,
         home,
         ...INDOOR_ENTRY,
+        layout: 2,
       };
       publish();
       return true;
@@ -445,7 +446,7 @@ export function useStreetLife(
         !opt.ready
       )
         return;
-      const next = stepIndoor(position, input, dt);
+      const next = stepIndoor(position, input, dt, position.home);
       if (next.x !== position.x || next.y !== position.y) {
         life.current.indoor = { ...position, ...next };
         sinceIndoorView.current += dt;
