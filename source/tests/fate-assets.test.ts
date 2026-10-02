@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from 'node:test';
 import { FATE_CAST } from '../lib/fate-cast';
@@ -33,5 +33,25 @@ void test('each added resident has a four-frame RGBA strip matching its displaye
     assert.equal(image.color, 6, `${id} needs an alpha channel`);
     assert.equal(image.width % 4, 0, `${id} needs four whole cells`);
     assert.equal(image.width / (4 * image.height), 0.75, id);
+  }
+});
+
+void test('all street walk strips have smaller transparent WebP game assets with unchanged dimensions', () => {
+  const directory = join(process.cwd(), 'public', 'fate', 'street');
+  const sources = readdirSync(directory).filter((name) => name.endsWith('-walk.png'));
+  assert.equal(sources.length, 16);
+  for (const name of sources) {
+    const original = png(`/fate/street/${name}`);
+    const sourcePath = join(directory, name);
+    const gamePath = join(directory, name.replace(/\.png$/, '.webp'));
+    const encoded = readFileSync(gamePath);
+    assert.equal(encoded.toString('ascii', 0, 4), 'RIFF', name);
+    assert.equal(encoded.toString('ascii', 8, 16), 'WEBPVP8X', name);
+    assert.ok(encoded[20] & 0x10, `${name} lost its alpha channel`);
+    const width = encoded.readUIntLE(24, 3) + 1;
+    const height = encoded.readUIntLE(27, 3) + 1;
+    assert.equal(width, original.width, name);
+    assert.equal(height, original.height, name);
+    assert.ok(statSync(gamePath).size < statSync(sourcePath).size, name);
   }
 });

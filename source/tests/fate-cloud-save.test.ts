@@ -3,11 +3,20 @@ import { test } from 'node:test';
 import {
   createFateBackup,
   emptyFateLibrary,
+  readFateBackupText,
+  readFateLibrary,
   restoreFateLibrary,
+  serializeFateBackup,
+  writeFateLibrary,
   type FateBackup,
 } from '../lib/fate-backup';
-import { createDailyLife } from '../lib/fate-life';
+import { createDailyLife, snapshotLife } from '../lib/fate-life';
 import { emptyFateSave } from '../lib/fate-state';
+import { DISTRICT_PLACES } from '../lib/fate-district';
+import { FATE_HOMES } from '../lib/fate-housing';
+import { roomPoint } from '../lib/fate-indoor-layout';
+import { visitPublicPlace } from '../lib/fate-public-places';
+import { createStreetActors, nearestWalkable } from '../lib/street';
 import { STREET_PARTNERS, type WaverStage } from '../lib/fate-cast';
 import { bondKey } from '../lib/fate-social';
 import {
@@ -217,6 +226,49 @@ void test('same-origin reads and explicit versioned uploads round-trip the compl
   privateResponse(read);
   assert.deepEqual(parseCloudSaveView(await read.json()), second);
   assert.equal(store.writes.length, 2);
+});
+
+void test('a public visit and a non-Emiya interior survive export, cloud upload and local restore together', async () => {
+  const store = memoryBackend();
+  const life = createDailyLife();
+  const actors = createStreetActors();
+  const rin = actors.find((actor) => actor.id === 'rin')!;
+  Object.assign(rin, nearestWalkable(DISTRICT_PLACES.park));
+  assert.equal(visitPublicPlace(life, actors, 'rin', 'park', 'walk').ok, true);
+  const visit = structuredClone(life.events.at(-1));
+
+  Object.assign(rin, FATE_HOMES.tohsaka);
+  const savedLife = snapshotLife(life, actors);
+  const room = roomPoint('tohsaka', 'study', { x: 240, y: 390 });
+  savedLife.indoor = { actor: 'rin', home: 'tohsaka', ...room, layout: 2 };
+  const backup = readFateBackupText(serializeFateBackup(createFateBackup({
+    ...emptyFateSave(),
+    worldNote: '凛从河岸公园回到远坂宅',
+    life: savedLife,
+  })));
+
+  const written = await store.PUT(request('PUT', upload(backup)));
+  assert.equal(written.status, 201);
+  const cloud = parseCloudSaveView(await (await store.GET(request('GET'))).json());
+  assert.deepEqual(cloud.slot?.backup, backup);
+
+  const local = new Map<string, string>();
+  const storage = {
+    getItem: (key: string) => local.get(key) ?? null,
+    setItem: (key: string, value: string) => { local.set(key, value); },
+  };
+  const before = { ...emptyFateLibrary(), current: emptyFateSave() };
+  before.current.worldNote = '恢复前的本地进度';
+  writeFateLibrary(storage, restoreFateLibrary(before, cloud.slot!.backup));
+  const restored = readFateLibrary(storage);
+  assert.equal(restored.checkpoints[0].save.worldNote, '恢复前的本地进度');
+  assert.deepEqual(restored.current.life?.indoor, savedLife.indoor);
+  assert.deepEqual(restored.current.life?.positions.rin, {
+    x: FATE_HOMES.tohsaka.x,
+    y: FATE_HOMES.tohsaka.y,
+  });
+  assert.deepEqual(restored.current.life?.events.at(-1), visit);
+  assert.equal(restored.current.worldNote, '凛从河岸公园回到远坂宅');
 });
 
 void test('cloud saves store only parsed game fields and never persist connection settings', async () => {
