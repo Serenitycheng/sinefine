@@ -21,7 +21,7 @@
 - `park.png`：河岸公园，步道、草地、花树、河面与远桥。
 - 咖啡店继续使用原有 `street.png`，画面中的街角咖啡店不重复生成。
 
-这些是当前 2D 街景背景；真正可自由环视的 3D 人物、场景与动作单列在[后续开发顺序](roadmap.md)第 16—17 条。
+这些是早期 2D 街景概念背景；真正可自由环视的 3D 人物、场景与动作现已暂停，后续先按[2D 打磨顺序](roadmap.md)制作可运行的连续场景。
 
 补充：`source/public/fate/street/fuyuki-city-miyama.png` 是原创的双岸俯瞰绘景，供地图和街区行走底图共用。`source/public/fate/street/scenes/new-city-link.png` 是咖啡店与商店侧巷之间的近景连接路段。二者也是 imagegen 生成的 2D 概念素材，遵循[地图取舍](fuyuki-geography.md)，并非原作官方地图。
 
