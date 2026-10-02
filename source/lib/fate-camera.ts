@@ -13,7 +13,9 @@ export function sceneCameraFor(point: Point, width: number, height: number, zoom
     (size - viewport) / 2 : clamp(center - viewport / 2, 0, size - viewport);
   return {
     x: origin(point.x * factor, world.x, visible.x),
-    y: origin(point.y * factor - visible.y * 0.06, world.y, visible.y), scale,
+    // Street compositions leave more room above the actor for facades and
+    // entrances; the overview keeps its neutral center.
+    y: origin(point.y * factor - visible.y * (scene === 'street' ? 0.2 : 0.06), world.y, visible.y), scale,
   };
 }
 
