@@ -1237,12 +1237,13 @@ export default function StreetWalk({
           </Link>
           <button
             className={styles.aiButton}
+            aria-label={fate.verified ? 'DeepSeek 已连接' : '连接 DeepSeek'}
             onClick={() => openDialog('settings')}
           >
             <Settings2 size={16} />
             <span>{fate.verified ? 'DeepSeek 已连接' : '连接 DeepSeek'}</span>
           </button>
-          <Link href="/" className={styles.back}>
+          <Link href="/" className={styles.back} aria-label="返回世界">
             <ArrowLeft size={16} />
             <span>返回世界</span>
           </Link>
