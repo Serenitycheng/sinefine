@@ -112,7 +112,7 @@ void test('raw v1 saves and the original two-resident daily life migrate without
   const backup = readFateBackupText(JSON.stringify(legacy));
   assert.equal(backup.createdAt, null);
   assert.equal(backup.save.worldNote, legacy.worldNote);
-  assert.equal(backup.save.life!.version, 15);
+  assert.equal(backup.save.life!.version, 16);
   assert.equal(backup.save.life!.minutes, 1080);
   assert.equal(backup.save.life!.lastEncounters['rin|saber'], 1070);
   assert.equal(backup.save.life!.waverStage, 'young');

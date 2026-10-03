@@ -139,7 +139,7 @@ void test('the real daily engine varies a repeated meeting and keeps the result 
     if (talking)
       Object.assign(
         actors.find((actor) => actor.id === id)!,
-        { x: 666, y: 859 },
+        { x: 1160, y: 840 },
       );
   }
   life.nextEncounter = life.minutes;

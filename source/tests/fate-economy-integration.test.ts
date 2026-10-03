@@ -17,7 +17,12 @@ import {
   parseLifeScene,
   snapshotLife,
 } from '../lib/fate-life';
-import { createStreetActors, isWalkable } from '../lib/street';
+import {
+  createStreetActors,
+  isWalkable,
+  migrateCityPoint,
+} from '../lib/street';
+import { cityPoint } from '../lib/fate-district';
 import { legacyDistrictPositions } from './legacy-district';
 
 void test('v12 progress preserves all 21 residents and initializes only the current day budget', () => {
@@ -26,13 +31,24 @@ void test('v12 progress preserves all 21 residents and initializes only the curr
   old.people.medusa.hunger = 71;
   old.people.natalia.choices = 15;
   old.belongings.emiya.notes = 8;
-  const legacy = { ...old, version: 12, economy: undefined, positions: legacyDistrictPositions(old.positions) };
+  const legacy = {
+    ...old,
+    version: 12,
+    economy: undefined,
+    positions: legacyDistrictPositions(old.positions),
+  };
   const restored = parseDailyLife(JSON.parse(JSON.stringify(legacy)));
-  assert.equal(restored.version, 15);
+  assert.equal(restored.version, 16);
   assert.deepEqual(restored.people, old.people);
   for (const [id, point] of Object.entries(old.positions)) {
     const moved = restored.positions[id as keyof typeof old.positions];
-    if (id !== 'medea' && id !== 'kuzuki') assert.deepEqual(moved, point);
+    if (id !== 'medea' && id !== 'kuzuki' && id !== 'admin')
+      assert.deepEqual(moved, point);
+    if (id === 'admin')
+      assert.deepEqual(
+        moved,
+        migrateCityPoint(cityPoint(legacy.positions.admin)),
+      );
     assert.ok(isWalkable(moved), id);
   }
   assert.deepEqual(restored.belongings, old.belongings);
@@ -141,7 +157,12 @@ void test('current saves reject missing ledgers and future shopping tokens, incl
   const damaged = structuredClone(current);
   damaged.economy.accounts.rin.lastShopChoice = damaged.people.rin.choices + 1;
   assert.throws(() => parseDailyLife(damaged), /购物记录/);
-  const old = { ...current, version: 12, economy: undefined, positions: legacyDistrictPositions(current.positions) };
+  const old = {
+    ...current,
+    version: 12,
+    economy: undefined,
+    positions: legacyDistrictPositions(current.positions),
+  };
   Reflect.deleteProperty(old.people, 'medusa');
   assert.throws(() => parseDailyLife(old), /人物状态/);
 });

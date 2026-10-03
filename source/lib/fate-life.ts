@@ -1,4 +1,4 @@
-import { cityPoint, DISTRICT_PLACES } from './fate-district';
+import { cityPoint, DISTRICT_PLACES, LEGACY_CITY_HOMES } from './fate-district';
 import { LIFE_ROUTINES, LEISURE_ACTIONS, lifeRoutine } from './fate-habits';
 import {
   createEconomy,
@@ -99,7 +99,9 @@ import {
   pathTo,
   stepActor,
   wasWalkableInDistrict,
-  WALK_AREAS,
+  wasWalkableInCity,
+  migrateCityPoint,
+  samePavement,
   type Actor,
   type ActorId,
   type Point,
@@ -211,7 +213,7 @@ export type DailyLife = {
   meals: HomeMeal[];
   housing: FateHousing;
   familyVisitDay: number;
-  version: 15;
+  version: 16;
   waverStage: WaverStage;
   minutes: number;
   people: Record<PartnerId, LifePerson>;
@@ -299,7 +301,7 @@ export function createDailyLife(): DailyLife {
     meals: [],
     housing: defaultHousing(),
     familyVisitDay: -1,
-    version: 15,
+    version: 16,
     waverStage: 'young',
     minutes: 980,
     people: {
@@ -427,13 +429,13 @@ export function lifeDestination(
 ): Point {
   if (home) {
     const point = FATE_HOMES[home];
-    return {
+    return nearestWalkable({
       x: point.x + ((STREET_PARTNERS.indexOf(id) % 3) - 1) * 18,
       y: point.y + (STREET_PARTNERS.indexOf(id) % 2) * 12,
-    };
+    });
   }
   const place = LIFE_PLACES[LIFE_ACTIONS[kind].place];
-  return {
+  return nearestWalkable({
     x:
       place.x +
       {
@@ -484,7 +486,7 @@ export function lifeDestination(
         emiya: 24,
         natalia: -8,
       }[id],
-  };
+  });
 }
 export function lifeIndoors(person: LifePerson) {
   return (
@@ -847,16 +849,7 @@ export function advanceDailyLife(
     const homeA = occupiedHome(life, first),
       homeB = occupiedHome(life, second);
     if ((homeA || homeB) && (!homeA || homeA !== homeB)) continue;
-    if (
-      Math.hypot(a.x - b.x, a.y - b.y) > 105 ||
-      !WALK_AREAS.some((r) =>
-        [a, b].every(
-          (p) =>
-            p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom,
-        ),
-      )
-    )
-      continue;
+    if (Math.hypot(a.x - b.x, a.y - b.y) > 105 || !samePavement(a, b)) continue;
     let dialogue = encounterDialogue(first, second, life.waverStage);
     const table = activeMeal(life, life.people[first].activity?.meal);
     const dining =
@@ -1623,7 +1616,9 @@ export function parseDailyLife(value: unknown): DailyLife {
   const number = (v: unknown, max = 1e9) =>
     typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
   if (
-    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(x.version) ||
+    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].includes(
+      x.version,
+    ) ||
     !number(x.minutes) ||
     !number(x.nextEncounter) ||
     !number(x.holdUntil) ||
@@ -1739,10 +1734,19 @@ export function parseDailyLife(value: unknown): DailyLife {
                   : LIFE_IDS;
   for (const id of ['admin', ...ids] as ActorId[]) {
     const p = x.positions?.[id];
-    if (!p || !(x.version < 15 ? wasWalkableInDistrict(p) : isWalkable(p)))
+    if (
+      !p ||
+      !(x.version < 15
+        ? wasWalkableInDistrict(p)
+        : x.version === 15
+          ? wasWalkableInCity(p)
+          : isWalkable(p))
+    )
       throw new Error('人物位置无效');
     result.positions[id] =
-      x.version < 15 ? nearestWalkable(cityPoint(p)) : { x: p.x, y: p.y };
+      x.version < 16
+        ? migrateCityPoint(x.version < 15 ? cityPoint(p) : p)
+        : { x: p.x, y: p.y };
   }
   for (const id of ids) {
     const p = x.people?.[id];
@@ -1858,7 +1862,7 @@ export function parseDailyLife(value: unknown): DailyLife {
       activity,
     };
   }
-  if (x.version < 14) {
+  if (x.version < 16) {
     // Ongoing activities keep their remaining time and history. Place somebody
     // already indoors/at an appointment at the relocated destination; journeys
     // are replanned from their saved pavement position by the daily engine.
@@ -2028,6 +2032,19 @@ export function parseDailyLife(value: unknown): DailyLife {
   }
   if (x.indoor !== undefined) {
     const indoor = x.indoor;
+    // Validate against the saved layout before shifting its outdoor doorstep.
+    // Room coordinates stay unchanged when an entire house moves on the map.
+    const savedDoor =
+      x.version < 16 &&
+      indoor &&
+      isHomeId(indoor.home) &&
+      isActorId(indoor.actor) &&
+      x.positions[indoor.actor]
+        ? x.version < 15
+          ? cityPoint(x.positions[indoor.actor])
+          : x.positions[indoor.actor]
+        : undefined;
+    const oldDoor = savedDoor && LEGACY_CITY_HOMES[indoor.home];
     if (
       !indoor ||
       !isActorId(indoor.actor) ||
@@ -2035,14 +2052,23 @@ export function parseDailyLife(value: unknown): DailyLife {
       !isIndoorFloor(indoor) ||
       (indoor.layout !== undefined && indoor.layout !== 2) ||
       Math.hypot(
-        result.positions[indoor.actor].x - FATE_HOMES[indoor.home].x,
-        result.positions[indoor.actor].y - FATE_HOMES[indoor.home].y,
+        (savedDoor ?? result.positions[indoor.actor]).x -
+          (oldDoor ?? FATE_HOMES[indoor.home]).x,
+        (savedDoor ?? result.positions[indoor.actor]).y -
+          (oldDoor ?? FATE_HOMES[indoor.home]).y,
       ) > 75
     )
       throw new Error('室内位置无效');
+    if (savedDoor && oldDoor)
+      result.positions[indoor.actor] = nearestWalkable({
+        x: FATE_HOMES[indoor.home].x + savedDoor.x - oldDoor.x,
+        y: FATE_HOMES[indoor.home].y + savedDoor.y - oldDoor.y,
+      });
     const legacyRoom = indoor.layout === 2 ? null : indoorRoom(indoor);
-    const point = legacyRoom && legacyRoom !== 'hall'
-      ? roomPoint(indoor.home, legacyRoom, indoor) : indoor;
+    const point =
+      legacyRoom && legacyRoom !== 'hall'
+        ? roomPoint(indoor.home, legacyRoom, indoor)
+        : indoor;
     result.indoor = {
       actor: indoor.actor,
       home: indoor.home,

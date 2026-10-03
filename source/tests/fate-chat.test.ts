@@ -139,15 +139,148 @@ void test('manual chat includes the new title, saved context and both history di
   assert.match(contextText, /已经忙完家务/);
   assert.match(contextText, /和士郎约好慢慢散步/);
   assert.match(contextText, /当前时间/);
-  assert.deepEqual(sent.messages.slice(2), [
-    { role: 'user', content: '家务做好了。' },
-    { role: 'assistant', content: '那就休息一下。' },
-    { role: 'assistant', content: '带伞了吗？' },
-    { role: 'user', content: '带好了。' },
-    { role: 'user', content: '今天想去哪里？' },
+  assert.deepEqual(sent.messages.slice(2, -2), [
+    { role: 'user', content: '【卫宫士郎（shirou）的历史发言】家务做好了。' },
+    { role: 'assistant', content: '【远坂凛（rin）的历史发言】那就休息一下。' },
+    { role: 'assistant', content: '【远坂凛（rin）的历史发言】带伞了吗？' },
+    { role: 'user', content: '【卫宫士郎（shirou）的历史发言】带好了。' },
   ]);
+  assert.equal(sent.messages.at(-2)!.role, 'system');
+  assert.match(sent.messages.at(-2)!.content, /只扮演回复者远坂凛（rin）/);
+  assert.equal(
+    sent.messages.at(-1)!.content,
+    '【卫宫士郎（shirou）现在说】今天想去哪里？',
+  );
   assert.equal(bodyText(calls[0].init).includes(localKey), false);
   assert.equal(JSON.stringify(result).includes(localKey), false);
+});
+
+void test('Emiya father and son retain responder identity, directional voice and attributed history in both directions', async () => {
+  for (const [speaker, target, reply, roleName, otherName, voice] of [
+    [
+      'kiritsugu',
+      'shirou',
+      '老爹，先回家吧。我去热一下饭。',
+      '卫宫士郎',
+      '卫宫切嗣',
+      '坦率、认真',
+    ],
+    [
+      'shirou',
+      'kiritsugu',
+      '……士郎，你也歇一会儿吧。',
+      '卫宫切嗣',
+      '卫宫士郎',
+      '寡言、克制',
+    ],
+  ]) {
+    const history = [
+      { speaker, target, message: '你是谁？', reply: `我是${otherName}。` },
+    ];
+    const before = structuredClone(history);
+    const { fetcher, calls } = stubFetch(() => answer(reply));
+    const response = await createFateChatHandler(fetcher)(
+      request(
+        chatBody({ speaker, target, history, message: '我才是你爸爸。' }),
+      ),
+    );
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).reply, reply);
+    const sent = JSON.parse(bodyText(calls[0].init)) as CompletionRequest;
+    const context = JSON.parse(
+      sent.messages[1].content.slice('以下为虚构背景资料：'.length),
+    );
+    assert.equal(context.角色.id, target);
+    assert.equal(context.交谈对象.id, speaker);
+    assert.match(
+      context.双方关系与表达.回应者对发起者,
+      target === 'shirou' ? /士郎是切嗣的养子/ : /切嗣是士郎的养父/,
+    );
+    for (const binding of [sent.messages[0], sent.messages.at(-2)!]) {
+      assert.equal(binding.role, 'system');
+      assert.ok(
+        binding.content.includes(`只扮演回复者${roleName}（${target}）`),
+      );
+      assert.ok(
+        binding.content.includes(`交谈对象是${otherName}（${speaker}）`),
+      );
+      assert.ok(binding.content.includes(voice));
+    }
+    assert.ok(
+      !sent.messages.some(
+        (m) => m.role === 'assistant' && m.content.includes(`我是${otherName}`),
+      ),
+    );
+    assert.deepEqual(
+      history,
+      before,
+      'bad saved replies are excluded from the prompt without deleting history',
+    );
+    assert.ok(
+      sent.messages
+        .at(-1)!
+        .content.startsWith(`【${otherName}（${speaker}）现在说】`),
+    );
+    assert.equal(calls.length, 1, 'no extra paid retry');
+  }
+});
+
+void test('explicit swapped Emiya self-introductions are rejected without blocking correct kinship or questions', async () => {
+  for (const [target, speaker, text, status] of [
+    ['shirou', 'kiritsugu', '（看了你一眼）我是切嗣。先跟我回去。', 502],
+    ['kiritsugu', 'shirou', '我是卫宫士郎。', 502],
+    ['shirou', 'kiritsugu', '我是切嗣的养子。老爹，回去吧。', 200],
+    ['shirou', 'kiritsugu', '我是切嗣吗？老爹，你在开玩笑吧。', 200],
+  ] as const) {
+    const { fetcher, calls } = stubFetch(() => answer(text));
+    const response = await createFateChatHandler(fetcher)(
+      request(chatBody({ target, speaker })),
+    );
+    assert.equal(response.status, status, text);
+    const result = await response.json();
+    if (status === 502) {
+      assert.match(result.error, /混淆了人物身份/);
+      assert.equal(result.reply, undefined);
+    } else assert.equal(result.reply, text);
+    assert.equal(calls.length, 1);
+  }
+});
+
+void test('autonomous father-son dialogue binds both speaker IDs and rejects a misidentified speaker', async () => {
+  const turns = [
+    { speaker: 'kiritsugu', text: '士郎，今天也忙了一天吧。' },
+    { speaker: 'shirou', text: '还好，老爹。我去热一下饭。' },
+    { speaker: 'kiritsugu', text: '……那我收拾桌子。' },
+    { speaker: 'shirou', text: '嗯，马上就好。' },
+  ];
+  for (const confused of [false, true]) {
+    const supplied = structuredClone(turns);
+    if (confused) supplied[1].text = '我是切嗣。';
+    const { fetcher, calls } = stubFetch(() =>
+      answer(JSON.stringify({ turns: supplied })),
+    );
+    const response = await createFateChatHandler(fetcher)(
+      request(
+        chatBody({
+          mode: 'encounter',
+          speaker: 'kiritsugu',
+          target: 'shirou',
+          scene: lifeScene(createDailyLife(), 'shirou'),
+          recent: [],
+        }),
+      ),
+    );
+    assert.equal(response.status, confused ? 502 : 200);
+    const result = await response.json();
+    if (confused) assert.equal(result.turns, undefined);
+    else assert.deepEqual(result.turns, turns);
+    const sent = JSON.parse(bodyText(calls[0].init)) as CompletionRequest;
+    assert.match(
+      sent.messages[0].content,
+      /发起者是卫宫切嗣（kiritsugu），回应者是卫宫士郎（shirou）/,
+    );
+    assert.equal(calls.length, 1);
+  }
 });
 
 void test('every added resident can speak and respond while all seven distinct activity states reach the model', async () => {

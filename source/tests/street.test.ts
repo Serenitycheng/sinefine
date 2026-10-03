@@ -12,24 +12,24 @@ import {
 } from '../lib/street';
 
 void test('movement stays on the street, slides along walls and cannot jump between disconnected alleys', () => {
-  const original = { x: 151, y: 1400 };
+  const original = { x: 851.5, y: 650 };
   const edge = moveWithinStreet(original, -500, 0);
   assert.ok(isWalkable(edge));
-  assert.ok(edge.x >= 150 && edge.x < 154);
-  assert.deepEqual(original, { x: 151, y: 1400 });
-  const slide = moveWithinStreet({ x: 150, y: 1400 }, -20, 20);
-  assert.equal(slide.x, 150);
-  assert.ok(Math.abs(slide.y - 1420) < 1e-6);
-  const blocked = moveWithinStreet({ x: 500, y: 1210 }, 590, 0);
-  assert.ok(blocked.x <= 540);
+  assert.ok(edge.x >= 850.5 && edge.x < 854);
+  assert.deepEqual(original, { x: 851.5, y: 650 });
+  const slide = moveWithinStreet({ x: 850.5, y: 650 }, -20, 20);
+  assert.equal(slide.x, 850.5);
+  assert.ok(Math.abs(slide.y - 670) < 1e-6);
+  const blocked = moveWithinStreet({ x: 890.5, y: 650 }, 590, 0);
+  assert.ok(blocked.x <= 930.5);
   assert.ok(isWalkable(blocked));
   assert.ok(isWalkable(nearestWalkable({ x: Number.NaN, y: Infinity })));
 });
 
 void test('click navigation travels through the main street and reaches the opposite alley safely', () => {
   const actor = createStreetActors()[0];
-  Object.assign(actor, { x: 500, y: 1210 });
-  const destination = { x: 1870, y: 1221 };
+  Object.assign(actor, { x: 620, y: 1160 });
+  const destination = { x: 1880, y: 907 };
   actor.path = pathTo(actor, destination);
   assert.ok(actor.path.length > 1);
   for (let frame = 0; frame < 1000 && actor.path.length; frame++) {
