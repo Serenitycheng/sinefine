@@ -5,31 +5,26 @@ import {
   readSavedConnection,
   saveConnection,
 } from '@/lib/deepseek-connection';
+import { requestFateJson } from '@/lib/fate-cloud-client';
 type AccountStatus = {
   configured: boolean;
   username: string | null;
   connection: { model: string; updatedAt: string } | null;
 };
-async function send(
+type ModelReply = { models?: unknown; model: string };
+type AccountReply = {
+  username: string | null;
+  recoveryCode?: string;
+  loginRequired?: boolean;
+  notice: string;
+};
+function send<T = ModelReply>(
   path: string,
   body?: unknown,
   method = 'POST',
   signal?: AbortSignal,
 ) {
-  const response = await fetch(path, {
-    method,
-    credentials: 'same-origin',
-    cache: 'no-store',
-    headers: { 'Content-Type': 'application/json' },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-    signal,
-  });
-  const data = await response.json();
-  if (!response.ok)
-    throw new Error(
-      typeof data.error === 'string' ? data.error : '连接暂时不可用，请重试。',
-    );
-  return data;
+  return requestFateJson<T>(path, { method, body, signal });
 }
 function validModels(data: { models?: unknown }): string[] {
   if (
@@ -52,6 +47,7 @@ export function useDeepSeekConnection() {
   const [connectionNotice, setNotice] = useState('');
   const [cloudUsername, setUsername] = useState<string | null>(null);
   const [cloudConfigured, setConfigured] = useState<boolean | null>(null);
+  const [cloudAccountLoading, setAccountLoading] = useState(true);
   const [cloudSaved, setCloudSaved] = useState(false),
     [cloudMode, setCloudMode] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState('');
@@ -64,13 +60,14 @@ export function useDeepSeekConnection() {
   const restore = useCallback(async (signal: AbortSignal, initial: boolean) => {
     let foundCloud = false;
     try {
-      const account: AccountStatus = await send(
+      const account = await send<AccountStatus>(
         '/api/fate/account',
         undefined,
         'GET',
         signal,
       );
       if (signal.aborted) return;
+      setAccountLoading(false);
       setConfigured(account.configured);
       setUsername(account.username);
       setCloudSaved(Boolean(account.connection));
@@ -119,6 +116,7 @@ export function useDeepSeekConnection() {
       }
     } catch {
       if (signal.aborted) return;
+      setAccountLoading(false);
       if (foundCloud || modeRef.current) {
         setVerified(false);
         setNotice(
@@ -163,7 +161,10 @@ export function useDeepSeekConnection() {
     queueMicrotask(() => {
       if (!controller.signal.aborted)
         void restore(controller.signal, true).finally(() => {
-          if (!controller.signal.aborted) ready.current = true;
+          if (!controller.signal.aborted) {
+            ready.current = true;
+            setAccountLoading(false);
+          }
         });
     });
     const focus = () => {
@@ -199,6 +200,7 @@ export function useDeepSeekConnection() {
     const next = new AbortController();
     request.current = next;
     ready.current = true;
+    setAccountLoading(false);
     setChecking(true);
     return next.signal;
   }
@@ -221,6 +223,7 @@ export function useDeepSeekConnection() {
   function setApiKey(value: string) {
     request.current?.abort();
     ready.current = true;
+    setAccountLoading(false);
     setChecking(false);
     setKey(value);
     setCloudMode(false);
@@ -263,7 +266,7 @@ export function useDeepSeekConnection() {
   ) {
     const signal = operation();
     try {
-      const result = await send(
+      const result = await send<AccountReply>(
         '/api/fate/account',
         { action, ...values },
         'POST',
@@ -334,6 +337,7 @@ export function useDeepSeekConnection() {
       cleared = false;
     }
     request.current?.abort();
+    setAccountLoading(false);
     setChecking(false);
     setKey('');
     setVerified(false);
@@ -405,6 +409,7 @@ export function useDeepSeekConnection() {
     clearConnection,
     cloudUsername,
     cloudConfigured,
+    cloudAccountLoading,
     cloudSaved,
     cloudMode,
     recoveryCode,

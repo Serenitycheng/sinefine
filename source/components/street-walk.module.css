@@ -1,6 +1,6 @@
 .shell {
-  height: 100svh;
-  min-height: 570px;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #101719;
@@ -76,6 +76,7 @@
 }
 .aiButton {
   display: flex;
+  text-decoration: none;
   align-items: center;
   gap: 7px;
   padding: 9px 12px;
@@ -264,10 +265,18 @@
   font-size: 12px;
 }
 .landmark:hover span,
-.landmark:focus-visible span { display: block; }
-.mapWorld .actorName { display: none; }
-.mapWorld .selectedActor .actorName { display: flex; }
-.mapWorld .actorActivity { display: none; }
+.landmark:focus-visible span {
+  display: block;
+}
+.mapWorld .actorName {
+  display: none;
+}
+.mapWorld .selectedActor .actorName {
+  display: flex;
+}
+.mapWorld .actorActivity {
+  display: none;
+}
 .landmark:hover,
 .landmark:focus-visible {
   background: #fff9e6;
@@ -326,6 +335,75 @@
 .controlled .actorName {
   border-color: #ddc185a0;
   color: #fff1bf;
+}
+.actor[data-crowded='true']:not(.selectedActor):not(.nearbyActor) .actorName {
+  visibility: hidden;
+}
+.homeEntrance {
+  z-index: 7000;
+  position: absolute;
+  transform: translate(-50%, -100%) scale(calc(1 / var(--world-scale, 1)));
+  transform-origin: bottom center;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1px solid #d1c291;
+  border-radius: 6px;
+  background: #25382ee8;
+  color: #f3e8c8;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.outingReminder {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 26px;
+  background: #3d4938;
+  color: #ece2c4;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.outingReminder span {
+  margin-right: auto;
+}
+.outingReminder button {
+  border: 1px solid #bfbc9177;
+  background: #283a30;
+  color: #ebe1bf;
+  border-radius: 5px;
+  padding: 7px 12px;
+  min-height: 36px;
+  cursor: pointer;
+}
+.outingMarker {
+  position: absolute;
+  z-index: 7100;
+  transform: translate(-50%, -130%) scale(calc(1 / var(--world-scale, 1)));
+  transform-origin: 50% 100%;
+  border: 1px solid #e5d190;
+  border-radius: 20px;
+  color: #fff5d3;
+  background: #496257;
+  box-shadow: 0 2px 14px #192d2255;
+  padding: 8px 12px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  cursor: pointer;
+}
+.homeEntrance small {
+  color: #c3d1b9;
+}
+.homeEntrance:hover,
+.homeEntrance:focus-visible {
+  outline: 2px solid #ebd290;
+  outline-offset: 2px;
+  background: #3d5040;
 }
 .activeDot {
   width: 5px;
@@ -468,6 +546,20 @@
 }
 .cameraTools button:hover {
   background: #ffffff18;
+}
+.cameraTools button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.cameraTools .zoomReset {
+  width: 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1px;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
 }
 .sceneCaption {
   position: absolute;
@@ -739,7 +831,7 @@
 }
 @media (max-width: 730px) {
   .headerActions {
-    gap: 10px;
+    gap: 6px;
   }
   .aiButton {
     padding: 8px;
@@ -748,7 +840,7 @@
     display: none;
   }
   .talkButton {
-    top: 58px;
+    top: 101px;
     bottom: auto;
     left: 13px;
     transform: none;
@@ -757,12 +849,12 @@
   }
   .header {
     height: 59px;
-    padding: 0 16px;
-    gap: 10px;
+    padding: 0 12px;
+    gap: 8px;
   }
   .wordmark {
-    font-size: 20px;
-    letter-spacing: 2px;
+    font-size: 18px;
+    letter-spacing: 1px;
   }
   .location {
     font-size: 12px;
@@ -816,7 +908,7 @@
   .instructions {
     flex: 1;
     position: absolute;
-    bottom: 22px;
+    bottom: 16px;
     left: 14px;
     width: calc(100% - 185px);
     font-size: 11px;
@@ -825,8 +917,7 @@
     display: block;
   }
   .instructions > span {
-    display: block;
-    max-width: 240px;
+    display: none;
   }
   .help {
     margin-top: 4px;
@@ -865,6 +956,9 @@
   .cameraTools button {
     width: 33px;
     height: 33px;
+  }
+  .cameraTools .zoomReset {
+    width: 48px;
   }
   .sceneCaption {
     left: 15px;

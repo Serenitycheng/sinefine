@@ -9,6 +9,7 @@ import {
   type BondMemory,
 } from './fate-social';
 import type { DialogueTurn } from './fate-dialogue';
+import { parsePersonalMemories } from './fate-memory';
 const number = (x: unknown, max = 1e9) =>
   typeof x === 'number' && Number.isFinite(x) && x >= 0 && x <= max;
 const int = (x: unknown, max = 1e9) =>
@@ -139,6 +140,17 @@ export function parseBonds(
       seen: b.seen,
       cutoff: b.cutoff,
       memories,
+      ...(b.archive === undefined
+        ? {}
+        : {
+            archive: parsePersonalMemories(
+              b.archive,
+              b.a,
+              b.b,
+              minutes,
+              nextId,
+            ),
+          }),
     };
   }
   return result;
@@ -172,7 +184,12 @@ export function parseAppointments(
       !['pending', 'meeting', 'fulfilled', 'missed', 'cancelled'].includes(
         a.status,
       ) ||
-      (a.status === 'fulfilled' && a.shared < 10)
+      (a.status === 'fulfilled' && a.shared < 10) ||
+      (a.attending !== undefined && ![a.a, a.b].includes(a.attending)) ||
+      (a.notice !== undefined &&
+        (typeof a.notice !== 'string' ||
+          !a.notice.trim() ||
+          a.notice.length > 200))
     )
       throw new Error('约定记录无效');
     seen.add(a.id);
@@ -224,6 +241,8 @@ export function parseAppointments(
       shared: a.shared,
       talked: a.talked,
       status,
+      ...(a.attending === undefined ? {} : { attending: a.attending }),
+      ...(a.notice === undefined ? {} : { notice: a.notice }),
       quotes: q,
     };
   });

@@ -7,7 +7,7 @@ import {
 } from './fate-belongings';
 import { canAfford } from './fate-economy';
 import { lifeIndoors, type DailyLife, type LifeEvent } from './fate-life';
-import { rememberSharedWalk } from './fate-social';
+import { startPublicOuting } from './fate-public-outings';
 import type { Actor, ActorId } from './street';
 
 export type PublicPlaceId = keyof typeof DISTRICT_PLACES;
@@ -48,6 +48,25 @@ export function visitPublicPlace(
     return denied('请先沿街走到地点附近。');
   if (lifeIndoors(life.people[actorId]))
     return denied('人物目前在室内，先回到街道。');
+  // Old callers now open the same staged activity as the current location UI.
+  // Arrival alone never awards a meal or creates a completed shared walk.
+  if (action === 'eat') {
+    if (target !== undefined) return denied('自己的点餐不需要选择同行的人。');
+    return startPublicOuting(life, actors, actorId, 'cafe', {
+      order: 'set-meal',
+    });
+  }
+  if (action === 'walk') {
+    if (target !== undefined) return denied('独自观察不需要选择同行的人。');
+    return startPublicOuting(life, actors, actorId, 'river');
+  }
+  if (action === 'together') {
+    if (!isPartner(target) || target === actorId)
+      return denied('请选择身边的一位居民。');
+    return startPublicOuting(life, actors, actorId, 'river', {
+      companion: target,
+    });
+  }
   const last = life.events.findLast(
     (event) =>
       event.publicVisit?.person === actorId &&
@@ -56,21 +75,7 @@ export function visitPublicPlace(
   );
   if (last && life.minutes - last.minute < WAIT_MINUTES)
     return denied('刚在这里活动过，过一会儿再来。');
-  if (action !== 'together' && target !== undefined)
-    return denied('这项活动不需要选择同行的人。');
-  if (action === 'together') {
-    if (!isPartner(target) || target === actorId)
-      return denied('请选择身边的一位居民。');
-    const companion = actors.find((candidate) => candidate.id === target);
-    if (
-      !companion ||
-      distance(companion, actor) > PUBLIC_VISIT_RADIUS ||
-      distance(companion, DISTRICT_PLACES.park) > PUBLIC_VISIT_RADIUS ||
-      lifeIndoors(life.people[target]) ||
-      life.people[target].activity?.kind === 'sleep'
-    )
-      return denied('对方目前不在公园附近。');
-  }
+  if (target !== undefined) return denied('这项活动不需要选择同行的人。');
   if (action === 'shop') {
     const item = shoppingChoice(life, actorId);
     if (!item) return denied('随身用品已经足够，暂时不用购买。');
@@ -110,27 +115,12 @@ export function visitPublicPlace(
     } else record(`${name}在穗群原学园自习，梳理了手头的思路。`);
     person.energy = cap(person.energy - 5);
     person.hunger = cap(person.hunger + 4);
-  } else if (action === 'eat') {
-    person.hunger = cap(person.hunger - 30);
-    person.energy = cap(person.energy + 7);
-    record(`${name}在街角咖啡店吃了一份简餐，稍作休息。`);
   } else if (action === 'shop') {
     person.choices = Math.max(
       person.choices + 1,
       (life.economy.accounts[actorId].lastShopChoice ?? -1) + 1,
     );
     finishInterest(life, actorId, 'shop', record);
-  } else if (action === 'walk') {
-    person.social = cap(person.social + 3);
-    person.energy = cap(person.energy - 2);
-    record(`${name}沿着河岸公园的林荫路走了一段，放慢脚步看了看未远川。`);
-  } else {
-    const companion = target!;
-    const otherName = fatePerson(companion, life.waverStage)!.name;
-    person.social = cap(person.social + 5);
-    life.people[companion].social = cap(life.people[companion].social + 5);
-    record(`${name}与${otherName}在河岸公园一起散步，留下了一段共同经历。`);
-    rememberSharedWalk(life, actorId, companion, event!);
   }
   actor.path = [];
   return { ok: true, message: event!.text };

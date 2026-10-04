@@ -8,9 +8,27 @@ import {
 } from '@/lib/fate-social';
 import { lifeTime, type DailyLife } from '@/lib/fate-life';
 import styles from './street-life.module.css';
+import { behaviorNotes } from '@/lib/fate-memory-behavior';
+import { StreetMemoryPanel } from './street-memory-panel';
 
-export function StreetSocialPanel({ life }: { life: DailyLife }) {
-  const [watched, setWatched] = useState<PartnerId>('illya');
+export function StreetSocialPanel({
+  life,
+  controlled,
+  onAppointment,
+}: {
+  life: DailyLife;
+  controlled: string | null;
+  onAppointment: (
+    id: number,
+    action: 'attend' | 'cancel',
+  ) => { ok: boolean; message: string };
+}) {
+  const [watched, setWatched] = useState<PartnerId>(
+    STREET_PARTNERS.includes(controlled as PartnerId)
+      ? (controlled as PartnerId)
+      : 'illya',
+  );
+  const [notice, setNotice] = useState('');
   const bonds = Object.values(life.bonds).filter(
     (b) =>
       (b.a === watched || b.b === watched) &&
@@ -28,7 +46,10 @@ export function StreetSocialPanel({ life }: { life: DailyLife }) {
         <select
           aria-label="观察谁的相处"
           value={watched}
-          onChange={(e) => setWatched(e.target.value as PartnerId)}
+          onChange={(e) => {
+            setWatched(e.target.value as PartnerId);
+            setNotice('');
+          }}
         >
           {STREET_PARTNERS.map((id) => (
             <option key={id} value={id}>
@@ -38,10 +59,51 @@ export function StreetSocialPanel({ life }: { life: DailyLife }) {
         </select>
       </label>
       <p>关系起点：{fatePerson(watched, life.waverStage)!.relations}</p>
+      <StreetMemoryPanel
+        key={`${watched}:${life.waverStage}`}
+        life={life}
+        person={watched}
+      />
+      {behaviorNotes(life, watched).map((note) => (
+        <p key={note}>{note}</p>
+      ))}
+      {notice && <output>{notice}</output>}
       {appointments.length ? (
         <div className={styles.eventReason}>
           {appointments.map((a) => (
-            <p key={a.id}>{appointmentSummary(a, life.waverStage)}</p>
+            <div key={a.id}>
+              <p>{appointmentSummary(a, life.waverStage)}</p>
+              {['pending', 'meeting'].includes(a.status) && (
+                <>
+                  <p>
+                    已相处 {Math.floor(a.shared)} / 10 分钟 ·{' '}
+                    {a.attending === controlled
+                      ? '你已选择参加，离开现场会暂停计时'
+                      : '玩家需主动参加；NPC 会自行赴约'}
+                  </p>
+                  {[a.a, a.b].includes(controlled as PartnerId) && (
+                    <div className={styles.speeds}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNotice(onAppointment(a.id, 'attend').message)
+                        }
+                      >
+                        前往赴约
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setNotice(onAppointment(a.id, 'cancel').message)
+                        }
+                      >
+                        告知取消
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           ))}
         </div>
       ) : (

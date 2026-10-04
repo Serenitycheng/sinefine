@@ -20,6 +20,8 @@ import {
   recentLifeEvents,
   type LifeEvent,
 } from '@/lib/fate-life';
+import { actOnPastime, type PastimeCommand } from '@/lib/fate-pastimes';
+import { playerAppointment } from '@/lib/fate-meetups';
 import { isPartner, type PartnerId } from '@/lib/fate-cast';
 import { pairConversationHistory, type Exchange } from '@/lib/fate-state';
 import {
@@ -42,6 +44,24 @@ import {
   type IndoorPosition,
 } from '@/lib/fate-indoor-map';
 import type { Point } from '@/lib/street';
+import {
+  startPublicOuting,
+  choosePublicOuting,
+  interactPublicOuting,
+  cancelPublicOuting,
+  type PublicOutingKind,
+  type CafeOrder,
+  type OutingChoice,
+} from '@/lib/fate-public-outings';
+import {
+  clockRate,
+  FATE_CLOCK_SPEED_KEY,
+  FATE_WALK_PACE_KEY,
+  parseFateClockSpeed,
+  parseFateWalkPace,
+  type FateClockSpeed,
+  type FateWalkPace,
+} from '@/lib/fate-clock';
 
 export function useStreetLife(
   actors: RefObject<Actor[]>,
@@ -60,7 +80,8 @@ export function useStreetLife(
   const initialized = useRef(false);
   const [view, setView] = useState(createDailyLife);
   const [running, setRunning] = useState(false),
-    [speed, setSpeed] = useState<1 | 4>(1);
+    [speed, setSpeed] = useState<FateClockSpeed>(1);
+  const [walkPace, setWalkPace] = useState<FateWalkPace>(1);
   const [auto, setAuto] = useState(false),
     [limit, setLimit] = useState(10),
     [used, setUsed] = useState(0);
@@ -70,13 +91,37 @@ export function useStreetLife(
   const controlled = options.mode === 'control' ? options.active : null;
   const config = useRef({
     running: false,
-    speed: 1 as 1 | 4,
+    speed: 1 as FateClockSpeed,
+    walkPace: 1 as FateWalkPace,
     auto: false,
     limit: 10,
     used: 0,
     decisionsUsed: 0,
     lastCall: -Infinity,
   });
+  useEffect(() => {
+    let mounted = true;
+    queueMicrotask(() => {
+      if (!mounted) return;
+      try {
+        const savedSpeed = parseFateClockSpeed(
+          localStorage.getItem(FATE_CLOCK_SPEED_KEY),
+        );
+        const savedPace = parseFateWalkPace(
+          localStorage.getItem(FATE_WALK_PACE_KEY),
+        );
+        config.current.speed = savedSpeed;
+        config.current.walkPace = savedPace;
+        setSpeed(savedSpeed);
+        setWalkPace(savedPace);
+      } catch {
+        /* Storage can be unavailable; the current session stays playable. */
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
   const request = useRef<AbortController | null>(null);
   const sincePublish = useRef(0);
   const sinceIndoorView = useRef(0);
@@ -247,6 +292,7 @@ export function useStreetLife(
             scene: lifeScene(
               snapshotLife(life.current, actors.current),
               target,
+              isPartner(speaker) ? speaker : undefined,
             ),
             ...(event.decision ? { needs: life.current.people[target] } : {}),
             recent: [
@@ -335,7 +381,9 @@ export function useStreetLife(
           !request.current &&
           !document.hidden &&
           document.hasFocus(),
-        speed: cfg.speed,
+        speed: 1,
+        clockRate: clockRate(cfg.speed),
+        motionRate: cfg.walkPace,
         controlled: opt.mode === 'control' ? opt.active : null,
       });
       if (encounter) remember(encounter);
@@ -361,9 +409,25 @@ export function useStreetLife(
     if (!next) cancel();
     publish();
   }
-  function changeSpeed(value: 1 | 4) {
-    config.current.speed = value;
-    setSpeed(value);
+  function changeSpeed(value: FateClockSpeed) {
+    const next = parseFateClockSpeed(value);
+    config.current.speed = next;
+    setSpeed(next);
+    try {
+      localStorage.setItem(FATE_CLOCK_SPEED_KEY, String(next));
+    } catch {
+      /* Session setting still applies. */
+    }
+  }
+  function changeWalkPace(value: FateWalkPace) {
+    const next = parseFateWalkPace(value);
+    config.current.walkPace = next;
+    setWalkPace(next);
+    try {
+      localStorage.setItem(FATE_WALK_PACE_KEY, String(next));
+    } catch {
+      /* Session setting still applies. */
+    }
   }
   function staggerFirstDepartures() {
     actors.current.forEach((actor, index) => {
@@ -446,7 +510,13 @@ export function useStreetLife(
         !opt.ready
       )
         return;
-      const next = stepIndoor(position, input, dt, position.home);
+      const next = stepIndoor(
+        position,
+        input,
+        dt,
+        position.home,
+        config.current.walkPace,
+      );
       if (next.x !== position.x || next.y !== position.y) {
         life.current.indoor = { ...position, ...next };
         sinceIndoorView.current += dt;
@@ -484,6 +554,51 @@ export function useStreetLife(
     },
     [actors, publish],
   );
+  const outing = useCallback(
+    (
+      command:
+        | {
+            type: 'start';
+            kind: PublicOutingKind;
+            order?: CafeOrder;
+            companion?: PartnerId;
+          }
+        | { type: 'choose'; choice: OutingChoice }
+        | { type: 'interact' | 'cancel' },
+    ) => {
+      const opt = opts.current;
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        opt.mode !== 'control' ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return { ok: false, message: '请先进入角色，或处理存档提示。' };
+      const result =
+        command.type === 'start'
+          ? startPublicOuting(
+              life.current,
+              actors.current,
+              opt.active,
+              command.kind,
+              command,
+            )
+          : command.type === 'choose'
+            ? choosePublicOuting(
+                life.current,
+                actors.current,
+                opt.active,
+                command.choice,
+              )
+            : command.type === 'cancel'
+              ? cancelPublicOuting(life.current, opt.active, actors.current)
+              : interactPublicOuting(life.current, actors.current, opt.active);
+      if (result.ok) publish();
+      return result;
+    },
+    [actors, publish],
+  );
   const interaction = useCallback(
     (target: PartnerId) => {
       const opt = opts.current;
@@ -510,7 +625,7 @@ export function useStreetLife(
       : null;
   }, [actors]);
   const commitConversation = useCallback(
-    (entry: Exchange) => {
+    (entry: Exchange, effects?: unknown) => {
       const status = interaction(entry.target);
       if (!status.ok) return status;
       const opt = opts.current;
@@ -520,6 +635,7 @@ export function useStreetLife(
         actors.current,
         opt.mode === 'control' ? opt.active : null,
         entry,
+        effects,
       );
       if (!result.ok) return result;
       if (!ctx.current.append(entry, next, engineRevision.current))
@@ -534,6 +650,50 @@ export function useStreetLife(
     },
     [actors, interaction],
   );
+  const manageAppointment = useCallback(
+    (id: number, action: 'attend' | 'cancel') => {
+      const opt = opts.current;
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return { ok: false, message: '请等待街区载入，或先处理存档提示。' };
+      const result = playerAppointment(
+        life.current,
+        actors.current,
+        opt.mode === 'control' ? opt.active : null,
+        id,
+        action,
+      );
+      if (result.ok) publish();
+      return result;
+    },
+    [actors, publish],
+  );
+  const pastime = useCallback(
+    (command: PastimeCommand, target: PartnerId) => {
+      const opt = opts.current;
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return { ok: false, message: '请等待街区载入，或先处理存档提示。' };
+      const result = actOnPastime(
+        life.current,
+        actors.current,
+        opt.mode === 'control' ? opt.active : null,
+        command,
+        target,
+      );
+      if (result.ok) publish();
+      return result;
+    },
+    [actors, publish],
+  );
   function resetPlans() {
     cancel();
     for (const id of LIFE_IDS) life.current.people[id].activity = null;
@@ -544,6 +704,9 @@ export function useStreetLife(
     view,
     running,
     speed,
+    walkPace,
+    changeWalkPace,
+    outing,
     auto,
     used,
     limit,
@@ -565,6 +728,8 @@ export function useStreetLife(
     interaction,
     nearestResident,
     commitConversation,
+    manageAppointment,
+    pastime,
     resetPlans,
   };
 }

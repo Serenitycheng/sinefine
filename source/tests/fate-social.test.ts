@@ -228,12 +228,14 @@ function legacyLife() {
     people: Object.fromEntries(
       LEGACY_STREET_PARTNERS.map((id) => [id, life.people[id]]),
     ),
-    positions: legacyDistrictPositions(Object.fromEntries(
-      ['admin' as const, ...LEGACY_STREET_PARTNERS].map((id) => [
-        id,
-        life.positions[id],
-      ]),
-    )),
+    positions: legacyDistrictPositions(
+      Object.fromEntries(
+        ['admin' as const, ...LEGACY_STREET_PARTNERS].map((id) => [
+          id,
+          life.positions[id],
+        ]),
+      ),
+    ),
     belongings: Object.fromEntries(
       LEGACY_STREET_PARTNERS.map((id) => [id, life.belongings[id]]),
     ),
@@ -247,7 +249,7 @@ void test('a full legacy save clears only travel towards the cancelled counterpr
   assert.equal(Object.keys(life.positions).length, 15);
   assert.equal(Object.keys(life.belongings).length, 14);
   const restored = parseDailyLife(life);
-  assert.equal(restored.version, 15);
+  assert.equal(restored.version, 16);
   assert.equal(Object.keys(restored.people).length, STREET_PARTNERS.length);
   assert.equal(restored.appointments[0].status, 'cancelled');
   assert.equal(restored.people.rin.activity, null);

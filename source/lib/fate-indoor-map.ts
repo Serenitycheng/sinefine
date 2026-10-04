@@ -1,16 +1,25 @@
 import { FATE_HOMES, type HomeId } from './fate-housing';
 import type { ActorId, Point, Rect } from './street';
 import { roomAt, roomPoint, type RoomZone } from './fate-indoor-layout';
+import { HOME_ENTRANCES } from './fate-home-entrances';
 
 export const INDOOR_SIZE = { width: 720, height: 460 } as const;
 export const INDOOR_ENTRY: Point = { x: 360, y: 422 };
 export const INDOOR_SPEED = 104;
-export type IndoorPosition = Point & { home: HomeId; actor: ActorId; layout?: 2 };
+export type IndoorPosition = Point & {
+  home: HomeId;
+  actor: ActorId;
+  layout?: 2;
+};
 export type IndoorRoom = 'lounge' | 'table' | 'study' | 'rest' | 'hall';
 
 export function nearHomeEntrance(point: Point, home: HomeId): boolean {
-  const door = FATE_HOMES[home];
-  return Math.hypot(point.x - door.x, point.y - door.y) <= 75;
+  const door = HOME_ENTRANCES[home].door;
+  const legacy = FATE_HOMES[home];
+  return (
+    Math.hypot(point.x - door.x, point.y - door.y) <= 75 ||
+    Math.hypot(point.x - legacy.x, point.y - legacy.y) <= 75
+  );
 }
 
 const AREAS: Rect[] = [
@@ -36,18 +45,36 @@ const FURNITURE: Rect[] = [
   { left: 626, right: 663, top: 301, bottom: 346 },
 ];
 const FURNITURE_ZONES: RoomZone[] = [
-  'lounge', 'lounge', 'lounge', 'table', 'table',
-  'study', 'study', 'rest', 'rest', 'rest',
+  'lounge',
+  'lounge',
+  'lounge',
+  'table',
+  'table',
+  'study',
+  'study',
+  'rest',
+  'rest',
+  'rest',
 ];
 function furnitureFor(home: HomeId): Rect[] {
   return FURNITURE.map((rect, index) => {
-    const origin = roomPoint(home, FURNITURE_ZONES[index], { x: rect.left, y: rect.top });
-    return { left: origin.x, right: origin.x + rect.right - rect.left,
-      top: origin.y, bottom: origin.y + rect.bottom - rect.top };
+    const origin = roomPoint(home, FURNITURE_ZONES[index], {
+      x: rect.left,
+      y: rect.top,
+    });
+    return {
+      left: origin.x,
+      right: origin.x + rect.right - rect.left,
+      top: origin.y,
+      bottom: origin.y + rect.bottom - rect.top,
+    };
   });
 }
 const FURNITURE_BY_HOME = Object.fromEntries(
-  (Object.keys(FATE_HOMES) as HomeId[]).map((home) => [home, furnitureFor(home)]),
+  (Object.keys(FATE_HOMES) as HomeId[]).map((home) => [
+    home,
+    furnitureFor(home),
+  ]),
 ) as Record<HomeId, Rect[]>;
 const CELL = 10;
 const COLUMNS = INDOOR_SIZE.width / CELL;
@@ -86,13 +113,20 @@ export function isIndoorFloor(point: Point): boolean {
   );
 }
 
-export function isIndoorWalkable(point: Point, home: HomeId = 'emiya'): boolean {
+export function isIndoorWalkable(
+  point: Point,
+  home: HomeId = 'emiya',
+): boolean {
   return (
-    isIndoorFloor(point) && !FURNITURE_BY_HOME[home].some((item) => contains(item, point))
+    isIndoorFloor(point) &&
+    !FURNITURE_BY_HOME[home].some((item) => contains(item, point))
   );
 }
 
-export function nearestIndoorPoint(point: Point, home: HomeId = 'emiya'): Point {
+export function nearestIndoorPoint(
+  point: Point,
+  home: HomeId = 'emiya',
+): Point {
   if (!Number.isFinite(point.x) || !Number.isFinite(point.y))
     return { ...INDOOR_ENTRY };
   if (isIndoorWalkable(point, home)) return point;
@@ -101,21 +135,46 @@ export function nearestIndoorPoint(point: Point, home: HomeId = 'emiya'): Point 
 }
 
 /** Axis sliding keeps the character on a floor when a wall blocks a diagonal. */
-export function stepIndoor(point: Point, input: Point, dt: number, home: HomeId = 'emiya'): Point {
+export function stepIndoor(
+  point: Point,
+  input: Point,
+  dt: number,
+  home: HomeId = 'emiya',
+  motionRate = 1,
+): Point {
   const length = Math.hypot(input.x, input.y);
   if (!length || !Number.isFinite(length) || !Number.isFinite(dt) || dt <= 0)
     return point;
-  const speed = (INDOOR_SPEED * Math.min(dt, 0.05)) / Math.max(1, length);
-  const x = point.x + input.x * speed;
-  const y = point.y + input.y * speed;
-  if (isIndoorWalkable({ x, y }, home)) return { x, y };
-  if (isIndoorWalkable({ x, y: point.y }, home)) return { x, y: point.y };
-  if (isIndoorWalkable({ x: point.x, y }, home)) return { x: point.x, y };
-  return point;
+  const rate = Number.isFinite(motionRate)
+    ? Math.max(0.4, Math.min(2, motionRate))
+    : 1;
+  const speed =
+    (INDOOR_SPEED * rate * Math.min(dt, 0.05)) / Math.max(1, length);
+  const dx = input.x * speed;
+  const dy = input.y * speed;
+  // Check short steps even at the fastest pace, including after a suspended
+  // browser frame, so furniture cannot be skipped by a single long movement.
+  const steps = Math.max(1, Math.ceil(Math.hypot(dx, dy) / 4));
+  let next = point;
+  for (let step = 0; step < steps; step++) {
+    const x = next.x + dx / steps;
+    const y = next.y + dy / steps;
+    if (isIndoorWalkable({ x, y }, home)) next = { x, y };
+    else if (isIndoorWalkable({ x, y: next.y }, home))
+      next = { x, y: next.y };
+    else if (isIndoorWalkable({ x: next.x, y }, home))
+      next = { x: next.x, y };
+    else break;
+  }
+  return next;
 }
 
 /** Find an unobstructed path through the open thresholds and around furniture. */
-export function indoorRoute(from: Point, requested: Point, home: HomeId = 'emiya'): Point[] {
+export function indoorRoute(
+  from: Point,
+  requested: Point,
+  home: HomeId = 'emiya',
+): Point[] {
   if (!isIndoorWalkable(from, home)) return [];
   const to = nearestIndoorPoint(requested, home);
   const start = nearestCell(from, home);

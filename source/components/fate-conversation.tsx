@@ -16,7 +16,14 @@ import {
   TOPICS,
   type PartnerId,
   type TopicId,
+  isPartner,
 } from '@/lib/fate-cast';
+import {
+  LIFE_TOPICS,
+  lifeTopic,
+  type LifeTopic,
+} from '@/lib/fate-conversation-presets';
+import { conversationSummary } from '@/lib/fate-social';
 import { conversationHistory, type Exchange } from '@/lib/fate-state';
 import type { InteractionStatus } from '@/lib/fate-interaction';
 import { lifeScene } from '@/lib/fate-life';
@@ -40,7 +47,7 @@ export function FateConversation({
   onSettings: () => void;
   onsite?: {
     check: () => InteractionStatus;
-    commit: (entry: Exchange) => InteractionStatus;
+    commit: (entry: Exchange, effects?: unknown) => InteractionStatus;
   };
 }) {
   const ctx = useFate(),
@@ -54,18 +61,53 @@ export function FateConversation({
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   const running = useRef<AbortController | null>(null),
-    end = useRef<HTMLDivElement>(null);
+    end = useRef<HTMLDivElement>(null),
+    popup = useRef<HTMLDivElement>(null);
   const history = conversationHistory(ctx.save, target, speaker);
+  const latestExchange = history.at(-1)?.id;
   const speakerName =
     speaker === 'admin' ? '管理员' : fatePerson(speaker, waverStage)!.name;
   useEffect(() => () => running.current?.abort(), []);
   useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    let frame = 0;
+    const fitViewport = () => {
+      const element = popup.current;
+      if (!element) return;
+      element.style.setProperty(
+        '--conversation-height',
+        `${viewport.height}px`,
+      );
+      element.style.setProperty(
+        '--conversation-center',
+        `${viewport.offsetTop + viewport.height / 2}px`,
+      );
+      element.dataset.compactHeight = String(viewport.height < 560);
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const focused = document.activeElement;
+        if (focused instanceof HTMLTextAreaElement && element.contains(focused))
+          focused.scrollIntoView({ block: 'nearest' });
+      });
+    };
+    fitViewport();
+    viewport.addEventListener('resize', fitViewport);
+    viewport.addEventListener('scroll', fitViewport);
+    return () => {
+      cancelAnimationFrame(frame);
+      viewport.removeEventListener('resize', fitViewport);
+      viewport.removeEventListener('scroll', fitViewport);
+    };
+  }, []);
+  useEffect(() => {
     end.current?.scrollIntoView({ block: 'nearest' });
-  }, [ctx.save.history.length, busy]);
+  }, [latestExchange, busy]);
   function remember(
     message: string,
     reply: string,
     source: 'preset' | 'deepseek',
+    effects?: unknown,
   ) {
     const entry: Exchange = {
       id: crypto.randomUUID(),
@@ -78,7 +120,7 @@ export function FateConversation({
       createdAt: new Date().toISOString(),
     };
     const result = onsite
-      ? onsite.commit(entry)
+      ? onsite.commit(entry, effects)
       : { ok: ctx.append(entry), message: '暂时无法保存这次交谈。' };
     if (!result.ok) setError(result.message);
     return result.ok;
@@ -100,6 +142,12 @@ export function FateConversation({
       specific?.reply ?? presetReply(target, topic, waverStage),
       'preset',
     );
+  }
+  function chooseLifeTopic(topic: LifeTopic) {
+    if (!canTalk() || !isPartner(speaker) || !ctx.save.life) return;
+    setError('');
+    const result = lifeTopic(ctx.save.life, speaker, target, topic);
+    remember(result.message, result.reply, 'preset', result.effects);
   }
   async function send(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -132,6 +180,7 @@ export function FateConversation({
           target,
           speaker,
           message,
+          socialEffects: Boolean(onsite && isPartner(speaker)),
           history: history.map(
             ({ message, reply, turns, speaker, target }) => ({
               message,
@@ -146,19 +195,28 @@ export function FateConversation({
           relationshipNotes: ctx.save.relationshipNotes,
           waverStage,
           housing: ctx.save.life?.housing,
-          ...(ctx.save.life ? { scene: lifeScene(ctx.save.life, target) } : {}),
+          ...(ctx.save.life
+            ? {
+                scene: lifeScene(
+                  ctx.save.life,
+                  target,
+                  isPartner(speaker) ? speaker : undefined,
+                ),
+              }
+            : {}),
         }),
       });
       const data = (await response.json()) as {
         error?: string;
         reply?: string;
         tokens?: number | null;
+        effects?: unknown;
       };
       if (!response.ok || typeof data.reply !== 'string')
         throw new Error(data.error || '没有收到回复，请重试。');
       if (controller.signal.aborted) return;
       if (typeof data.tokens === 'number') ctx.trackTokens(data.tokens);
-      if (remember(message, data.reply, 'deepseek')) setDraft('');
+      if (remember(message, data.reply, 'deepseek', data.effects)) setDraft('');
     } catch (error) {
       if (!controller.signal.aborted)
         setError(
@@ -177,8 +235,13 @@ export function FateConversation({
       }}
     >
       <DialogContent
+        ref={popup}
         className={styles.conversation}
-        style={{ width: 'min(940px, calc(100vw - 24px))', maxWidth: 'none' }}
+        style={{
+          width: 'min(940px, calc(100vw - 24px))',
+          maxWidth: 'none',
+          top: 'var(--conversation-center, 50%)',
+        }}
       >
         <div className={styles.art}>
           {artwork && (
@@ -237,26 +300,49 @@ export function FateConversation({
                 </small>
               </p>
             )}
-            {history.map((entry) => (
-              <div key={entry.id} className={styles.exchange}>
-                {dialogueLines(entry).map((turn, index) => (
-                  <div
-                    key={index}
-                    className={
-                      turn.speaker === speaker ? styles.player : styles.reply
-                    }
-                  >
-                    <small>
-                      {turn.speaker === speaker ? speakerName : person.name}
-                      <span>
-                        {entry.source === 'deepseek' ? 'DeepSeek' : '预设台词'}
-                      </span>
-                    </small>
-                    <p>{turn.text}</p>
-                  </div>
-                ))}
-              </div>
-            ))}
+            {history.map((entry) => {
+              const result = ctx.save.life?.events.find(
+                (e) => e.interaction?.exchangeId === entry.id,
+              )?.conversation;
+              return (
+                <div key={entry.id} className={styles.exchange}>
+                  {dialogueLines(entry).map((turn, index) => (
+                    <div
+                      key={index}
+                      className={
+                        turn.speaker === speaker ? styles.player : styles.reply
+                      }
+                    >
+                      <small>
+                        {turn.speaker === speaker ? speakerName : person.name}
+                        <span>
+                          {entry.source === 'deepseek'
+                            ? 'DeepSeek'
+                            : '预设台词'}
+                        </span>
+                      </small>
+                      <p>{turn.text}</p>
+                    </div>
+                  ))}
+                  {result && (
+                    <div
+                      className={styles.outcome}
+                      aria-label="这次交谈的结果"
+                      aria-live={
+                        entry.id === history.at(-1)?.id ? 'polite' : undefined
+                      }
+                    >
+                      <b>这次交谈</b>
+                      {conversationSummary(result, waverStage).map(
+                        (line, i) => (
+                          <p key={i}>{line}</p>
+                        ),
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
             {busy && (
               <output className={styles.waiting}>
                 <LoaderCircle size={15} className={styles.spinner} />
@@ -276,6 +362,34 @@ export function FateConversation({
                   {topic.text}
                 </button>
               ))}
+              {onsite && isPartner(speaker) && ctx.save.life && (
+                <>
+                  <div className={styles.lifeTopics} aria-label="日常话题">
+                    {LIFE_TOPICS.slice(0, 2).map((topic) => (
+                      <button
+                        key={topic.id}
+                        disabled={!ctx.loaded || busy}
+                        onClick={() => chooseLifeTopic(topic.id)}
+                      >
+                        {topic.label}
+                      </button>
+                    ))}
+                  </div>
+                  <details className={styles.inviteTopics}>
+                    <summary>约下次见面</summary>
+                    <p>双方约好后才会安排；你控制的人物仍由你带去赴约。</p>
+                    {LIFE_TOPICS.slice(2).map((topic) => (
+                      <button
+                        key={topic.id}
+                        disabled={!ctx.loaded || busy}
+                        onClick={() => chooseLifeTopic(topic.id)}
+                      >
+                        {topic.label}
+                      </button>
+                    ))}
+                  </details>
+                </>
+              )}
             </div>
           ) : !ctx.verified ? (
             <div className={styles.connectPrompt}>

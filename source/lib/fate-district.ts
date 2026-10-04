@@ -1,5 +1,4 @@
-// Shared playable geography for the city, destinations and street views.
-// Old single-block coordinates are mapped onto two banks of the river.
+// Conversion retained only for imports from the old single-block saves.
 export function cityPoint(point: { x: number; y: number }) {
   return {
     x: point.x * 1.7 + (point.x > 810 ? 340 : 100),
@@ -7,7 +6,7 @@ export function cityPoint(point: { x: number; y: number }) {
   };
 }
 
-export const DISTRICT_HOMES = {
+export const LEGACY_CITY_HOMES = {
   einzbern: { name: '切嗣一家 · 新居', ...cityPoint({ x: 230, y: 300 }) },
   emiya: { name: '卫宫宅 · 士郎的家', ...cityPoint({ x: 465, y: 300 }) },
   tohsaka: { name: '远坂宅', ...cityPoint({ x: 680, y: 300 }) },
@@ -20,11 +19,30 @@ export const DISTRICT_HOMES = {
   natalia: { name: '娜塔莉亚的住处', ...cityPoint({ x: 230, y: 850 }) },
 } as const;
 
-export const DISTRICT_PLACES = {
+export const LEGACY_CITY_PLACES = {
   school: { name: '穗群原学园', ...cityPoint({ x: 465, y: 550 }) },
   cafe: { name: '街角咖啡店', ...cityPoint({ x: 1250, y: 844 }) },
   shops: { name: '商店侧巷', ...cityPoint({ x: 893, y: 740 }) },
   park: { name: '林荫路边 · 河岸公园', x: 1880, y: 907 },
+} as const;
+
+export const DISTRICT_HOMES = {
+  einzbern: { name: '切嗣一家 · 新居', x: 470, y: 390 },
+  emiya: { ...LEGACY_CITY_HOMES.emiya },
+  tohsaka: { name: '远坂宅', x: 620, y: 1160 },
+  matou: { name: '间桐宅', x: 960, y: 1200 },
+  waver: { name: '韦伯的住处', x: 410, y: 650 },
+  temple: { name: '柳洞寺 · 葛木的住处', x: 260, y: 1480 },
+  church: { ...LEGACY_CITY_HOMES.church },
+  kayneth: { name: '肯尼斯的住处', x: 2450, y: 1160 },
+  fujimura: { name: '藤村家', x: 1180, y: 680 },
+  natalia: { name: '娜塔莉亚的住处', x: 310, y: 1100 },
+} as const;
+export const DISTRICT_PLACES = {
+  school: { ...LEGACY_CITY_PLACES.school },
+  cafe: { ...LEGACY_CITY_PLACES.cafe },
+  shops: { name: '深山商店街 · 侧巷', x: 1240, y: 1080 },
+  park: { ...LEGACY_CITY_PLACES.park },
 } as const;
 
 type DistrictPlaceId =
@@ -32,7 +50,7 @@ type DistrictPlaceId =
   | keyof typeof DISTRICT_PLACES;
 
 // Earlier painted corridor assets. The playable street now uses the continuous
-// world and WALK_AREAS; retain these links for the original art references.
+// world and CITY_ROADS; retain these links for the original art references.
 export const STREET_CLOSEUP_LINKS = [
   {
     from: 'temple',
@@ -191,9 +209,16 @@ export function streetScenePoint(point: { x: number; y: number }) {
 }
 
 export function districtAt(p: { x: number; y: number }) {
-  if (p.x < 1500) return p.y < 850 ? '冬木 · 深山町北丘' : '冬木 · 深山町';
-  if (p.x < 1800) return p.y < 1150 ? '冬木 · 冬木大桥' : '冬木 · 未远川南桥';
-  if (p.y < 850) return '冬木 · 新都教会区';
+  if (p.x < 1500) {
+    if (p.y > 1300 && p.x < 600) return '冬木 · 圆藏山参道';
+    if (p.y > 1020 && p.x < 1120) return '冬木 · 深山町洋馆丘陵';
+    if (p.y > 980 && p.x > 1120) return '冬木 · 深山商店街';
+    return p.y < 740 ? '冬木 · 深山町住宅坂' : '冬木 · 深山町';
+  }
+  if (p.x < 1775)
+    return p.y < 1150 ? '冬木 · 冬木大桥' : '冬木 · 南桥（日常分支）';
+  if (p.y < 670) return '冬木 · 新都教会丘陵';
+  if (p.x > 2320 && p.y < 1000) return '冬木 · 新都中央公园周边';
   if (p.y < 1200)
     return p.x < 2050 ? '冬木 · 新都河岸公园' : '冬木 · 新都住宅区';
   return '冬木 · 新都商业街';

@@ -1,3 +1,4 @@
+import { actOnPastime, advancePastimes } from '../lib/fate-pastimes';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
@@ -18,7 +19,7 @@ import { roomPoint } from '../lib/fate-indoor-layout';
 import { visitPublicPlace } from '../lib/fate-public-places';
 import { createStreetActors, nearestWalkable } from '../lib/street';
 import { STREET_PARTNERS, type WaverStage } from '../lib/fate-cast';
-import { bondKey } from '../lib/fate-social';
+import { bondKey, rememberEncounter } from '../lib/fate-social';
 import {
   CloudSaveError,
   createCloudSaveHandlers,
@@ -228,6 +229,55 @@ void test('same-origin reads and explicit versioned uploads round-trip the compl
   assert.equal(store.writes.length, 2);
 });
 
+void test('cloud upload and authenticated restore keep personal preference evidence and private participants', async () => {
+  const store = memoryBackend();
+  const life = createDailyLife();
+  const e = {
+    id: life.nextId++,
+    minute: life.minutes,
+    text: '凛与士郎交谈。',
+    dialogue: {
+      speaker: 'rin' as const,
+      target: 'shirou' as const,
+      message: '你喜欢做什么？',
+      reply: '我喜欢阅读。',
+      source: 'preset' as const,
+    },
+  };
+  life.events.push(e);
+  rememberEncounter(life, e, {
+    impressions: [],
+    preferences: [
+      {
+        person: 'shirou',
+        kind: 'like',
+        subject: '阅读',
+        turn: 1,
+        quote: '我喜欢阅读。',
+      },
+    ],
+  });
+  const backup = createFateBackup({ ...emptyFateSave(), life });
+  assert.equal((await store.PUT(request('PUT', upload(backup)))).status, 201);
+  const restored = parseCloudSaveView(
+    await (await store.GET(request('GET'))).json(),
+  );
+  assert.deepEqual(
+    restored.slot!.backup.save.life!.bonds,
+    backup.save.life!.bonds,
+  );
+  assert.deepEqual(
+    (await store.GET(request('GET', undefined, 'bob'))).status,
+    200,
+  );
+  assert.equal(
+    parseCloudSaveView(
+      await (await store.GET(request('GET', undefined, 'bob'))).json(),
+    ).slot,
+    null,
+  );
+});
+
 void test('a public visit and a non-Emiya interior survive export, cloud upload and local restore together', async () => {
   const store = memoryBackend();
   const life = createDailyLife();
@@ -241,21 +291,29 @@ void test('a public visit and a non-Emiya interior survive export, cloud upload 
   const savedLife = snapshotLife(life, actors);
   const room = roomPoint('tohsaka', 'study', { x: 240, y: 390 });
   savedLife.indoor = { actor: 'rin', home: 'tohsaka', ...room, layout: 2 };
-  const backup = readFateBackupText(serializeFateBackup(createFateBackup({
-    ...emptyFateSave(),
-    worldNote: '凛从河岸公园回到远坂宅',
-    life: savedLife,
-  })));
+  const backup = readFateBackupText(
+    serializeFateBackup(
+      createFateBackup({
+        ...emptyFateSave(),
+        worldNote: '凛从河岸公园回到远坂宅',
+        life: savedLife,
+      }),
+    ),
+  );
 
   const written = await store.PUT(request('PUT', upload(backup)));
   assert.equal(written.status, 201);
-  const cloud = parseCloudSaveView(await (await store.GET(request('GET'))).json());
+  const cloud = parseCloudSaveView(
+    await (await store.GET(request('GET'))).json(),
+  );
   assert.deepEqual(cloud.slot?.backup, backup);
 
   const local = new Map<string, string>();
   const storage = {
     getItem: (key: string) => local.get(key) ?? null,
-    setItem: (key: string, value: string) => { local.set(key, value); },
+    setItem: (key: string, value: string) => {
+      local.set(key, value);
+    },
   };
   const before = { ...emptyFateLibrary(), current: emptyFateSave() };
   before.current.worldNote = '恢复前的本地进度';
@@ -554,4 +612,43 @@ void test('reading a remote snapshot leaves local progress alone and confirmed r
   assert.equal(restored.checkpoints.at(-1)!.title, '恢复前的进度');
   assert.deepEqual(library, before);
   assert.equal(store.writes.length, 1);
+});
+
+void test('completed and in-progress small activities survive the cloud API and local restore without replaying item changes', async () => {
+  const life = createDailyLife(),
+    actors = createStreetActors();
+  for (const id of ['rin', 'shirou', 'irisviel', 'illya'] as const) {
+    Object.assign(
+      actors.find((a) => a.id === id)!,
+      DISTRICT_PLACES.cafe,
+    );
+    life.people[id].activity = null;
+  }
+  life.belongings.rin.parts = 1;
+  assert.equal(
+    actOnPastime(life, actors, 'rin', 'repair-replace', 'shirou').ok,
+    true,
+  );
+  advancePastimes(life, actors, 12, 'rin');
+  assert.equal(
+    actOnPastime(life, actors, 'illya', 'repair-inspect', 'irisviel').ok,
+    true,
+  );
+  advancePastimes(life, actors, 4, 'illya');
+  const remote = createFateBackup({
+    ...emptyFateSave(),
+    life: snapshotLife(life, actors),
+  });
+  const store = memoryBackend();
+  const response = await store.PUT(request('PUT', upload(remote)));
+  assert.equal(response.status, 201);
+  const preview = parseCloudSaveView(
+    await (await store.GET(request('GET'))).json(),
+  );
+  const restored = restoreFateLibrary(emptyFateLibrary(), preview.slot!.backup)
+    .current.life!;
+  assert.deepEqual(restored.pastimes, life.pastimes);
+  assert.deepEqual(restored.belongings, life.belongings);
+  assert.equal(restored.belongings.rin.parts, 0);
+  assert.equal(restored.belongings.shirou.repairs, 1);
 });

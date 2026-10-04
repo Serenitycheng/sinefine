@@ -6,7 +6,7 @@ import {
 } from './fate-cast';
 import { parseFateSettings, type FateSettings } from './fate-world';
 import type { ActorId, Actor } from './street';
-import { WALK_AREAS, isActorId } from './street';
+import { samePavement, isActorId } from './street';
 import { parseDailyLife, type DailyLife } from './fate-life';
 import { reviseSocial } from './fate-social';
 import { storedDialogueTurns, type DialogueTurn } from './fate-dialogue';
@@ -119,15 +119,7 @@ export function nearestPartner(
         isPartner(a.id) &&
         a.id !== active &&
         Math.hypot(a.x - player.x, a.y - player.y) <= 135 &&
-        WALK_AREAS.some((r) =>
-          [a, player].every(
-            (p) =>
-              p.x >= r.left &&
-              p.x <= r.right &&
-              p.y >= r.top &&
-              p.y <= r.bottom,
-          ),
-        ),
+        samePavement(a, player),
     )
     .sort(
       (a, b) =>

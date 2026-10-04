@@ -83,7 +83,11 @@ export async function runBackgroundRound(
         relationshipNotes: save.relationshipNotes,
         waverStage: life.waverStage,
         housing: life.housing,
-        scene: lifeScene(snapshotLife(life, actors), target),
+        scene: lifeScene(
+          snapshotLife(life, actors),
+          target,
+          isPartner(speaker) ? speaker : undefined,
+        ),
         ...(event.decision ? { needs: life.people[target] } : {}),
         recent: recentLifeEvents(life, target)
           .filter((e) => e.id !== event.id)

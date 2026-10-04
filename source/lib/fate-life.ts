@@ -1,4 +1,17 @@
-import { cityPoint, DISTRICT_PLACES } from './fate-district';
+import {
+  createPublicOutings,
+  parsePublicOutings,
+  advancePublicOutings,
+  publicOutingHolds,
+  type PublicOutingsState,
+} from './fate-public-outings';
+import {
+  advancePastimes,
+  pastimeHolds,
+  parsePastimes,
+  type Pastime,
+} from './fate-pastimes';
+import { cityPoint, DISTRICT_PLACES, LEGACY_CITY_HOMES } from './fate-district';
 import { LIFE_ROUTINES, LEISURE_ACTIONS, lifeRoutine } from './fate-habits';
 import {
   createEconomy,
@@ -10,12 +23,15 @@ import {
 } from './fate-economy';
 import {
   rememberEncounter,
+  rememberSharedMeal,
   socialContext,
   socialAffinity,
   socialCooldown,
   appointmentSummary,
   cancelAppointments,
   MEETUPS,
+  parseConversationOutcome,
+  type ConversationOutcome,
   type Bond,
   type Appointment,
 } from './fate-social';
@@ -26,6 +42,12 @@ import {
   meetupPair,
 } from './fate-meetups';
 import { parseBonds, parseAppointments } from './fate-social-storage';
+import { migratePersonalMemories } from './fate-memory';
+import {
+  activityPreference,
+  preferenceWeight,
+  recentImpression,
+} from './fate-memory-behavior';
 import {
   createBelongings,
   parseBelongings,
@@ -99,13 +121,16 @@ import {
   pathTo,
   stepActor,
   wasWalkableInDistrict,
-  WALK_AREAS,
+  wasWalkableInCity,
+  migrateCityPoint,
+  samePavement,
   type Actor,
   type ActorId,
   type Point,
 } from './street';
 import {
   isIndoorFloor,
+  nearHomeEntrance,
   nearestIndoorPoint,
   type IndoorPosition,
 } from './fate-indoor-map';
@@ -170,6 +195,7 @@ export type LifeDialogue = {
 };
 export type LifePlan = { action: LifeAction; reason: string };
 export type LifeEvent = {
+  conversation?: ConversationOutcome;
   interaction?: {
     exchangeId: string;
     speaker: ActorId;
@@ -203,6 +229,8 @@ export const LIFE_HABITS = Object.fromEntries(
   STREET_PARTNERS.map((id) => [id, LIFE_ROUTINES[id].habits]),
 ) as Record<PartnerId, string>;
 export type DailyLife = {
+  publicOutings: PublicOutingsState;
+  pastimes?: Pastime[];
   economy: Economy;
   bonds: Record<string, Bond>;
   appointments: Appointment[];
@@ -211,7 +239,7 @@ export type DailyLife = {
   meals: HomeMeal[];
   housing: FateHousing;
   familyVisitDay: number;
-  version: 15;
+  version: 16;
   waverStage: WaverStage;
   minutes: number;
   people: Record<PartnerId, LifePerson>;
@@ -299,7 +327,8 @@ export function createDailyLife(): DailyLife {
     meals: [],
     housing: defaultHousing(),
     familyVisitDay: -1,
-    version: 15,
+    publicOutings: createPublicOutings(),
+    version: 16,
     waverStage: 'young',
     minutes: 980,
     people: {
@@ -420,6 +449,41 @@ export function lifePeriod(minutes: number) {
         ? '午后'
         : '傍晚';
 }
+const publicStops = new Map<LifePlace, Point[]>();
+function publicLifeStops(place: LifePlace) {
+  const cached = publicStops.get(place);
+  if (cached) return cached;
+  const center = LIFE_PLACES[place];
+  const stops: Point[] = [];
+  // Separate feet on actual pavement; snapping a tiny set of offsets onto the
+  // same curb previously put the whole shop/repair crowd on top of one another.
+  for (let i = 0; i < 2400 && stops.length < STREET_PARTNERS.length; i++) {
+    const radius = Math.sqrt(i) * 12;
+    const angle = i * 2.399963229728653;
+    const point = {
+      x: center.x + Math.cos(angle) * radius,
+      y: center.y + Math.sin(angle) * radius,
+    };
+    if (
+      !isWalkable(point) ||
+      ![
+        { x: 10, y: 0 },
+        { x: -10, y: 0 },
+        { x: 0, y: 10 },
+        { x: 0, y: -10 },
+      ].every((margin) =>
+        isWalkable({ x: point.x + margin.x, y: point.y + margin.y }),
+      ) ||
+      stops.some(
+        (other) => Math.hypot(point.x - other.x, point.y - other.y) < 60,
+      )
+    )
+      continue;
+    stops.push(point);
+  }
+  publicStops.set(place, stops);
+  return stops;
+}
 export function lifeDestination(
   id: PartnerId,
   kind: LifeAction,
@@ -427,64 +491,13 @@ export function lifeDestination(
 ): Point {
   if (home) {
     const point = FATE_HOMES[home];
-    return {
+    return nearestWalkable({
       x: point.x + ((STREET_PARTNERS.indexOf(id) % 3) - 1) * 18,
       y: point.y + (STREET_PARTNERS.indexOf(id) % 2) * 12,
-    };
+    });
   }
-  const place = LIFE_PLACES[LIFE_ACTIONS[kind].place];
-  return {
-    x:
-      place.x +
-      {
-        saber: 0,
-        rin: 35,
-        shirou: -35,
-        sakura: 18,
-        kiritsugu: -48,
-        irisviel: 48,
-        illya: -18,
-        taiga: 0,
-        diarmuid: -50,
-        cu: 50,
-        waver: 15,
-        iskandar: 0,
-        medea: -28,
-        kuzuki: 28,
-        gilgamesh: -8,
-        medusa: -16,
-        tokiomi: 24,
-        kirei: 42,
-        kariya: -40,
-        emiya: 8,
-        natalia: -24,
-      }[id],
-    y:
-      place.y +
-      {
-        saber: 0,
-        rin: 9,
-        shirou: 15,
-        sakura: -10,
-        kiritsugu: -12,
-        irisviel: 18,
-        illya: -20,
-        taiga: 23,
-        diarmuid: 30,
-        cu: -5,
-        waver: 36,
-        iskandar: -32,
-        medea: -27,
-        kuzuki: -18,
-        gilgamesh: 21,
-        medusa: 7,
-        tokiomi: -4,
-        kirei: -16,
-        kariya: 15,
-        emiya: 24,
-        natalia: -8,
-      }[id],
-  };
+  const place = LIFE_ACTIONS[kind].place;
+  return { ...publicLifeStops(place)[STREET_PARTNERS.indexOf(id)] };
 }
 export function lifeIndoors(person: LifePerson) {
   return (
@@ -539,6 +552,11 @@ export function decideLife(life: DailyLife, id: PartnerId): LifePlan {
   const person = life.people[id],
     hour = (life.minutes % 1440) / 60;
   const routine = lifeRoutine(id, life.waverStage);
+  if (person.hunger >= 85)
+    return {
+      action: 'eat',
+      reason: '已经很饿了，先吃一份简单餐食，其他事情稍后再做。',
+    };
   if (hour >= 22 || hour < 6)
     return { action: 'sleep', reason: routine.reasons.sleep };
   if (person.hunger >= 55)
@@ -593,6 +611,7 @@ export function decideLife(life: DailyLife, id: PartnerId): LifePlan {
       kind,
       score:
         routine.weights[kind] +
+        preferenceWeight(life, id, kind) +
         ((person.choices * 7 + i * 3) % 11) / 30 +
         (kind === 'walk' || kind === 'read' ? person.social / 180 : 0) +
         (kind === 'study' && hour < 17 ? 0.25 : 0) -
@@ -600,7 +619,35 @@ export function decideLife(life: DailyLife, id: PartnerId): LifePlan {
         (previous.includes(kind) ? 0.85 : 0),
     }))
     .sort((a, b) => b.score - a.score)[0].kind;
-  return { action, reason: routine.reasons[action] };
+  const preference = activityPreference(life, id, action);
+  return {
+    action,
+    reason:
+      preference?.preference === 'like'
+        ? `记得自己喜欢${preference.subject}，今天有空，想继续做一会儿。`
+        : routine.reasons[action],
+  };
+}
+
+/** Basic food is available at home too; choose a reachable table, not a city-wide queue. */
+function basicMealHome(life: DailyLife, id: PartnerId, actor: Actor) {
+  const home = homeOf(id, life.housing);
+  const distance = (point: Point) => {
+    const route = pathTo(actor, point);
+    if (!route.length && Math.hypot(actor.x - point.x, actor.y - point.y) >= 2)
+      return Infinity;
+    let length = 0;
+    let previous: Point = actor;
+    for (const next of route) {
+      length += Math.hypot(next.x - previous.x, next.y - previous.y);
+      previous = next;
+    }
+    return length;
+  };
+  return distance(lifeDestination(id, 'eat', home)) <=
+    distance(lifeDestination(id, 'eat'))
+    ? home
+    : undefined;
 }
 
 export function snapshotLife(life: DailyLife, actors: Actor[]): DailyLife {
@@ -617,7 +664,13 @@ export function advanceDailyLife(
   life: DailyLife,
   actors: Actor[],
   dt: number,
-  options: { running: boolean; speed: 1 | 4; controlled: ActorId | null },
+  options: {
+    running: boolean;
+    speed: 1 | 4;
+    controlled: ActorId | null;
+    clockRate?: number;
+    motionRate?: number;
+  },
 ): LifeEvent | null {
   const seconds = Number.isFinite(dt) ? clamp(dt, 0, 0.05) : 0;
   if (isPartner(options.controlled))
@@ -627,11 +680,26 @@ export function advanceDailyLife(
       if (actor.id !== options.controlled) actor.frame = 0;
     return null;
   }
-  const elapsed = seconds * options.speed * 2;
+  const clockRate = Number.isFinite(options.clockRate)
+    ? clamp(options.clockRate!, 1 / 24, 8)
+    : 2;
+  const motionRate = Number.isFinite(options.motionRate)
+    ? clamp(options.motionRate!, 0.4, 2)
+    : 1;
+  const motionSeconds = seconds * motionRate;
+  const elapsed = seconds * options.speed * clockRate;
   life.minutes += elapsed;
   advanceEconomy(life.economy, life.minutes);
   reconcileAppointments(life, actors, elapsed, options.controlled, (text) =>
     addEvent(life, text),
+  );
+  advancePastimes(life, actors, elapsed, options.controlled);
+  advancePublicOutings(
+    life,
+    actors,
+    options.controlled,
+    elapsed,
+    motionSeconds * options.speed,
   );
   const itemLog = (text: string, item: ItemEvent) => {
     addEvent(life, text).item = parseItemEvent(item);
@@ -641,7 +709,9 @@ export function advanceDailyLife(
   };
   prepareAgenda(life, scheduleLog);
   const mealLog = (text: string, meal: MealEvent) => {
-    addEvent(life, text).meal = parseMealEvent(meal);
+    const event = addEvent(life, text);
+    event.meal = parseMealEvent(meal);
+    rememberSharedMeal(life, event);
   };
   reconcileMeals(life, options.controlled, mealLog);
   for (const meal of planMeals(life, options.controlled)) {
@@ -667,7 +737,13 @@ export function advanceDailyLife(
       person.activity = null;
       continue;
     }
-    person.hunger = clamp(person.hunger + elapsed * 0.09, 0, 100);
+    const asleep =
+      person.activity?.kind === 'sleep' && person.activity.phase === 'doing';
+    person.hunger = clamp(
+      person.hunger + elapsed * (asleep ? 0.018 : 0.09),
+      0,
+      100,
+    );
     person.energy = clamp(person.energy - elapsed * 0.035, 0, 100);
     person.social = clamp(person.social + elapsed * 0.04, 0, 100);
     if (
@@ -680,12 +756,51 @@ export function advanceDailyLife(
       actor.frame = 0;
       continue;
     }
+    if (publicOutingHolds(life, id, options.controlled, actors)) continue;
+    if (pastimeHolds(life, id, options.controlled, actors)) {
+      actor.frame = 0;
+      actor.path = [];
+      continue;
+    }
     advanceBelongings(life, id, elapsed, itemLog);
+    const current = person.activity;
     if (
-      advanceSchedule(life, actor, elapsed, seconds, options.speed, scheduleLog)
+      current &&
+      !current.routine &&
+      current.meeting === undefined &&
+      !current.meal &&
+      ((person.hunger >= 85 && !['eat', 'cook'].includes(current.kind)) ||
+        (person.energy <= 10 &&
+          !['eat', 'cook', 'rest', 'sleep'].includes(current.kind)))
+    ) {
+      const need = person.hunger >= 85 ? '已经很饿' : '精力不足';
+      person.activity = null;
+      actor.path = [];
+      addEvent(
+        life,
+        `${fatePerson(id, life.waverStage)!.name}${need}，先停下${LIFE_ACTIONS[current.kind].label}，照顾身体。`,
+      );
+    }
+    if (
+      advanceSchedule(
+        life,
+        actor,
+        elapsed,
+        seconds,
+        options.speed * motionRate,
+        scheduleLog,
+      )
     )
       continue;
-    if (advanceAppointment(life, actor, elapsed, seconds, options.speed))
+    if (
+      advanceAppointment(
+        life,
+        actor,
+        elapsed,
+        seconds,
+        options.speed * motionRate,
+      )
+    )
       continue;
     const invitation = availableMeal(life, id);
     if (
@@ -713,12 +828,15 @@ export function advanceDailyLife(
       }
       const plan = decideLife(life, id),
         kind = plan.action;
+      const mealHome =
+        kind === 'eat' ? basicMealHome(life, id, actor) : undefined;
       person.activity = {
         kind,
         phase: 'going',
         remaining: actionDuration(kind, life.minutes),
         reason: plan.reason,
         source: 'rules',
+        ...(mealHome ? { home: mealHome } : {}),
         ...(LIFE_ACTIONS[kind].place === 'home'
           ? {
               home: homeOf(
@@ -753,6 +871,25 @@ export function advanceDailyLife(
       if (Math.hypot(actor.x - home.x, actor.y - home.y) >= 2)
         action.phase = 'going';
     }
+    if (
+      action.phase === 'doing' &&
+      !action.home &&
+      actors.filter(
+        (other) =>
+          other.id !== id &&
+          isPartner(other.id) &&
+          !lifeIndoors(life.people[other.id]) &&
+          Math.hypot(actor.x - other.x, actor.y - other.y) < 50,
+      ).length >= 2
+    ) {
+      const destination = lifeDestination(id, action.kind);
+      if (Math.hypot(actor.x - destination.x, actor.y - destination.y) >= 2) {
+        // Old saves keep their coordinates and remaining work. Walk to the new
+        // free-standing spot instead of teleporting or continuing in a pile.
+        action.phase = 'going';
+        actor.path = pathTo(actor, destination);
+      }
+    }
     if (action.phase === 'going') {
       const destination = lifeDestination(id, action.kind, action.home);
       if (Math.hypot(actor.x - destination.x, actor.y - destination.y) < 2) {
@@ -765,7 +902,7 @@ export function advanceDailyLife(
         );
       } else {
         if (!actor.path.length) actor.path = pathTo(actor, destination);
-        stepActor(actor, seconds, undefined, 55 * options.speed);
+        stepActor(actor, seconds, undefined, 55 * options.speed * motionRate);
       }
     } else {
       actor.frame = 0;
@@ -831,6 +968,14 @@ export function advanceDailyLife(
     const key = encounterKey(first, second);
     const previous = life.lastEncounters[key];
     const meeting = meetupPair(life, first, second);
+    const impression = recentImpression(life, first, second);
+    if (
+      !meeting &&
+      impression?.kind === 'experience' &&
+      impression.activity === 'friction' &&
+      life.minutes - impression.minute < 90
+    )
+      continue;
     if (!meeting && life.minutes < life.nextEncounter) continue;
     if (
       (life.people[first].activity?.meeting !== undefined ||
@@ -847,16 +992,7 @@ export function advanceDailyLife(
     const homeA = occupiedHome(life, first),
       homeB = occupiedHome(life, second);
     if ((homeA || homeB) && (!homeA || homeA !== homeB)) continue;
-    if (
-      Math.hypot(a.x - b.x, a.y - b.y) > 105 ||
-      !WALK_AREAS.some((r) =>
-        [a, b].every(
-          (p) =>
-            p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom,
-        ),
-      )
-    )
-      continue;
+    if (Math.hypot(a.x - b.x, a.y - b.y) > 105 || !samePavement(a, b)) continue;
     let dialogue = encounterDialogue(first, second, life.waverStage);
     const table = activeMeal(life, life.people[first].activity?.meal);
     const dining =
@@ -1315,7 +1451,11 @@ export type LifeScene = {
   emiya: string;
   natalia: string;
 };
-export function lifeScene(life: DailyLife, target: PartnerId): LifeScene {
+export function lifeScene(
+  life: DailyLife,
+  target: PartnerId,
+  partner?: PartnerId,
+): LifeScene {
   const p = life.positions[target];
   const home = occupiedHome(life, target);
   const place =
@@ -1335,11 +1475,14 @@ export function lifeScene(life: DailyLife, target: PartnerId): LifeScene {
               ? 'home'
               : 'street';
   return {
-    social: socialContext(life, target),
+    social: socialContext(life, target).filter(
+      (s) => partner === undefined || s.person === partner,
+    ),
     appointments: life.appointments
       .filter(
         (a) =>
           [a.a, a.b].includes(target) &&
+          (partner === undefined || [a.a, a.b].includes(partner)) &&
           (a.stage === null || a.stage === life.waverStage),
       )
       .slice(-6)
@@ -1413,6 +1556,21 @@ export function parseLifeScene(value: unknown): LifeScene {
         person: s.person,
         state: s.state,
         memories: [...s.memories],
+        ...(s.knowledge === undefined
+          ? {}
+          : {
+              knowledge: (() => {
+                if (
+                  !Array.isArray(s.knowledge) ||
+                  s.knowledge.length > 6 ||
+                  !s.knowledge.every(
+                    (m: unknown) => typeof m === 'string' && m.length <= 1000,
+                  )
+                )
+                  throw new Error('个人记忆场景无效');
+                return [...s.knowledge] as string[];
+              })(),
+            }),
       });
     }
   }
@@ -1585,7 +1743,7 @@ export function applyLifePlan(
     person.activity?.meeting !== undefined ||
     person.activity?.routine ||
     person.activity?.phase !== 'going' ||
-    (person.hunger >= 90 && plan.action !== 'eat') ||
+    (person.hunger >= 85 && plan.action !== 'eat') ||
     (person.energy <= 10 && !['rest', 'sleep', 'eat'].includes(plan.action))
   )
     return false;
@@ -1593,12 +1751,15 @@ export function applyLifePlan(
     const item = shoppingChoice(life, id);
     if (!item || !canAfford(life.economy, id, item)) return false;
   }
+  const mealHome =
+    plan.action === 'eat' ? basicMealHome(life, id, actor) : undefined;
   person.activity = {
     kind: plan.action,
     phase: 'going',
     remaining: actionDuration(plan.action, life.minutes),
     reason: plan.reason,
     source: 'deepseek',
+    ...(mealHome ? { home: mealHome } : {}),
     ...(LIFE_ACTIONS[plan.action].place === 'home'
       ? {
           home: homeOf(
@@ -1613,7 +1774,7 @@ export function applyLifePlan(
     lifeDestination(id, plan.action, person.activity.home),
   );
   event.decision = { person: id, ...plan, source: 'deepseek' };
-  event.text = `${fatePerson(id, life.waverStage)!.name}准备去${LIFE_PLACES[LIFE_ACTIONS[plan.action].place].name}${LIFE_ACTIONS[plan.action].label}。`;
+  event.text = `${fatePerson(id, life.waverStage)!.name}准备去${person.activity.home ? FATE_HOMES[person.activity.home].name : LIFE_PLACES[LIFE_ACTIONS[plan.action].place].name}${LIFE_ACTIONS[plan.action].label}。`;
   return true;
 }
 
@@ -1623,7 +1784,9 @@ export function parseDailyLife(value: unknown): DailyLife {
   const number = (v: unknown, max = 1e9) =>
     typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= max;
   if (
-    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].includes(x.version) ||
+    ![1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16].includes(
+      x.version,
+    ) ||
     !number(x.minutes) ||
     !number(x.nextEncounter) ||
     !number(x.holdUntil) ||
@@ -1739,10 +1902,19 @@ export function parseDailyLife(value: unknown): DailyLife {
                   : LIFE_IDS;
   for (const id of ['admin', ...ids] as ActorId[]) {
     const p = x.positions?.[id];
-    if (!p || !(x.version < 15 ? wasWalkableInDistrict(p) : isWalkable(p)))
+    if (
+      !p ||
+      !(x.version < 15
+        ? wasWalkableInDistrict(p)
+        : x.version === 15
+          ? wasWalkableInCity(p)
+          : isWalkable(p))
+    )
       throw new Error('人物位置无效');
     result.positions[id] =
-      x.version < 15 ? nearestWalkable(cityPoint(p)) : { x: p.x, y: p.y };
+      x.version < 16
+        ? migrateCityPoint(x.version < 15 ? cityPoint(p) : p)
+        : { x: p.x, y: p.y };
   }
   for (const id of ids) {
     const p = x.people?.[id];
@@ -1781,7 +1953,8 @@ export function parseDailyLife(value: unknown): DailyLife {
               home:
                 isHomeId(a.home) &&
                 (LIFE_ACTIONS[a.kind].place === 'home' ||
-                  (a.kind === 'eat' && Boolean(a.meal)))
+                  (a.kind === 'eat' &&
+                    (Boolean(a.meal) || a.home === homeOf(id, result.housing))))
                   ? a.home
                   : (() => {
                       throw new Error('行动住址无效');
@@ -1858,7 +2031,7 @@ export function parseDailyLife(value: unknown): DailyLife {
       activity,
     };
   }
-  if (x.version < 14) {
+  if (x.version < 16) {
     // Ongoing activities keep their remaining time and history. Place somebody
     // already indoors/at an appointment at the relocated destination; journeys
     // are replanned from their saved pavement position by the daily engine.
@@ -2015,6 +2188,18 @@ export function parseDailyLife(value: unknown): DailyLife {
         source: d.source,
       };
     }
+    if (event.conversation !== undefined) {
+      const d = clean.dialogue ?? clean.interaction;
+      if (!d || !isPartner(d.speaker)) throw new Error('交谈结果没有对应居民');
+      const turns: DialogueTurn[] =
+        'turns' in d && d.turns
+          ? d.turns
+          : [
+              { speaker: d.speaker, text: d.message },
+              { speaker: d.target, text: d.reply },
+            ];
+      clean.conversation = parseConversationOutcome(event.conversation, turns);
+    }
     return clean;
   });
   // Older saves had only the journal. Preserve every encounter time still available there.
@@ -2028,21 +2213,40 @@ export function parseDailyLife(value: unknown): DailyLife {
   }
   if (x.indoor !== undefined) {
     const indoor = x.indoor;
+    // Validate against the saved layout before shifting its outdoor doorstep.
+    // Room coordinates stay unchanged when an entire house moves on the map.
+    const savedDoor =
+      x.version < 16 &&
+      indoor &&
+      isHomeId(indoor.home) &&
+      isActorId(indoor.actor) &&
+      x.positions[indoor.actor]
+        ? x.version < 15
+          ? cityPoint(x.positions[indoor.actor])
+          : x.positions[indoor.actor]
+        : undefined;
+    const oldDoor = savedDoor && LEGACY_CITY_HOMES[indoor.home];
     if (
       !indoor ||
       !isActorId(indoor.actor) ||
       !isHomeId(indoor.home) ||
       !isIndoorFloor(indoor) ||
       (indoor.layout !== undefined && indoor.layout !== 2) ||
-      Math.hypot(
-        result.positions[indoor.actor].x - FATE_HOMES[indoor.home].x,
-        result.positions[indoor.actor].y - FATE_HOMES[indoor.home].y,
-      ) > 75
+      (savedDoor && oldDoor
+        ? Math.hypot(savedDoor.x - oldDoor.x, savedDoor.y - oldDoor.y) > 75
+        : !nearHomeEntrance(result.positions[indoor.actor], indoor.home))
     )
       throw new Error('室内位置无效');
+    if (savedDoor && oldDoor)
+      result.positions[indoor.actor] = nearestWalkable({
+        x: FATE_HOMES[indoor.home].x + savedDoor.x - oldDoor.x,
+        y: FATE_HOMES[indoor.home].y + savedDoor.y - oldDoor.y,
+      });
     const legacyRoom = indoor.layout === 2 ? null : indoorRoom(indoor);
-    const point = legacyRoom && legacyRoom !== 'hall'
-      ? roomPoint(indoor.home, legacyRoom, indoor) : indoor;
+    const point =
+      legacyRoom && legacyRoom !== 'hall'
+        ? roomPoint(indoor.home, legacyRoom, indoor)
+        : indoor;
     result.indoor = {
       actor: indoor.actor,
       home: indoor.home,
@@ -2050,7 +2254,7 @@ export function parseDailyLife(value: unknown): DailyLife {
       layout: 2,
     };
   }
-  return {
+  const clean: DailyLife = {
     ...result,
     minutes: x.minutes,
     nextId: x.nextId,
@@ -2058,4 +2262,27 @@ export function parseDailyLife(value: unknown): DailyLife {
     holdUntil: x.holdUntil,
     encounters: x.encounters,
   };
+  if (x.pastimes !== undefined)
+    clean.pastimes = parsePastimes(x.pastimes, clean);
+  clean.publicOutings = parsePublicOutings(x.publicOutings, clean);
+  migratePersonalMemories(clean);
+  for (const bond of Object.values(clean.bonds))
+    for (const m of bond.archive ?? []) {
+      if (m.kind !== 'appointment') continue;
+      const a = clean.appointments.find((a) => a.id === m.appointmentId);
+      if (
+        a
+          ? a.stage !== bond.stage ||
+            ![a.a, a.b].includes(bond.a) ||
+            ![a.a, a.b].includes(bond.b) ||
+            a.status !== m.status ||
+            a.activity !== m.activity ||
+            a.start !== m.start ||
+            a.until !== m.until ||
+            a.createdAt !== m.minute
+          : ['pending', 'meeting'].includes(m.status)
+      )
+        throw new Error('约定记忆与实际状态不一致');
+    }
+  return clean;
 }

@@ -213,7 +213,7 @@ void test('daily-life migration keeps the exact stored baseline until an explici
   );
   const { storage, writes } = memoryStorage([[FATE_LIBRARY_KEY, raw]]);
   const snapshot = readFateLocalSnapshot(storage);
-  assert.equal(snapshot.library.current.life!.version, 15);
+  assert.equal(snapshot.library.current.life!.version, 16);
   assert.equal(snapshot.stamp.library, raw);
   assert.equal(writes.length, 0);
   const saved = writeFateLocalSnapshot(

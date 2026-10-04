@@ -15,13 +15,19 @@ import {
 } from './fate-life';
 import { nearestDistrictLandmark } from './fate-district';
 import type { Exchange } from './fate-state';
-import { WALK_AREAS, type ActorId, type Point } from './street';
+import {
+  rememberEncounter,
+  conversationSummary,
+  type ConversationOutcome,
+} from './fate-social';
+import { samePavement, type ActorId, type Point } from './street';
 
 type Positions = readonly (Point & { id: ActorId })[];
 export type InteractionStatus = {
   ok: boolean;
   message: string;
   place?: string;
+  outcome?: ConversationOutcome;
 };
 
 export function liveEncounter(life: DailyLife): LifeEvent | null {
@@ -76,7 +82,10 @@ function proximity(
       return { ok: false, message: '此人已离开这处住宅。' };
     const point = interiorResidentPoint(life, indoors.home, target, speaker);
     if (!point) return { ok: false, message: '此人目前不在屋内。' };
-    if (indoorRoom(indoors, indoors.home) !== interiorZone(life.people[target].activity))
+    if (
+      indoorRoom(indoors, indoors.home) !==
+      interiorZone(life.people[target].activity)
+    )
       return { ok: false, message: '先走进人物所在的房间，再靠近交谈。' };
     if (Math.hypot(point.x - indoors.x, point.y - indoors.y) > 85)
       return { ok: false, message: '再走近一些，才能面对面交谈。' };
@@ -97,14 +106,7 @@ function proximity(
     b = actors.find((actor) => actor.id === target);
   if (!a || !b || Math.hypot(a.x - b.x, a.y - b.y) > 135)
     return { ok: false, message: '先靠近人物，再按 E 或点击交谈。' };
-  if (
-    !WALK_AREAS.some((r) =>
-      [a, b].every(
-        (p) =>
-          p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom,
-      ),
-    )
-  )
+  if (!samePavement(a, b))
     return {
       ok: false,
       message: '请走到同一条道路上，不能隔着河岸或建筑交谈。',
@@ -177,6 +179,7 @@ export function recordOnsiteConversation(
   actors: Positions,
   controlled: ActorId | null,
   entry: Exchange,
+  effects?: unknown,
 ): InteractionStatus {
   if (!isPartner(entry.target) || entry.speaker !== controlled)
     return { ok: false, message: '人物已切换，请重新靠近后交谈。' };
@@ -237,5 +240,12 @@ export function recordOnsiteConversation(
     },
   };
   life.events = [...life.events, event].slice(-80);
-  return { ...status, message: '交谈已记入日常。' };
+  rememberEncounter(life, event, effects);
+  return {
+    ...status,
+    message: event.conversation
+      ? conversationSummary(event.conversation, life.waverStage).join(' ')
+      : '交谈已记入日常。',
+    ...(event.conversation ? { outcome: event.conversation } : {}),
+  };
 }

@@ -147,7 +147,7 @@ export function StreetObserver({
         <Link href="/fate/world#homes">调整姐妹同住与从者住处 ↗</Link>
       </details>
       <p className={styles.fine}>
-        本地日常在离开页面或切到其他窗口时暂停；开启上方「后台代管」后，云端会继续推进。这里的记录随存档保留。
+        本地日常在离开页面或切到其他窗口时暂停；可在上方「后台日常设置」中开启云端代管。这里的记录随存档保留。
       </p>
     </aside>
   );

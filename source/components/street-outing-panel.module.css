@@ -1,0 +1,97 @@
+.panel {
+  display: grid;
+  gap: 9px;
+  color: #ece8d6;
+  font-size: 12px;
+}
+.panel h3 {
+  margin: 0;
+  color: #ead8ac;
+  font-size: 16px;
+  font-weight: 500;
+}
+.panel > small {
+  color: #c8c5a4;
+  letter-spacing: 1px;
+}
+.panel p {
+  margin: 0;
+  line-height: 1.7;
+}
+.panel progress {
+  width: 100%;
+  height: 7px;
+  accent-color: #c9c492;
+}
+.panel button {
+  min-height: 40px;
+  width: 100%;
+  justify-content: flex-start;
+}
+.panel .option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px;
+  text-align: left;
+}
+.option svg {
+  flex: none;
+  color: #d6c58f;
+}
+.option span {
+  display: grid;
+  gap: 4px;
+}
+.option b {
+  font-size: 13px;
+  font-weight: 500;
+}
+.option small {
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #c1cbb9;
+}
+.panel label {
+  display: grid;
+  gap: 6px;
+  color: #d1d4bd;
+}
+.panel select {
+  min-height: 40px;
+  width: 100%;
+  max-width: 100%;
+  background: #273a31;
+  color: #ede8d3;
+  border: 1px solid #a6b69b88;
+  border-radius: 5px;
+  padding: 8px;
+}
+.panel .quiet {
+  background: transparent;
+  color: #b7c0ae;
+  border-color: #a1ad8e44;
+}
+.panel .needs {
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: #ffffff08;
+  font-variant-numeric: tabular-nums;
+}
+.keepsake {
+  border-left: 2px solid #cbb888;
+  padding: 9px 10px;
+  background: #b9c1990c;
+}
+.keepsake small {
+  color: #dece9f;
+}
+.keepsake p {
+  margin-top: 5px;
+}
+@media (max-width: 800px) {
+  .panel button {
+    min-height: 44px;
+  }
+}

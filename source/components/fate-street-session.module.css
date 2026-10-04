@@ -1,0 +1,70 @@
+.session {
+  height: 100svh;
+  min-height: 620px;
+  display: flex;
+  flex-direction: column;
+  background: #182221;
+  color: #ebe8d5;
+}
+.game {
+  flex: 1;
+  min-height: 0;
+}
+.statusBar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 24px;
+  border-bottom: 1px solid #c6b48233;
+  font-size: 11px;
+  color: #b9c8bd;
+}
+.statusBar button,
+.dialogHeading button {
+  flex: none;
+  padding: 6px 10px;
+  border: 1px solid #c6b48255;
+  border-radius: 6px;
+  color: #e2d3a8;
+  background: #c6b4820c;
+  cursor: pointer;
+}
+.statusBar button:focus-visible,
+.dialogHeading button:focus-visible {
+  outline: 2px solid #e2d3a8;
+  outline-offset: 2px;
+}
+.backgroundDialog {
+  width: min(640px, calc(100vw - 24px));
+  max-width: min(640px, calc(100vw - 24px)) !important;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  background: #202e2a;
+  color: #ebe8d5;
+  border: 1px solid #c6b48277;
+}
+.backgroundDialog > p {
+  color: #becbc3;
+}
+.dialogHeading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+@media (max-width: 800px) {
+  .statusBar {
+    padding: 4px 12px;
+    font-size: 10px;
+  }
+  .statusBar button {
+    min-height: 36px;
+  }
+}
+@media (max-height: 570px) and (orientation: landscape) {
+  .session {
+    min-height: 440px;
+  }
+}

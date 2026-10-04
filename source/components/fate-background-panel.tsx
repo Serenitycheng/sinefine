@@ -6,8 +6,10 @@ import styles from './fate-background-panel.module.css';
 
 export function FateBackgroundPanel({
   background,
+  onSettings,
 }: {
   background: ReturnType<typeof useBackgroundLife>;
+  onSettings: () => void;
 }) {
   const fate = useFate();
   const { view, loading, busy, conflict, notice, start, stop, refresh } =
@@ -23,8 +25,8 @@ export function FateBackgroundPanel({
         <div>
           <strong>后台日常 · 每 30 分钟</strong>
           <p>
-            关闭网页后，居民继续行动和 AI 交谈。每天最多
-            ¥5，达到预算后次日继续。
+            开启后，关闭网页也会继续居民日常和 AI 交谈。后台每账号每天最多
+            ¥5，达到预算后次日继续；网页内的 AI 交谈另计。
           </p>
         </div>
         {session?.enabled ? (
@@ -37,6 +39,7 @@ export function FateBackgroundPanel({
               busy ||
               loading ||
               !view ||
+              background.recoveryPending ||
               !fate.cloudSaved ||
               fate.storageBlocked
             }
@@ -47,13 +50,23 @@ export function FateBackgroundPanel({
         )}
       </div>
       <div className={styles.status} aria-live="polite">
-        {loading
-          ? '正在读取后台状态…'
-          : busy
-            ? '正在保存并切换进度…'
-            : session?.enabled
-              ? `云端代管中 · 今日保守计费 ¥${spent.toFixed(3)} / ¥5 · 已推进 ${session.rounds} 轮`
-              : '后台未运行'}
+        {background.recoveryPending
+          ? `账号 ${background.recoveryAccount} 的后台状态尚未确认，本地已暂停以保护进度。请重新读取；若登录失效，请先登录这个账号。`
+          : fate.cloudAccountLoading
+            ? '正在读取云端账号…'
+            : loading
+              ? '正在读取后台状态…'
+              : busy
+                ? '正在保存并切换进度…'
+                : session?.enabled
+                  ? `云端代管中 · 今日保守计费 ¥${spent.toFixed(3)} / ¥5 · 已推进 ${session.rounds} 轮`
+                  : view
+                    ? '后台未运行'
+                    : fate.cloudUsername
+                      ? '尚未确认后台状态，请刷新重试'
+                      : fate.cloudConfigured === null
+                        ? '云端账号暂时不可用 · 本地日常可继续'
+                        : '未登录游戏账号 · 当前使用本地日常'}
         {session?.enabled && (
           <span>
             下轮预计{' '}
@@ -75,6 +88,7 @@ export function FateBackgroundPanel({
       {!fate.cloudSaved && (
         <p>请先在「AI 设置」登录游戏账号，并保存 DeepSeek 连接。</p>
       )}
+      <button onClick={onSettings}>账号与 AI 连接</button>
       {(notice || session?.notice) && (
         <output className={styles.notice}>{notice || session?.notice}</output>
       )}
@@ -96,6 +110,15 @@ export function FateBackgroundPanel({
           onClick={() => void refresh()}
         >
           刷新后台状态
+        </button>
+      )}
+      {fate.cloudConfigured === null && !fate.cloudAccountLoading && (
+        <button
+          className={styles.refresh}
+          disabled={fate.checkingConnection}
+          onClick={fate.useCloudConnection}
+        >
+          重新读取云端账号
         </button>
       )}
     </section>

@@ -215,7 +215,7 @@ export function advanceSchedule(
   actor: Actor,
   elapsed: number,
   seconds: number,
-  speed: 1 | 4,
+  speed: number,
   log: ScheduleLog,
 ) {
   const id = actor.id;

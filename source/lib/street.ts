@@ -1,5 +1,25 @@
 import { STREET_PARTNERS } from './fate-cast';
-import { cityPoint, districtAt, DISTRICT_LANDMARKS } from './fate-district';
+import {
+  districtAt,
+  DISTRICT_HOMES,
+  DISTRICT_PLACES,
+  DISTRICT_LANDMARKS,
+  LEGACY_CITY_HOMES,
+  LEGACY_CITY_PLACES,
+} from './fate-district';
+import {
+  CITY_SIZE,
+  cityWalkable,
+  closestCityPavement,
+  shareCityPavement,
+  cityJunctions,
+} from './fate-city-layout';
+import {
+  HOME_ENTRANCES,
+  homeApproachWalkable,
+  shareHomeApproach,
+  closestHomeApproach,
+} from './fate-home-entrances';
 export type Point = { x: number; y: number };
 export type Rect = { left: number; right: number; top: number; bottom: number };
 export const ACTOR_IDS = ['admin', ...STREET_PARTNERS] as const;
@@ -17,7 +37,7 @@ export type Actor = Point & {
   routeIndex: number;
 };
 
-export const STREET = { width: 3100, height: 1660 };
+export const STREET = CITY_SIZE;
 export const LEGACY_WALK_AREAS: Rect[] = [
   { left: 55, right: 1617, top: 802, bottom: 903 },
   { left: 830, right: 955, top: 670, bottom: 824 },
@@ -32,7 +52,7 @@ export const LEGACY_DISTRICT_WALK_AREAS: Rect[] = [
   { left: 1420, right: 1500, top: 300, bottom: 850 },
   { left: 860, right: 925, top: 550, bottom: 850 },
 ];
-export const WALK_AREAS: Rect[] = [
+export const LEGACY_CITY_WALK_AREAS: Rect[] = [
   // Three east-west roads on each bank, joined by two usable bridges.
   { left: 150, right: 1510, top: 440, bottom: 550 },
   { left: 150, right: 1510, top: 850, bottom: 965 },
@@ -53,23 +73,27 @@ export const WALK_AREAS: Rect[] = [
   { left: 315, right: 385, top: 300, bottom: 500 },
 ];
 export const ROUTE_STOPS: Point[] = [
-  { x: 1250, y: 818 },
-  { x: 940, y: 858 },
-  { x: 390, y: 837 },
-  { x: 670, y: 886 },
-].map(cityPoint);
+  DISTRICT_PLACES.cafe,
+  DISTRICT_PLACES.park,
+  DISTRICT_PLACES.shops,
+  { x: 1160, y: 840 },
+];
 export const WALK_SPEED = 70;
 
 export function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 export function isWalkable(p: Point) {
+  return cityWalkable(p) || homeApproachWalkable(p);
+}
+export function samePavement(a: Point, b: Point) {
+  return shareCityPavement(a, b) || shareHomeApproach(a, b);
+}
+export function wasWalkableInCity(p: Point) {
   return (
     Number.isFinite(p.x) &&
     Number.isFinite(p.y) &&
-    WALK_AREAS.some(
-      (r) => p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom,
-    )
+    LEGACY_CITY_WALK_AREAS.some((r) => within(p, r))
   );
 }
 export function wasWalkableInDistrict(p: Point) {
@@ -82,15 +106,29 @@ export function wasWalkableInDistrict(p: Point) {
   );
 }
 export function nearestWalkable(p: Point): Point {
-  if (!Number.isFinite(p.x) || !Number.isFinite(p.y))
-    return cityPoint({ x: 750, y: 845 });
-  return WALK_AREAS.map((r) => ({
-    x: clamp(p.x, r.left, r.right),
-    y: clamp(p.y, r.top, r.bottom),
-  })).sort(
-    (a, b) =>
+  const city = closestCityPavement(p);
+  if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return city;
+  const entrance = closestHomeApproach(p);
+  return Math.hypot(p.x - entrance.x, p.y - entrance.y) <
+    Math.hypot(p.x - city.x, p.y - city.y)
+    ? entrance
+    : city;
+}
+export function migrateCityPoint(p: Point): Point {
+  const oldPlaces = { ...LEGACY_CITY_HOMES, ...LEGACY_CITY_PLACES };
+  const newPlaces = { ...DISTRICT_HOMES, ...DISTRICT_PLACES };
+  const closest = Object.entries(oldPlaces).sort(
+    ([, a], [, b]) =>
       Math.hypot(a.x - p.x, a.y - p.y) - Math.hypot(b.x - p.x, b.y - p.y),
   )[0];
+  if (Math.hypot(closest[1].x - p.x, closest[1].y - p.y) <= 120) {
+    const to = newPlaces[closest[0] as keyof typeof newPlaces];
+    return nearestWalkable({
+      x: to.x + p.x - closest[1].x,
+      y: to.y + p.y - closest[1].y,
+    });
+  }
+  return nearestWalkable(p);
 }
 export function moveWithinStreet(p: Point, dx: number, dy: number): Point {
   let result = { ...p };
@@ -119,26 +157,13 @@ function within(p: Point, r: Rect) {
   return p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom;
 }
 function straightPath(a: Point, b: Point) {
-  return WALK_AREAS.some((r) => within(a, r) && within(b, r));
+  return samePavement(a, b);
 }
-// Every edge lies inside one convex pavement rectangle. Intersections connect
-// those rectangles, so diagonal shortcuts can never cross a house or the river.
-const junctions: Point[] = WALK_AREAS.map((r) => ({
-  x: (r.left + r.right) / 2,
-  y: (r.top + r.bottom) / 2,
-}));
-for (let i = 0; i < WALK_AREAS.length; i++) {
-  for (let j = i + 1; j < WALK_AREAS.length; j++) {
-    const a = WALK_AREAS[i],
-      b = WALK_AREAS[j];
-    const left = Math.max(a.left, b.left),
-      right = Math.min(a.right, b.right);
-    const top = Math.max(a.top, b.top),
-      bottom = Math.min(a.bottom, b.bottom);
-    if (left <= right && top <= bottom)
-      junctions.push({ x: (left + right) / 2, y: (top + bottom) / 2 });
-  }
-}
+// Each capsule is convex; actual overlaps join curved road sections safely.
+const junctions: Point[] = [
+  ...cityJunctions(),
+  ...Object.values(HOME_ENTRANCES).flatMap((entry) => entry.points),
+];
 const roads = junctions.map((a) =>
   junctions.map((b) =>
     straightPath(a, b) ? Math.hypot(a.x - b.x, a.y - b.y) : Infinity,
@@ -242,32 +267,35 @@ export function pointAlongRoute(route: Point[], progress: number): Point {
   return route.at(-1)!;
 }
 export function createStreetActors(): Actor[] {
-  return [
-    { id: 'admin', x: 690, y: 863 },
-    { id: 'saber', x: 1450, y: 850 },
-    { id: 'rin', x: 680, y: 300 },
-    { id: 'shirou', x: 540, y: 300 },
-    { id: 'sakura', x: 230, y: 550 },
-    { id: 'kiritsugu', x: 230, y: 300 },
-    { id: 'irisviel', x: 330, y: 300 },
-    { id: 'illya', x: 440, y: 300 },
-    { id: 'taiga', x: 680, y: 550 },
-    { id: 'diarmuid', x: 480, y: 850 },
-    { id: 'cu', x: 906, y: 550 },
-    { id: 'waver', x: 1120, y: 550 },
-    { id: 'iskandar', x: 1190, y: 550 },
-    { id: 'medea', x: 140, y: 212 },
-    { id: 'kuzuki', x: 150, y: 212 },
-    { id: 'gilgamesh', x: 1230, y: 850 },
-    { id: 'medusa', x: 1060, y: 850 },
-    { id: 'tokiomi', x: 790, y: 300 },
-    { id: 'kirei', x: 1430, y: 300 },
-    { id: 'kariya', x: 350, y: 550 },
-    { id: 'emiya', x: 900, y: 850 },
-    { id: 'natalia', x: 230, y: 850 },
-  ].map((p, i) => ({
-    ...cityPoint(p),
-    id: p.id as ActorId,
+  const h = DISTRICT_HOMES,
+    p = DISTRICT_PLACES;
+  const starts: Record<ActorId, Point> = {
+    admin: { x: 1160, y: 840 },
+    saber: p.park,
+    rin: h.tohsaka,
+    shirou: { x: h.emiya.x + 35, y: h.emiya.y },
+    sakura: h.matou,
+    kiritsugu: h.einzbern,
+    irisviel: { x: h.einzbern.x + 24, y: h.einzbern.y },
+    illya: { x: h.einzbern.x - 24, y: h.einzbern.y },
+    taiga: h.fujimura,
+    diarmuid: h.kayneth,
+    cu: p.shops,
+    waver: h.waver,
+    iskandar: { x: h.waver.x + 30, y: h.waver.y },
+    medea: { x: h.temple.x - 18, y: h.temple.y },
+    kuzuki: h.temple,
+    gilgamesh: p.cafe,
+    medusa: { x: h.matou.x + 32, y: h.matou.y },
+    tokiomi: { x: h.tohsaka.x + 25, y: h.tohsaka.y },
+    kirei: h.church,
+    kariya: { x: h.matou.x - 24, y: h.matou.y },
+    emiya: { x: p.park.x + 35, y: p.park.y },
+    natalia: h.natalia,
+  };
+  return ACTOR_IDS.map((id, i) => ({
+    ...nearestWalkable(starts[id]),
+    id,
     facing: 1,
     frame: 0,
     phase: 0,
@@ -318,7 +346,10 @@ export function stepActor(
   const moved = Math.hypot(actor.x - previous.x, actor.y - previous.y) > 0.02;
   if (Math.abs(actor.x - previous.x) > 0.02)
     actor.facing = actor.x > previous.x ? 1 : -1;
-  actor.phase = moved ? actor.phase + elapsed : 0;
+  const cadence = Number.isFinite(speed)
+    ? clamp(speed / WALK_SPEED, 0.4, 2)
+    : 1;
+  actor.phase = moved ? actor.phase + elapsed * cadence : 0;
   actor.frame = moved ? 1 + (Math.floor(actor.phase * 9) % 3) : 0;
   return moved;
 }

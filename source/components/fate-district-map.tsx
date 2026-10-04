@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { MapPin, Navigation, Users, X } from 'lucide-react';
 import {
@@ -7,7 +8,12 @@ import {
 } from '@/lib/fate-district';
 import { FATE_HOMES, type HomeId } from '@/lib/fate-housing';
 import { fatePerson, STREET_PARTNERS, type PartnerId } from '@/lib/fate-cast';
-import { lifePeriod, lifeStatus, occupiedHome, type DailyLife } from '@/lib/fate-life';
+import {
+  lifePeriod,
+  lifeStatus,
+  occupiedHome,
+  type DailyLife,
+} from '@/lib/fate-life';
 import { STREET, placeName, type ActorId } from '@/lib/street';
 import type { PublicVisitAction } from '@/lib/fate-public-places';
 import { FateCityScenery } from './fate-city-scenery';
@@ -123,7 +129,7 @@ export function DistrictPlaceCard({
   onVisit,
   onEnter,
   onPublicAction,
-  companions,
+  activity,
   shopLabel,
   shopAffordable,
   notice,
@@ -137,7 +143,7 @@ export function DistrictPlaceCard({
   onVisit: (home: HomeId) => void;
   onEnter: (home: HomeId) => void;
   onPublicAction: (action: PublicVisitAction, target?: PartnerId) => void;
-  companions: { id: PartnerId; name: string }[];
+  activity?: ReactNode;
   shopLabel: string | null;
   shopAffordable: boolean;
   notice: string;
@@ -194,7 +200,7 @@ export function DistrictPlaceCard({
             )}
           </>
         )}
-        <button type="button" onClick={onWalk}>
+        <button type="button" onClick={control && arrived ? onClose : onWalk}>
           {control
             ? arrived
               ? '回到街区'
@@ -205,51 +211,31 @@ export function DistrictPlaceCard({
       {place.kind !== 'home' && (
         <div className={styles.publicVisit}>
           <strong>到场活动</strong>
-          {control && arrived ? (
-            <>
-              {place.id === 'school' && (
-                <button type="button" onClick={() => onPublicAction('study')}>
-                  在学园自习
-                </button>
-              )}
-              {place.id === 'cafe' && (
-                <button type="button" onClick={() => onPublicAction('eat')}>
-                  吃一份简餐 · 免费
-                </button>
-              )}
-              {place.id === 'shops' && (
-                <button
-                  type="button"
-                  disabled={!shopLabel || !shopAffordable}
-                  onClick={() => onPublicAction('shop')}
-                >
-                  {shopLabel
-                    ? shopAffordable
-                      ? shopLabel
-                      : `${shopLabel} · 生活点不足`
-                    : '随身用品已足'}
-                </button>
-              )}
-              {place.id === 'park' && (
-                <>
-                  <button type="button" onClick={() => onPublicAction('walk')}>
-                    沿河散步
+          {activity ??
+            (control && arrived ? (
+              <>
+                {place.id === 'school' && (
+                  <button type="button" onClick={() => onPublicAction('study')}>
+                    在学园自习
                   </button>
-                  {companions.map((companion) => (
-                    <button
-                      type="button"
-                      key={companion.id}
-                      onClick={() => onPublicAction('together', companion.id)}
-                    >
-                      与{companion.name}一起散步
-                    </button>
-                  ))}
-                </>
-              )}
-            </>
-          ) : (
-            <span>先进入角色，沿街走到地点附近即可互动。</span>
-          )}
+                )}
+                {place.id === 'shops' && (
+                  <button
+                    type="button"
+                    disabled={!shopLabel || !shopAffordable}
+                    onClick={() => onPublicAction('shop')}
+                  >
+                    {shopLabel
+                      ? shopAffordable
+                        ? shopLabel
+                        : `${shopLabel} · 生活点不足`
+                      : '随身用品已足'}
+                  </button>
+                )}
+              </>
+            ) : (
+              <span>先进入角色，沿街走到地点附近即可互动。</span>
+            ))}
           {notice && <output>{notice}</output>}
         </div>
       )}

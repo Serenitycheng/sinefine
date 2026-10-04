@@ -17,18 +17,17 @@ import { interiorResidentPoint } from '../lib/fate-interior';
 import { indoorRoom, isIndoorWalkable } from '../lib/fate-indoor-map';
 import { STREET_PARTNERS } from '../lib/fate-cast';
 import { FATE_HOMES, type HomeId } from '../lib/fate-housing';
-import { createStreetActors, WALK_AREAS } from '../lib/street';
+import { createStreetActors } from '../lib/street';
 import { emptyFateSave, parseFateSave, type Exchange } from '../lib/fate-state';
 
 function outside() {
   const life = createDailyLife(),
     actors = createStreetActors();
-  const road = WALK_AREAS.find((r) => r.right - r.left > 200)!;
   const a = actors.find((actor) => actor.id === 'illya')!,
     b = actors.find((actor) => actor.id === 'shirou')!;
   Object.assign(a, {
-    x: (road.left + road.right) / 2,
-    y: (road.top + road.bottom) / 2,
+    x: 1600,
+    y: 907,
   });
   Object.assign(b, { x: a.x + 30, y: a.y });
   for (const id of STREET_PARTNERS)

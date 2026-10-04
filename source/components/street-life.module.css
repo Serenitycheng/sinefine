@@ -1,5 +1,6 @@
 .toolbar {
   display: flex;
+  flex-wrap: wrap;
   flex: none;
   align-items: center;
   gap: 15px;
@@ -131,17 +132,37 @@
   font-size: 12px;
   font-weight: 500;
 }
-.speeds {
+.paceControls {
   display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.paceField {
+  display: grid;
   gap: 3px;
+  min-width: 0;
+  font-size: 10px;
+  color: #acbdaf;
 }
-.speeds button {
-  padding: 5px 7px;
-  border-radius: 3px;
+.paceField select {
+  min-height: 34px;
+  max-width: 100%;
+  padding: 5px 8px;
+  border: 1px solid #bdc89950;
+  border-radius: 5px;
+  background: #26332d;
+  color: #e4dec2;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
 }
-.speeds [aria-pressed='true'] {
-  background: #c8d6b222;
-  color: #e8e9d7;
+.paceField select:focus-visible {
+  outline: 2px solid #e0d39c;
+  outline-offset: 2px;
+}
+.paceField select:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 .state {
   font-size: 10px;
@@ -153,8 +174,8 @@
   font-size: 11px;
 }
 .panel {
-  flex: 0 0 324px;
-  width: 324px;
+  flex: 0 0 378px;
+  width: 378px;
   padding: 23px 20px;
   background: #182221;
   border-left: 1px solid #ffffff19;
@@ -204,6 +225,68 @@
 .person {
   padding: 17px 0;
   border-top: 1px solid #ffffff17;
+}
+.lifeOverview {
+  padding: 14px;
+  margin: 16px 0;
+  background: linear-gradient(145deg, #344039, #25322d);
+  border: 1px solid #d8cb9e38;
+  border-radius: 9px;
+}
+.overviewTop {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  justify-content: space-between;
+  align-items: center;
+  color: #e6dbb8;
+  font-size: 12px;
+}
+.overviewTop button {
+  padding: 5px 8px;
+  border: 1px solid #d8cb9e45;
+  border-radius: 5px;
+  color: #ece3c8;
+  font-size: 11px;
+}
+.lifeOverview p {
+  color: #c0cabe;
+  font-size: 12px;
+  line-height: 1.85;
+  margin: 11px 0;
+}
+.lifeOverview label {
+  display: block;
+  font-size: 12px;
+  margin: 12px 0 7px;
+  color: #ded9bf;
+}
+.lifeOverview select {
+  width: 100%;
+  min-height: 38px;
+  background: #1e2b25;
+  color: #eee9d5;
+  border: 1px solid #c8c3a357;
+  border-radius: 5px;
+  padding: 7px 9px;
+  font-size: 12px;
+}
+.activityDetail {
+  display: grid;
+  gap: 5px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: #c9d7bc0b;
+  border-left: 2px solid #d7c89c80;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.activityDetail b {
+  font-weight: 500;
+  color: #e1d8b7;
+}
+.activityDetail span {
+  color: #b5c4b7;
 }
 .personTop {
   display: flex;
@@ -489,13 +572,13 @@
     gap: 5px;
   }
 }
-@media (max-width: 430px) {
+@media (max-width: 640px) {
   .toolbar {
     flex-wrap: wrap;
     gap: 8px;
   }
   .clock {
-    flex-basis: calc(100% - 100px);
+    flex: 1 1 calc(100% - 120px);
   }
   .records {
     order: 0;
@@ -504,8 +587,12 @@
   .play {
     order: 1;
   }
-  .speeds {
+  .paceControls {
     order: 2;
+    flex-basis: 100%;
+  }
+  .paceField select {
+    min-height: 40px;
   }
 }
 .belongings {
@@ -533,4 +620,298 @@
   height: 5px;
   margin: 6px 0;
   accent-color: #b1c5a0;
+}
+.personalMemories {
+  margin: 16px 0;
+  padding: 14px 0;
+  border-block: 1px solid #aabb9926;
+}
+.personalMemories h4 {
+  margin: 0 0 8px;
+  font-size: 14px;
+  color: #e6dfbc;
+  font-weight: 500;
+}
+.memoryFilters {
+  display: flex;
+  gap: 6px;
+  margin: 12px 0;
+}
+.memoryFilters button,
+.moreMemories {
+  border: 1px solid #c9c2a645;
+  background: transparent;
+  border-radius: 5px;
+  padding: 7px 10px;
+  color: #c6d0c4;
+  font-size: 12px;
+  cursor: pointer;
+}
+.memoryFilters button[aria-pressed='true'] {
+  background: #d9cca91c;
+  border-color: #d9cca97a;
+  color: #ece3c5;
+}
+.memoryFilters button:focus-visible,
+.moreMemories:focus-visible,
+.memoryList summary:focus-visible {
+  outline: 2px solid #d9cca9;
+  outline-offset: 3px;
+}
+.memoryList {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.memoryList li {
+  background: #ffffff04;
+  border-left: 2px solid #b8be984a;
+  padding: 10px 12px;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.memoryList small,
+.personalMemories .memoryNote {
+  color: #a9b8ab;
+  font-size: 11px;
+}
+.memoryList p {
+  line-height: 1.75;
+}
+.memoryList summary {
+  color: #cec6a5;
+  cursor: pointer;
+  font-size: 11px;
+  padding-block: 4px;
+}
+.memoryList blockquote {
+  margin: 8px 0;
+  padding-left: 9px;
+  border-left: 1px solid #c9c2a63b;
+  color: #c1cfc2;
+  font-size: 12px;
+}
+.personalMemories .memoryEmpty {
+  margin-block: 12px;
+}
+.moreMemories {
+  margin: 5px 0;
+}
+
+.pastimes {
+  padding: 20px;
+  margin: 20px 0;
+  border: 1px solid #adc3a64d;
+  border-radius: 14px;
+  background: linear-gradient(140deg, #39473d, #243533);
+  color: #edf0df;
+}
+.pastimes > span {
+  color: #e1c98e;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+}
+.pastimes h3 {
+  margin: 6px 0 8px;
+  font-size: 22px;
+  font-weight: 500;
+}
+.pastimes h4 {
+  margin: 0 0 9px;
+  color: #f2e4bd;
+  font-size: 14px;
+}
+.pastimes p {
+  font-size: 13px;
+  line-height: 1.85;
+  margin: 10px 0;
+}
+.pastimes label {
+  display: block;
+  font-size: 12px;
+  margin-top: 14px;
+}
+.pastimes select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  margin-top: 7px;
+  border: 1px solid #a3b49b80;
+  border-radius: 8px;
+  background: #1e302c;
+  color: #eff0de;
+}
+.activityTabs,
+.activityButtons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.pastimes button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 9px 12px;
+  border: 1px solid #afc3a666;
+  border-radius: 8px;
+  font-size: 12px;
+  background: #23322c;
+  color: #ece5ca;
+  cursor: pointer;
+}
+.pastimes button:hover:not(:disabled),
+.activityTabs button[aria-pressed='true'] {
+  background: #59654d;
+  border-color: #c8d7b1;
+}
+.pastimes button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.pastimes button:focus-visible,
+.pastimes select:focus-visible,
+.pastimes summary:focus-visible {
+  outline: 2px solid #edcf89;
+  outline-offset: 3px;
+}
+.activityCard {
+  background: #18292477;
+  padding: 16px;
+  margin: 14px 0 10px;
+  border-radius: 10px;
+  border: 1px solid #dce6c624;
+}
+.activityCard progress {
+  display: block;
+  width: 100%;
+  height: 9px;
+  margin: 16px 0;
+  accent-color: #d6c383;
+}
+.pastimes .quietButton {
+  margin-top: 12px;
+  background: transparent;
+  color: #c3cbb8;
+}
+.pastimes .hint {
+  color: #c8cfbb;
+  font-size: 12px;
+}
+.materials {
+  margin: 16px 0 0;
+  border-top: 1px solid #c2cead33;
+  padding-top: 12px;
+  font-size: 12px;
+}
+.materials summary {
+  cursor: pointer;
+  min-height: 36px;
+  color: #e4d4a6;
+}
+.actionNotice {
+  padding: 12px;
+  border-left: 3px solid #d0bf81;
+  background: #10211e88;
+  border-radius: 4px;
+}
+@media (max-width: 600px) {
+  .pastimes {
+    padding: 15px;
+  }
+  .activityButtons > button {
+    flex: 1 1 130px;
+  }
+}
+
+.notebookNav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin: 18px 0 10px;
+}
+.notebookNav button {
+  min-height: 44px;
+  border: 1px solid #a5bca54d;
+  border-radius: 8px;
+  color: #ccd7c4;
+  font-size: 12px;
+  background: #26332d;
+}
+.notebookNav button[aria-pressed='true'] {
+  color: #f4e9c8;
+  background: #4b5945;
+  border-color: #c5c69a;
+}
+.scheduleFold {
+  padding: 12px 0;
+  border-top: 1px solid #ced6bc33;
+  font-size: 12px;
+}
+.scheduleFold summary {
+  cursor: pointer;
+  min-height: 36px;
+  color: #d8d5bc;
+}
+.eventFilter {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 44px;
+  font-size: 12px;
+}
+.eventFilter input {
+  accent-color: #cfbd84;
+  width: 17px;
+  height: 17px;
+}
+.reminder {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 26px;
+  background: #354137;
+  border-bottom: 1px solid #c4cfab33;
+  color: #eee5c8;
+  font-size: 12px;
+}
+.reminder > span:first-child {
+  margin-right: auto;
+}
+.reminder button {
+  border: 1px solid #b6c69b66;
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  color: #ede6ce;
+  background: #25352c;
+  cursor: pointer;
+}
+.reminder button:focus-visible {
+  outline: 2px solid #edd293;
+  outline-offset: 3px;
+}
+.reminder output {
+  flex-basis: 100%;
+  color: #f0e5c4;
+}
+@media (max-width: 800px) {
+  .reminder {
+    gap: 7px;
+    padding: 8px 12px;
+    font-size: 11px;
+  }
+  .reminder button {
+    min-height: 44px;
+  }
+}
+
+.actionNotice {
+  display: block;
+  font-size: 12px;
+  line-height: 1.85;
+  margin: 12px 0;
 }
