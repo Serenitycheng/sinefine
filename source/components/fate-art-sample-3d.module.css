@@ -1,0 +1,326 @@
+.shell {
+  height: 100dvh;
+  min-height: 440px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #192623;
+  color: #ecebdc;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 72px;
+  padding: 14px 26px;
+  border-bottom: 1px solid #c8b98435;
+}
+.identity {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+}
+.brand {
+  font:
+    23px Georgia,
+    serif;
+  letter-spacing: 3px;
+  color: #e2d1a4;
+  white-space: nowrap;
+}
+.identity h1 {
+  font-size: 14px;
+  font-weight: 400;
+  color: #d8ddcc;
+  margin: 0;
+  white-space: nowrap;
+}
+.links {
+  margin-left: auto;
+  display: flex;
+  gap: 10px;
+}
+.links a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dfddc6;
+  text-decoration: none;
+  padding: 10px 12px;
+  border: 1px solid #c8b98445;
+  border-radius: 6px;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.links a:hover {
+  background: #c8b98412;
+}
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 260px;
+  overflow: hidden;
+  background: #c3dce7;
+}
+.canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+}
+.canvas canvas:focus-visible {
+  outline: 2px solid #d8cb9c;
+  outline-offset: -3px;
+}
+.sceneTitle,
+.tools,
+.hint {
+  position: absolute;
+  background: #1b2a26e8;
+  border: 1px solid #d5c99f45;
+  border-radius: 7px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 2px 12px #13221a18;
+}
+.sceneTitle {
+  left: 20px;
+  top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px 15px;
+  font-size: 14px;
+  pointer-events: none;
+}
+.sun {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #e3ca86;
+}
+.season {
+  border-left: 1px solid #e0d3ae40;
+  padding-left: 11px;
+  color: #d0d5bc;
+  font-size: 12px;
+}
+.tools {
+  right: 20px;
+  top: 20px;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  gap: 2px;
+  margin: 0;
+  min-width: 0;
+}
+.tools button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 36px;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  color: #e3dfc7;
+  cursor: pointer;
+}
+.tools button:hover {
+  background: #d7c89b24;
+}
+.divider {
+  height: 20px;
+  width: 1px;
+  margin: 0 4px;
+  background: #e0d3ae35;
+}
+.hint {
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 13px;
+  pointer-events: none;
+  color: #d0d5bc;
+  font-size: 12px;
+}
+.touchHint {
+  display: none;
+}
+.footer {
+  min-height: 78px;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  padding: 14px 24px;
+  border-top: 1px solid #c8b98435;
+}
+.views {
+  display: flex;
+  gap: 6px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.views button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid #c8b98440;
+  border-radius: 5px;
+  color: #d8dbc5;
+  background: transparent;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.views button[aria-pressed='true'] {
+  background: #c2ba8d22;
+  color: #efe2b4;
+  border-color: #c8b98480;
+}
+.views button:hover {
+  background: #c2ba8d15;
+}
+.note {
+  margin: 0;
+  font-size: 12px;
+  color: #d5dcc8;
+  line-height: 1.6;
+}
+.note span {
+  display: block;
+  font-size: 11px;
+  color: #98a997;
+}
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 28px;
+  text-align: center;
+  background: #26362fec;
+  color: #dfdfc6;
+}
+.loading p {
+  margin: 0;
+}
+.loading a {
+  color: #e9d8a3;
+}
+.loading button {
+  border: 1px solid #c8b98466;
+  border-radius: 6px;
+  padding: 10px 18px;
+  color: #e9d8a3;
+  background: #c8b98418;
+  cursor: pointer;
+}
+.loadingDot {
+  height: 12px;
+  width: 12px;
+  border: 1px solid #e3ca86;
+  border-radius: 50%;
+  animation: breathe 1.5s ease-in-out infinite;
+}
+.shell button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.shell button:focus-visible,
+.shell a:focus-visible {
+  outline: 2px solid #e0d3ae;
+  outline-offset: 3px;
+}
+@keyframes breathe {
+  50% {
+    opacity: 0.3;
+    transform: scale(0.65);
+  }
+}
+@media (max-width: 740px) {
+  .header {
+    min-height: 64px;
+    padding: 12px 15px;
+    gap: 12px;
+  }
+  .identity {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .brand {
+    font-size: 18px;
+    letter-spacing: 2px;
+  }
+  .identity h1 {
+    font-size: 11px;
+  }
+  .links {
+    gap: 6px;
+  }
+  .links a {
+    font-size: 12px;
+    padding: 8px;
+    gap: 5px;
+  }
+  .links svg {
+    width: 14px;
+  }
+  .sceneTitle {
+    left: 12px;
+    top: 12px;
+    padding: 9px 11px;
+  }
+  .season {
+    display: none;
+  }
+  .tools {
+    right: 12px;
+    top: 12px;
+  }
+  .tools button {
+    width: 34px;
+    height: 32px;
+  }
+  .hint {
+    left: 12px;
+    bottom: 12px;
+    font-size: 11px;
+  }
+  .hint > span {
+    font-size: 0;
+  }
+  .touchHint {
+    display: block;
+    font-size: 11px;
+  }
+  .footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px;
+  }
+  .views {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .views button {
+    justify-content: center;
+    padding: 9px 7px;
+  }
+  .note {
+    font-size: 11px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loadingDot {
+    animation: none;
+  }
+}

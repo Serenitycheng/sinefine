@@ -1,0 +1,504 @@
+.shell {
+  height: 100dvh;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #ecebdc;
+  background: #192623;
+}
+
+.header {
+  min-height: 72px;
+  padding: 14px 26px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  border-bottom: 1px solid #c8b98435;
+}
+
+.identity {
+  display: flex;
+  align-items: baseline;
+  gap: 18px;
+}
+.brand {
+  font:
+    23px Georgia,
+    serif;
+  letter-spacing: 3px;
+  color: #e2d1a4;
+  white-space: nowrap;
+}
+.identity h1 {
+  font-size: 14px;
+  font-weight: 400;
+  color: #d8ddcc;
+  margin: 0;
+}
+.sampleNote {
+  color: #9eafa1;
+  font-size: 12px;
+  margin: 0;
+}
+.return {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #dfddc6;
+  padding: 10px 12px;
+  border: 1px solid #c8b98445;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.return:hover {
+  background: #c8b98412;
+}
+.comparison {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  white-space: nowrap;
+  color: #e0d3ae;
+  text-decoration: none;
+  font-size: 13px;
+}
+.comparison + .return {
+  margin-left: 0;
+}
+.viewport {
+  position: relative;
+  flex: 1;
+  min-height: 270px;
+  overflow: hidden;
+  background: #202c29;
+  touch-action: none;
+  user-select: none;
+  cursor: grab;
+}
+.viewport:active {
+  cursor: grabbing;
+}
+.viewport:focus-visible {
+  outline: 2px solid #d8cb9c;
+  outline-offset: -2px;
+}
+.world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.painting {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #c9cfb6;
+  letter-spacing: 2px;
+}
+.sceneTitle,
+.cameraTools,
+.personStatus {
+  position: absolute;
+  background: #1b2a26e6;
+  box-shadow: 0 2px 12px #13221a18;
+  border: 1px solid #d5c99f45;
+  border-radius: 7px;
+  backdrop-filter: blur(8px);
+}
+.sceneTitle {
+  left: 20px;
+  top: 20px;
+  padding: 12px 15px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 14px;
+  pointer-events: none;
+}
+.sunDot {
+  width: 6px;
+  height: 6px;
+  background: #e3ca86;
+  border-radius: 50%;
+}
+.season {
+  border-left: 1px solid #e0d3ae40;
+  padding-left: 11px;
+  font-size: 12px;
+  color: #d0d5bc;
+}
+.cameraTools {
+  right: 20px;
+  top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+}
+.cameraTools button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 4px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: #dfdfc9;
+}
+.cameraTools button:hover {
+  background: #d4c69b20;
+}
+.zoom {
+  min-width: 46px;
+  font-size: 11px;
+  text-align: center;
+  color: #c8d0b8;
+  font-variant-numeric: tabular-nums;
+}
+.personStatus {
+  bottom: 22px;
+  left: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 15px;
+  pointer-events: none;
+  font-size: 13px;
+}
+.personAction {
+  padding-left: 10px;
+  border-left: 1px solid #ded4b33b;
+  color: #bcc9b9;
+  font-size: 12px;
+}
+.character {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.sprite {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: block;
+  background-repeat: no-repeat;
+  background-size: 600% 400%;
+  filter: drop-shadow(0 1px 1px #1c283128);
+}
+.shadow {
+  position: absolute;
+  left: -14px;
+  top: -5px;
+  width: 31px;
+  height: 10px;
+  border-radius: 50%;
+  background: #293c4a59;
+  filter: blur(1.5px);
+  transform: rotate(-8deg);
+}
+.placeMarker {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border: none;
+  background: transparent;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  color: #f7e7af;
+  z-index: 1;
+}
+.placeDot {
+  display: block;
+  width: 9px;
+  height: 9px;
+  margin: auto;
+  border-radius: 50%;
+  background: #f7e7af;
+  border: 2px solid #615b3d;
+  box-shadow: 0 0 0 4px #f7e7af30;
+}
+.placeName {
+  position: absolute;
+  left: 50%;
+  bottom: 23px;
+  transform: translateX(-50%);
+  padding: 4px 8px;
+  border: 1px solid #e1d5a777;
+  border-radius: 4px;
+  font-size: 11px;
+  background: #23352be0;
+  white-space: nowrap;
+}
+.target {
+  position: absolute;
+  width: 20px;
+  height: 8px;
+  border: 1px solid #fff0bb;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0.7;
+}
+.nearby {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  border: 1px solid #bda973;
+  border-radius: 6px;
+  background: #23352aee;
+  color: #ecddaf;
+  box-shadow: 0 4px 20px #1a2d2425;
+  font-size: 13px;
+}
+.nearby kbd {
+  color: #b5c6b4;
+  font-size: 11px;
+  padding: 2px 5px;
+  border: 1px solid #b5c6b445;
+  border-radius: 3px;
+}
+.directionPad {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 40px);
+  gap: 4px;
+}
+.directionPad button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid #d5c99f55;
+  border-radius: 5px;
+  background: #223329d9;
+  color: #e5ddc0;
+  touch-action: none;
+}
+.directionPad button:first-child {
+  grid-column: 2;
+}
+.directionPad button:nth-child(2) {
+  grid-column: 1;
+}
+.directionPad button:active {
+  background: #6a7860;
+}
+.placeCard {
+  margin: 0;
+  color: #ecebdc;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(320px, calc(100% - 32px));
+  transform: translate(-50%, -50%);
+  padding: 28px;
+  border: 1px solid #cfbf8d90;
+  border-radius: 10px;
+  background: #1e302bf7;
+  box-shadow: 0 18px 70px #10231b55;
+}
+.close {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #e2dfc8;
+  border-radius: 4px;
+}
+.cardEyebrow {
+  font-size: 11px;
+  color: #d6c38f;
+  letter-spacing: 3px;
+}
+.placeCard h2 {
+  font-size: 23px;
+  font-weight: 400;
+  margin: 12px 0 16px;
+}
+.placeCard p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #d0d8c7;
+}
+.placeCard .indoorNote {
+  color: #a6b7a4;
+  font-size: 12px;
+  margin-top: 14px;
+}
+.goButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 20px;
+  border: 1px solid #d9c99b80;
+  border-radius: 5px;
+  color: #253a2e;
+  background: #d8c99e;
+}
+.footer {
+  min-height: 80px;
+  display: flex;
+  gap: 24px;
+  padding: 14px 24px;
+  align-items: center;
+  border-top: 1px solid #c8b98435;
+}
+.destinations {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.destinations button {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid #c8b98445;
+  border-radius: 5px;
+  color: #ddd7bb;
+  background: #c8b98408;
+  font-size: 12px;
+}
+.message p,
+.message output {
+  display: block;
+  margin: 0;
+  line-height: 1.7;
+  font-size: 12px;
+  color: #d0d9c5;
+}
+.message .instructions {
+  color: #95a995;
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .header {
+    padding: 12px 16px;
+    gap: 12px;
+    min-height: 66px;
+  }
+  .identity {
+    display: block;
+  }
+  .brand {
+    font-size: 20px;
+    letter-spacing: 2px;
+  }
+  .identity h1 {
+    font-size: 11px;
+    margin-top: 4px;
+  }
+  .sampleNote {
+    display: none;
+  }
+  .return {
+    font-size: 12px;
+    padding: 9px;
+  }
+  .sceneTitle {
+    top: 14px;
+    left: 12px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .season {
+    display: none;
+  }
+  .cameraTools {
+    top: 14px;
+    right: 12px;
+    gap: 0;
+    padding: 3px;
+  }
+  .cameraTools button {
+    width: 31px;
+    height: 32px;
+  }
+  .zoom {
+    min-width: 36px;
+    font-size: 10px;
+  }
+  .personStatus {
+    left: 12px;
+    bottom: 20px;
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+  .personAction {
+    display: none;
+  }
+  .directionPad {
+    right: 12px;
+    bottom: 18px;
+    grid-template-columns: repeat(3, 42px);
+  }
+  .directionPad button {
+    width: 42px;
+    height: 42px;
+  }
+  .nearby {
+    left: 12px;
+    bottom: 67px;
+    transform: none;
+    font-size: 12px;
+    padding: 10px;
+    max-width: calc(100% - 170px);
+  }
+  .nearby kbd {
+    display: none;
+  }
+  .footer {
+    padding: 12px 14px;
+    gap: 9px;
+    flex-direction: column;
+    align-items: flex-start;
+    min-height: 116px;
+  }
+  .destinations button {
+    padding: 9px 12px;
+  }
+  .message .instructions {
+    font-size: 10px;
+  }
+}
+
+@media (max-height: 560px) and (min-width: 761px) {
+  .header {
+    min-height: 54px;
+    padding-block: 9px;
+  }
+  .footer {
+    min-height: 64px;
+    padding-block: 8px;
+  }
+}

@@ -1,6 +1,6 @@
 import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import ts from 'typescript';
@@ -50,6 +50,14 @@ try {
     const result = spawnSync(process.execPath, ['--test', ...tests], {
       cwd: root,
       stdio: 'inherit',
+      // Compiled files live in a temporary directory; resolve app dependencies
+      // from this project's node_modules rather than the system temp directory.
+      env: {
+        ...process.env,
+        NODE_PATH: [join(root, 'node_modules'), process.env.NODE_PATH]
+          .filter(Boolean)
+          .join(delimiter),
+      },
     });
     if (result.error) throw result.error;
     process.exitCode = result.status ?? 1;

@@ -29,6 +29,7 @@ import {
   MessageCircle,
   Settings2,
   House,
+  Palette,
   Map as MapIcon,
 } from 'lucide-react';
 import {
@@ -1309,6 +1310,14 @@ export default function StreetWalk({
           <small>{lifePeriod(daily.view.minutes)}</small>
         </div>
         <div className={styles.headerActions}>
+          <Link
+            href="/fate/art-sample"
+            className={styles.aiButton}
+            aria-label="查看街道美术小样"
+          >
+            <Palette size={16} />
+            <span>美术小样</span>
+          </Link>
           <button
             type="button"
             className={styles.aiButton}
