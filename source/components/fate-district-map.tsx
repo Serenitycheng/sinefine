@@ -126,6 +126,7 @@ export function DistrictPlaceCard({
   traveler,
   arrived,
   onWalk,
+  onTeleport,
   onVisit,
   onEnter,
   onPublicAction,
@@ -140,6 +141,7 @@ export function DistrictPlaceCard({
   traveler: string;
   arrived: boolean;
   onWalk: () => void;
+  onTeleport: () => void;
   onVisit: (home: HomeId) => void;
   onEnter: (home: HomeId) => void;
   onPublicAction: (action: PublicVisitAction, target?: PartnerId) => void;
@@ -206,6 +208,14 @@ export function DistrictPlaceCard({
               ? '回到街区'
               : '沿街前往'
             : `控制${traveler}沿街前往`}
+        </button>
+        <button
+          type="button"
+          onClick={onTeleport}
+          disabled={!control}
+          title={control ? `传送到${place.name}` : '先进入角色，再选择传送地点'}
+        >
+          传送到这里
         </button>
       </div>
       {place.kind !== 'home' && (

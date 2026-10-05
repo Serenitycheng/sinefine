@@ -7,6 +7,7 @@ import {
 } from './fate-cast';
 import { isActorId } from './street';
 import { sameOriginRequest } from './fate-origin';
+import { completionReply, manualChatReply } from './fate-chat-response';
 import { fateWorldContext, parseFateNotes } from './fate-world';
 import {
   dialogueLines,
@@ -456,7 +457,7 @@ export function createFateChatHandler(
                 content:
                   identityReminder +
                   (annotatedChat
-                    ? ' 本次按 JSON {"reply":"你的回应","effects":{"impressions":[],"preferences":[]}} 输出，reply 只含回复者的台词与动作。'
+                    ? ' 本次按 JSON {"reply":"你的回应","effects":{"impressions":[],"preferences":[]}} 输出，先填写非空 reply，再附加有依据的 effects；普通提问也要回应，不能只输出 effects 或空对象。reply 只含回复者的台词与动作；缺少具体经历时可以自然表示不确定，不编造事实来填字段。'
                     : ''),
               },
               {
@@ -478,16 +479,17 @@ export function createFateChatHandler(
         choices?: { message?: { content?: unknown } }[];
         usage?: { total_tokens?: unknown };
       };
-      const reply = data.choices?.[0]?.message?.content;
-      if (
-        typeof reply !== 'string' ||
-        !reply.trim() ||
-        reply.length > (encounter || annotatedChat ? 6000 : 2400)
-      )
+      let reply: string;
+      try {
+        reply = completionReply(data, encounter || annotatedChat ? 6000 : 2400);
+      } catch (error) {
         return errorReply(
-          '模型没有返回完整的短对话，请重试。本次未写入记录。',
+          error instanceof Error
+            ? error.message
+            : 'AI 回应不可用，本次未写入记录。',
           502,
         );
+      }
       const tokens = data.usage?.total_tokens;
       let plan: LifePlan | undefined;
       let turns: DialogueTurn[] | undefined;
@@ -506,40 +508,21 @@ export function createFateChatHandler(
         }
       }
       if (annotatedChat) {
-        if (reply.trim().startsWith('{')) {
-          try {
-            const parsed = JSON.parse(reply) as {
-              reply?: unknown;
-              effects?: unknown;
-            };
-            if (
-              typeof parsed.reply !== 'string' ||
-              !parsed.reply.trim() ||
-              parsed.reply.length > 2400
-            )
-              throw new Error('无效回应');
-            manualReply = parsed.reply.trim();
-            effects = resolveSocialEffects(parsed.effects, [
-              {
-                speaker: body.speaker as PartnerId,
-                text: body.message as string,
-              },
-              { speaker: body.target, text: manualReply },
-            ]);
-          } catch {
-            return errorReply('AI 没有返回完整回应，本次未写入记录。', 502);
-          }
-        } else {
-          // Keep a valid legacy plain-text reply without inventing impressions.
-          if (manualReply.length > 2400)
-            return errorReply('回应过长，本次未写入记录。', 502);
-          effects = resolveSocialEffects(undefined, [
+        try {
+          const parsed = manualChatReply(reply);
+          manualReply = parsed.reply;
+          effects = resolveSocialEffects(parsed.effects, [
             {
               speaker: body.speaker as PartnerId,
               text: body.message as string,
             },
             { speaker: body.target, text: manualReply },
           ]);
+        } catch {
+          return errorReply(
+            'AI 没有返回完整的单人回应，本次未写入记录。请重试。',
+            502,
+          );
         }
       }
       if (decision) {

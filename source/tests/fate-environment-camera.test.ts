@@ -16,6 +16,8 @@ import {
   DEFAULT_ZOOM,
   ZOOM_LIMITS,
   clampZoom,
+  cameraAnchor,
+  panCamera,
 } from '../lib/fate-camera';
 import { screenToWorld, STREET } from '../lib/street';
 
@@ -104,13 +106,47 @@ void test('street and overview can zoom past both old limits and use the same in
     assert.ok(far.scale < sceneCameraFor(point, 1000, 600, 1, scene).scale);
     assert.ok(close.scale > sceneCameraFor(point, 1000, 600, 1.8, scene).scale);
     assert.ok(
-      Math.abs(close.scale / normal.scale - (scene === 'street' ? 2.5 : 5)) <
+      Math.abs(close.scale / normal.scale - (scene === 'street' ? 10 : 20)) <
         1e-10,
     );
     assert.deepEqual(sceneCameraFor(point, 1000, 600, 999, scene), close);
     assert.deepEqual(sceneCameraFor(point, 1000, 600, -1, scene), far);
     assert.equal(clampZoom(NaN, scene), DEFAULT_ZOOM);
   }
+});
+
+void test('drag starts at the visible framing and moves the world by the pointer distance', () => {
+  for (const scene of ['street', 'map'] as const) {
+    const width = 1000,
+      height = 600;
+    const zoom = DEFAULT_ZOOM * 3;
+    const camera = sceneCameraFor(
+      { x: 1550, y: 830 },
+      width,
+      height,
+      zoom,
+      scene,
+    );
+    const anchor = cameraAnchor(camera, width, height, scene);
+    const target = panCamera(anchor, { x: 85, y: -60 }, camera.scale, scene);
+    const moved = sceneCameraFor(target, width, height, zoom, scene);
+    assert.ok(Math.abs((camera.x - moved.x) * camera.scale - 85) < 1e-8);
+    assert.ok(Math.abs((camera.y - moved.y) * camera.scale + 60) < 1e-8);
+    const corner = panCamera(anchor, { x: 1e8, y: -1e8 }, camera.scale, scene);
+    assert.deepEqual(corner, { x: 0, y: STREET.height });
+  }
+});
+
+void test('minimum street zoom can show the full city even in a narrow viewport', () => {
+  const c = sceneCameraFor(
+    { x: 1550, y: 830 },
+    390,
+    220,
+    ZOOM_LIMITS.street.min,
+    'street',
+  );
+  assert.ok(390 / c.scale >= STREET.width * 2);
+  assert.ok(220 / c.scale >= STREET.height * 2);
 });
 
 void test('expanded zoom preserves pointer projection and bounds on desktop, narrow and tall screens', () => {

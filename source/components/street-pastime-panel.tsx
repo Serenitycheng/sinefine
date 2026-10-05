@@ -26,7 +26,13 @@ export function StreetPastimePanel({
   controlled: string | null;
 }) {
   const [target, setTarget] = useState<PartnerId>(
-    controlled === 'shirou' ? 'sakura' : 'shirou',
+    controlled === 'illya'
+      ? 'kiritsugu'
+      : controlled === 'kiritsugu' || controlled === 'irisviel'
+        ? 'illya'
+        : controlled === 'shirou'
+          ? 'sakura'
+          : 'shirou',
   );
   const [notice, setNotice] = useState<{ text: string; scope: string } | null>(
     null,
@@ -66,6 +72,10 @@ export function StreetPastimePanel({
   const status = life.interaction(selected);
   const notes = knownPreferences(life.view, controlled, selected).slice(0, 2);
   const supplies = life.view.belongings[controlled];
+  const appointment =
+    current?.appointment === undefined
+      ? undefined
+      : life.view.appointments.find((a) => a.id === current.appointment);
   return (
     <section className={styles.pastimes} aria-label="一起做点事">
       <span>SMALL MOMENTS</span>
@@ -123,7 +133,7 @@ export function StreetPastimePanel({
           {current.phase === 'invited' && (
             <>
               <p>
-                约定的时间到来后，双方都在咖啡店相处十分钟。开启日常才能推进时间。
+                约定的时间到来后，双方在咖啡店一起吃十分钟。可以开启日常，或到场后主动度过等待和用餐时间。
               </p>
               <button
                 onClick={() =>
@@ -135,6 +145,14 @@ export function StreetPastimePanel({
               >
                 前往赴约 <ArrowRight size={15} />
               </button>
+              <button onClick={() => doAction('wait-meal')}>
+                {appointment?.status === 'meeting'
+                  ? '坐下，度过这顿饭'
+                  : '到店后，度过等待时间'}
+              </button>
+              <p className={styles.hint}>
+                这是主动安排这段时间；其他人照常生活。双方实际同桌才会留下共同用餐的记忆。
+              </p>
             </>
           )}
           {current.phase === 'active' && (
@@ -144,13 +162,72 @@ export function StreetPastimePanel({
                 value={current.progress}
                 aria-label="检修进度"
               />
-              <p>
-                已一起动手 {Math.floor(current.progress)} / 12
-                分钟。开启日常并留在对方身边；离开或换人会暂停，超时会收起。
-              </p>
+              {current.work ? (
+                <>
+                  <ol className={styles.repairSteps} aria-label="检修步骤">
+                    {(['diagnose', 'adjust', 'test'] as const).map(
+                      (step, index) => (
+                        <li
+                          key={step}
+                          aria-current={
+                            current.work?.stage === step ? 'step' : undefined
+                          }
+                        >
+                          {index + 1} ·{' '}
+                          {['了解问题', '一起处理', '实际试用'][index]}
+                        </li>
+                      ),
+                    )}
+                  </ol>
+                  <div className={styles.activityButtons}>
+                    {current.work.stage === 'diagnose' ? (
+                      <>
+                        <button
+                          disabled={!status.ok}
+                          onClick={() => doAction('repair-listen')}
+                        >
+                          先听对方说哪里不好用 · 3 分钟
+                        </button>
+                        <button
+                          disabled={!status.ok}
+                          onClick={() => doAction('repair-look')}
+                        >
+                          先从外观检查 · 3 分钟
+                        </button>
+                      </>
+                    ) : current.work.stage === 'adjust' ? (
+                      <button
+                        disabled={!status.ok}
+                        onClick={() => doAction('repair-adjust')}
+                      >
+                        {current.choice === 'replace'
+                          ? '一起处理连接处，更换零件'
+                          : '一起调整松动的连接处'}{' '}
+                        · 6 分钟
+                      </button>
+                    ) : (
+                      <button
+                        disabled={!status.ok}
+                        onClick={() => doAction('repair-test')}
+                      >
+                        让对方试用，确认结果 · 3 分钟
+                      </button>
+                    )}
+                  </div>
+                  {!status.ok && <p>{status.message}</p>}
+                  <p className={styles.hint}>
+                    选择每一步后直接度过所需时间；先听清使用时的问题，检查会更仔细。试用前不算完成。
+                  </p>
+                </>
+              ) : (
+                <p>
+                  已一起动手 {Math.floor(current.progress)} / 12
+                  分钟。开启日常并留在对方身边；离开或换人会暂停，超时会收起。
+                </p>
+              )}
             </>
           )}
-          {!life.running && (
+          {!life.running && !current.work && current.phase !== 'ready' && (
             <button onClick={life.toggleRunning}>开始日常，继续这段时间</button>
           )}
           <button
@@ -231,7 +308,7 @@ export function StreetPastimePanel({
                 </button>
               </div>
               <p className={styles.hint}>
-                免费检查可调整松动；更换零件改善更多。都要实际在场动手十二分钟。
+                免费检查可调整松动；更换零件改善更多。了解问题、一起处理、实际试用，共十二分钟。
               </p>
             </div>
           )}
@@ -252,7 +329,7 @@ export function StreetPastimePanel({
           </details>
         </>
       )}
-      {notice?.scope === noticeScope && (
+      {notice?.scope === noticeScope && notice.text !== current?.reply && (
         <output className={styles.actionNotice}>{notice.text}</output>
       )}
       {!current && recent[0] && (

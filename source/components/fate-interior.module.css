@@ -4,6 +4,87 @@
   z-index: 12;
   outline: none;
 }
+.selfCare {
+  margin: 16px 0;
+  padding: 18px;
+  border: 1px solid #d9c08d40;
+  border-radius: 12px;
+  background: linear-gradient(115deg, #334038, #24352f);
+  box-shadow: 0 8px 20px #121e221c;
+}
+.careHeading {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.careHeading h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 500;
+  color: #e5d3ac;
+}
+.careHeading span {
+  color: #c4cec1;
+  font-size: 12px;
+}
+.selfCare p {
+  color: #b9c6b5;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.careRooms {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 10px;
+}
+.careRooms > div {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.careRooms button {
+  padding: 10px 12px;
+  min-height: 44px;
+  border: 1px solid #dbc5964a;
+  border-radius: 7px;
+  background: #d9c08912;
+  color: #ebdfc3;
+  text-align: left;
+  font-size: 12px;
+}
+.careRooms button:hover:not(:disabled) {
+  background: #d9c08928;
+  border-color: #d9c089;
+}
+.careRooms button small {
+  display: block;
+  margin-top: 4px;
+  color: #b6c3b1;
+  font-size: 10px;
+}
+.careRooms button.careWalk {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #bacbb9;
+  border-style: dashed;
+  background: transparent;
+}
+.careNotice {
+  display: block;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 7px;
+  background: #f1d6a113;
+  color: #ead5a6;
+  font-size: 12px;
+  line-height: 1.8;
+}
+.selfCare p.careWarning {
+  color: #efc89b;
+}
 .interior {
   --room-wall: #e6dbc6;
   --room-floor: #c0a27a;

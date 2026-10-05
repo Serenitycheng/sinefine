@@ -4,6 +4,7 @@ import type { DailyLife } from './fate-life';
 import { DUTIES, dutyIds, isWorkday } from './fate-schedule';
 import { activityPreference } from './fate-memory-behavior';
 import { visibleMemories } from './fate-memory';
+import { pastimeRecollection } from './fate-pastime-voices';
 import {
   currentBond,
   liveAppointment,
@@ -51,7 +52,16 @@ export function lifeTopic(
       message: '还记得我们上次一起做的事吗？',
       reply:
         latest?.kind === 'experience' && latest.activity in recollections
-          ? recollections[latest.activity as keyof typeof recollections]
+          ? ((latest.activity === 'repair' || latest.activity === 'eat'
+              ? pastimeRecollection(
+                  life,
+                  speaker,
+                  target,
+                  latest.activity === 'repair' ? 'repair' : 'meal',
+                  latest.minute,
+                )
+              : undefined) ??
+            recollections[latest.activity as keyof typeof recollections])
           : '我们之后可以一起做点什么，等真正做过，再慢慢聊。',
       effects: { impressions: [] } as SocialEffects,
     };

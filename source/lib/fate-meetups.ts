@@ -118,6 +118,9 @@ export function reconcileAppointments(
     if (both && life.minutes >= a.start) {
       a.status = 'meeting';
       a.shared = Math.min(10, a.shared + elapsed);
+      // Explicit time advances may leave a tiny floating-point remainder.
+      // A full shared meal should not require a second click to finish.
+      if (10 - a.shared < 1e-6) a.shared = 10;
     } else {
       a.status = 'pending';
     }

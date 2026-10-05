@@ -135,7 +135,16 @@ void test('daily life pauses fully, ignores invalid time and caps elapsed time a
   const controlledBefore = structuredClone(life.people.rin);
   advanceDailyLife(life, actors, 60, { ...options, controlled: 'rin' });
   assert.ok(Math.abs(life.minutes - (before.minutes + 0.4)) < 1e-8);
-  assert.deepEqual(life.people.rin, controlledBefore);
+  assert.ok(
+    Math.abs(life.people.rin.hunger - controlledBefore.hunger - 0.4 * 0.09) <
+      1e-8,
+  );
+  assert.ok(
+    Math.abs(life.people.rin.energy - controlledBefore.energy + 0.4 * 0.035) <
+      1e-8,
+  );
+  assert.equal(life.people.rin.activity, null);
+  assert.equal(life.people.rin.choices, controlledBefore.choices);
 });
 
 void test('one controlled character walks alone while residents keep independent routes', () => {

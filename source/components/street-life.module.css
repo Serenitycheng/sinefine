@@ -1,3 +1,71 @@
+.dayPlan {
+  padding: 18px;
+  margin-bottom: 18px;
+  border: 1px solid #d9c08d40;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #34443a, #263830);
+}
+.dayPlan > span {
+  color: #bda982;
+  letter-spacing: 2px;
+  font-size: 9px;
+}
+.dayPlan h3 {
+  color: #ead8b3;
+  font-size: 18px;
+  font-weight: 500;
+  margin: 7px 0;
+}
+.dayPlan p {
+  color: #b9c6b5;
+  line-height: 1.8;
+  font-size: 12px;
+}
+.bodyNeeds {
+  display: flex;
+  gap: 18px;
+  margin: 14px 0;
+}
+.bodyNeeds label {
+  width: 50%;
+  color: #bdcbbc;
+  font-size: 11px;
+}
+.bodyNeeds b {
+  float: right;
+  color: #e3d1a8;
+}
+.bodyNeeds meter {
+  display: block;
+  width: 100%;
+  height: 10px;
+  margin-top: 6px;
+  accent-color: #b9c9a2;
+}
+.dayReflection {
+  border-top: 1px solid #d8bc8725;
+  padding-top: 12px;
+}
+.repairSteps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0;
+  margin: 12px 0;
+  list-style: none;
+}
+.repairSteps li {
+  padding: 6px 9px;
+  border-radius: 6px;
+  color: #b7c4b4;
+  background: #172b244f;
+  font-size: 11px;
+}
+.repairSteps li[aria-current='step'] {
+  background: #d9c08d26;
+  color: #ecdaac;
+  box-shadow: inset 0 0 0 1px #d9c08d55;
+}
 .toolbar {
   display: flex;
   flex-wrap: wrap;
@@ -748,7 +816,8 @@
   flex-wrap: wrap;
   margin: 12px 0;
 }
-.pastimes button {
+.pastimes button,
+.dayPlan button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -763,6 +832,7 @@
   cursor: pointer;
 }
 .pastimes button:hover:not(:disabled),
+.dayPlan button:hover:not(:disabled),
 .activityTabs button[aria-pressed='true'] {
   background: #59654d;
   border-color: #c8d7b1;
@@ -772,6 +842,7 @@
   cursor: not-allowed;
 }
 .pastimes button:focus-visible,
+.dayPlan button:focus-visible,
 .pastimes select:focus-visible,
 .pastimes summary:focus-visible {
   outline: 2px solid #edcf89;

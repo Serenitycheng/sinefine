@@ -4,12 +4,41 @@ export type Camera = Point & { scale: number };
 export type CameraScene = 'street' | 'map';
 export const DEFAULT_ZOOM = 1.24;
 export const ZOOM_LIMITS = {
-  street: { min: DEFAULT_ZOOM * 0.35, max: DEFAULT_ZOOM * 2.5 },
-  map: { min: DEFAULT_ZOOM * 0.8, max: DEFAULT_ZOOM * 5 },
+  street: { min: DEFAULT_ZOOM * 0.05, max: DEFAULT_ZOOM * 10 },
+  map: { min: DEFAULT_ZOOM * 0.25, max: DEFAULT_ZOOM * 20 },
 } as const;
 export function clampZoom(zoom: number, scene: CameraScene) {
   const { min, max } = ZOOM_LIMITS[scene];
   return clamp(Number.isFinite(zoom) ? zoom : DEFAULT_ZOOM, min, max);
+}
+
+/** Start a drag from the visible camera, including any unfinished follow easing. */
+export function cameraAnchor(
+  camera: Camera,
+  width: number,
+  height: number,
+  scene: CameraScene,
+): Point {
+  const factor = scene === 'street' ? STREET_SCENE_SCALE : 1;
+  return {
+    x: (camera.x + width / camera.scale / 2) / factor,
+    y:
+      (camera.y + (height / camera.scale) * (scene === 'street' ? 0.7 : 0.56)) /
+      factor,
+  };
+}
+
+export function panCamera(
+  anchor: Point,
+  delta: Point,
+  scale: number,
+  scene: CameraScene,
+): Point {
+  const factor = scene === 'street' ? STREET_SCENE_SCALE : 1;
+  return {
+    x: clamp(anchor.x - delta.x / scale / factor, 0, STREET.width),
+    y: clamp(anchor.y - delta.y / scale / factor, 0, STREET.height),
+  };
 }
 
 /** Actual visible camera is also used for pointer-to-world conversion. */

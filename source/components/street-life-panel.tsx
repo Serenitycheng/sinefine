@@ -15,7 +15,8 @@ import { dialogueLines } from '@/lib/fate-dialogue';
 import { homeMealSummary } from '@/lib/fate-meals';
 import { belongingsSummary, BOOKS, deviceName } from '@/lib/fate-belongings';
 import { agendaSummary, dutyIds, weekdayName } from '@/lib/fate-schedule';
-import { FATE_HOMES } from '@/lib/fate-housing';
+import { FATE_HOMES, type HomeId } from '@/lib/fate-housing';
+import { StreetDayPlan } from './street-day-plan';
 import type { ActorId } from '@/lib/street';
 import type { StreetLife } from './use-street-life';
 import styles from './street-life.module.css';
@@ -149,6 +150,7 @@ export function LifePanel({
   storageNotice,
   onSettings,
   onClose,
+  onHome,
 }: {
   section: LifeSection;
   onSectionChange: (section: LifeSection) => void;
@@ -158,6 +160,7 @@ export function LifePanel({
   storageNotice: string;
   onSettings: () => void;
   onClose: () => void;
+  onHome: (home: HomeId) => void;
 }) {
   const [allEvents, setAllEvents] = useState(false);
   const [personFilter, setPersonFilter] = useState<PartnerId | 'all' | 'care'>(
@@ -229,6 +232,12 @@ export function LifePanel({
       )}
       {section === 'today' && (
         <>
+          <StreetDayPlan
+            life={life.view}
+            controlled={controlled}
+            onHome={onHome}
+            onActivities={() => setSection('activities')}
+          />
           <section className={styles.lifeOverview} aria-label="居民生活概况">
             <div className={styles.overviewTop}>
               <span>日常正在{life.running ? '继续' : '暂停'}</span>

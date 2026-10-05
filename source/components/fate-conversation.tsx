@@ -1,5 +1,11 @@
 'use client';
-import { useEffect, useRef, useState, type SubmitEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type SubmitEvent,
+  type KeyboardEvent,
+} from 'react';
 import Image from 'next/image';
 import { KeyRound, LoaderCircle, Send, Settings2 } from 'lucide-react';
 import {
@@ -29,6 +35,7 @@ import type { InteractionStatus } from '@/lib/fate-interaction';
 import { lifeScene } from '@/lib/fate-life';
 import { familyTopic } from '@/lib/fate-relationships';
 import { dialogueLines } from '@/lib/fate-dialogue';
+import { isChatSendKey } from '@/lib/fate-chat-input';
 import type { ActorId } from '@/lib/street';
 import styles from './fate-conversation.module.css';
 
@@ -61,6 +68,7 @@ export function FateConversation({
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   const running = useRef<AbortController | null>(null),
+    composing = useRef(false),
     end = useRef<HTMLDivElement>(null),
     popup = useRef<HTMLDivElement>(null);
   const history = conversationHistory(ctx.save, target, speaker);
@@ -149,11 +157,28 @@ export function FateConversation({
     const result = lifeTopic(ctx.save.life, speaker, target, topic);
     remember(result.message, result.reply, 'preset', result.effects);
   }
+  function composerKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (!isChatSendKey(event.nativeEvent, composing.current)) return;
+    event.preventDefault();
+    if (
+      event.repeat ||
+      busy ||
+      running.current ||
+      !draft.trim() ||
+      !ctx.loaded ||
+      !ctx.verified ||
+      !ctx.model ||
+      ctx.requests >= 20
+    )
+      return;
+    event.currentTarget.form?.requestSubmit();
+  }
   async function send(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
     const message = draft.trim();
     if (
       running.current ||
+      !ctx.loaded ||
       !message ||
       !ctx.verified ||
       !ctx.model ||
@@ -365,7 +390,7 @@ export function FateConversation({
               {onsite && isPartner(speaker) && ctx.save.life && (
                 <>
                   <div className={styles.lifeTopics} aria-label="日常话题">
-                    {LIFE_TOPICS.slice(0, 2).map((topic) => (
+                    {LIFE_TOPICS.slice(0, 3).map((topic) => (
                       <button
                         key={topic.id}
                         disabled={!ctx.loaded || busy}
@@ -378,7 +403,7 @@ export function FateConversation({
                   <details className={styles.inviteTopics}>
                     <summary>约下次见面</summary>
                     <p>双方约好后才会安排；你控制的人物仍由你带去赴约。</p>
-                    {LIFE_TOPICS.slice(2).map((topic) => (
+                    {LIFE_TOPICS.slice(3).map((topic) => (
                       <button
                         key={topic.id}
                         disabled={!ctx.loaded || busy}
@@ -413,11 +438,22 @@ export function FateConversation({
                 id="fate-message"
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={composerKeyDown}
+                onCompositionStart={() => {
+                  composing.current = true;
+                }}
+                onCompositionEnd={() => {
+                  composing.current = false;
+                }}
+                aria-describedby="fate-message-shortcuts"
                 maxLength={1200}
                 disabled={busy || ctx.requests >= 20}
                 placeholder={`对${person.name}说些什么…`}
                 rows={2}
               />
+              <small id="fate-message-shortcuts">
+                Enter 发送 · Shift + Enter 换行
+              </small>
               <div>
                 <small>
                   {ctx.requests >= 20

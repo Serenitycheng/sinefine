@@ -20,6 +20,9 @@ import {
   rememberSharedWalk,
 } from './fate-social';
 import { playerAppointment } from './fate-meetups';
+import { meetupDestination } from './fate-meetups';
+import { spendPlayerTime } from './fate-player-time';
+import { pastimeVoice } from './fate-pastime-voices';
 import { dueDuty } from './fate-schedule';
 import { knownPreferences } from './fate-memory-behavior';
 
@@ -35,6 +38,10 @@ export type Pastime = {
   updatedAt: number;
   progress: number;
   appointment?: number;
+  work?: {
+    stage: 'diagnose' | 'adjust' | 'test';
+    approach?: 'listen' | 'look';
+  };
   reply: string;
 };
 export type PastimeCommand =
@@ -48,6 +55,11 @@ export type PastimeCommand =
   | 'invite'
   | 'repair-inspect'
   | 'repair-replace'
+  | 'repair-listen'
+  | 'repair-look'
+  | 'repair-adjust'
+  | 'repair-test'
+  | 'wait-meal'
   | 'cancel';
 export const currentPastime = (life: DailyLife, p: Pastime) =>
   p.stage === null || p.stage === life.waverStage;
@@ -117,6 +129,87 @@ export function actOnPastime(
   }
   if (life.indoor?.actor === controlled)
     return no('请先回到街道，再准备这项活动。');
+  if (command === 'wait-meal') {
+    if (!current || current.kind !== 'meal' || current.phase !== 'invited')
+      return no('先邀请对方并确认约定，才能在店里等。');
+    const a = life.appointments.find((a) => a.id === current.appointment);
+    if (!a || !liveAppointment(a)) return no('这次约定已经结束。');
+    const seat = meetupDestination(a, controlled);
+    if (
+      a.attending !== controlled ||
+      Math.hypot(actor.x - seat.x, actor.y - seat.y) >= 42 ||
+      actor.path.length
+    )
+      return no('先点「前往赴约」，实际走到咖啡店的约定位置再等。');
+    const minutes =
+      a.status === 'meeting'
+        ? 10 - a.shared
+        : life.minutes < a.start
+          ? a.start - life.minutes
+          : Math.min(5, a.until - life.minutes);
+    const { elapsed } = spendPlayerTime(
+      life,
+      actors,
+      controlled,
+      Math.max(0.01, minutes),
+      undefined,
+      () => !livePastime(current),
+    );
+    return ok(
+      !livePastime(current)
+        ? current.reply
+        : `在咖啡店度过 ${Math.round(elapsed)} 分钟；${a.status === 'meeting' ? '对方已经到场，可以继续这顿饭。' : '还未实际同桌，等对方到场后才算一起吃饭。'}`,
+    );
+  }
+  if (
+    ['repair-listen', 'repair-look', 'repair-adjust', 'repair-test'].includes(
+      command,
+    )
+  ) {
+    if (
+      !current ||
+      current.kind !== 'repair' ||
+      !current.work ||
+      current.phase !== 'active'
+    )
+      return no('先走近对方，开始这次检修。');
+    if (target !== current.target) return no('先完成眼前这位居民的检修。');
+    const status = interactionStatus(life, actors, controlled, current.target);
+    if (!status.ok) return no(status.message);
+    const stage = current.work.stage;
+    if (
+      command === 'repair-listen' || command === 'repair-look'
+        ? stage !== 'diagnose'
+        : command === 'repair-adjust'
+          ? stage !== 'adjust'
+          : stage !== 'test'
+    )
+      return no('这一步已经做过，请继续下一步。');
+    const approach = command === 'repair-listen' ? 'listen' : 'look';
+    actor.path = [];
+    other.path = [];
+    const minutes = stage === 'adjust' ? 6 : 3;
+    spendPlayerTime(
+      life,
+      actors,
+      controlled,
+      minutes,
+      undefined,
+      () => current.phase !== 'active',
+    );
+    if (current.phase !== 'active') return no(current.reply);
+    current.progress += minutes;
+    current.updatedAt = life.minutes;
+    if (stage === 'diagnose') {
+      current.work.approach = approach;
+      current.work.stage = 'adjust';
+      current.reply = pastimeVoice(life, current, approach);
+    } else if (stage === 'adjust') {
+      current.work.stage = 'test';
+      current.reply = `处理完连接处${current.choice === 'replace' ? '并换上零件' : '的松动'}；还要一起试用，才能确认结果。`;
+    } else finishRepair(life, current);
+    return ok(current.reply);
+  }
   if (command.startsWith('go-')) {
     actor.path = pathTo(
       actor,
@@ -295,6 +388,7 @@ export function actOnPastime(
     createdAt: life.minutes,
     updatedAt: life.minutes,
     progress: 0,
+    ...(!isMeal ? { work: { stage: 'diagnose' as const } } : {}),
     reply,
   };
   const records = [...(life.pastimes ?? []), p];
@@ -332,17 +426,19 @@ export function advancePastimes(
         const avoids = knownPreferences(life, p.host, p.target).some(
           (m) => m.preference === 'dislike' && /时蔬|蔬菜/.test(m.subject),
         );
-        p.reply =
-          p.choice === 'vegetable' && !avoids
-            ? `${names(life, p.target)}：配菜正好，谢谢你特地准备。下次我也来帮忙。`
-            : p.choice === 'vegetable'
-              ? `${names(life, p.target)}：谢谢你。我还是选平常的简餐，能一起坐下来吃就很好。`
-              : `${names(life, p.target)}：这样一起吃顿普通的饭，也挺好的。`;
+        p.reply = pastimeVoice(
+          life,
+          p,
+          p.choice === 'vegetable' ? (avoids ? 'avoids' : 'vegetable') : 'meal',
+        );
         for (const id of [p.host, p.target]) {
           life.people[id].hunger = Math.max(0, life.people[id].hunger - 25);
           life.people[id].energy = Math.min(100, life.people[id].energy + 5);
         }
-        log(life, `两人实际吃完饭。${p.reply}`);
+        log(
+          life,
+          `${names(life, p.host)}与${names(life, p.target)}实际吃完饭。${p.reply}`,
+        );
       } else if (!a || ['missed', 'cancelled'].includes(a.status))
         close(
           life,
@@ -375,33 +471,36 @@ export function advancePastimes(
         Math.hypot(host.x - target.x, host.y - target.y) > 130
       )
         continue;
+      // New activities advance only after a player chooses each actual work step.
+      // Older saved progress keeps its original timed completion rule.
+      if (p.work) continue;
       p.progress = Math.min(12, p.progress + elapsed);
       p.updatedAt = life.minutes;
-      if (p.progress >= 12) {
-        p.phase = 'done';
-        const belongings = life.belongings[p.target],
-          before = belongings.condition;
-        belongings.condition = Math.min(
-          100,
-          before + (p.choice === 'replace' ? 40 : 12),
-        );
-        belongings.repairs = Math.min(999999, belongings.repairs + 1);
-        life.people[p.host].energy = Math.max(
-          0,
-          life.people[p.host].energy - 4,
-        );
-        p.reply =
-          p.choice === 'replace'
-            ? `${names(life, p.target)}：换过零件以后顺手多了，谢谢。`
-            : `${names(life, p.target)}：松动的地方调好了，谢谢你。下次还不顺手，再找零件来换。`;
-        const e = log(
-          life,
-          `${names(life, p.host)}帮忙检修了${names(life, p.target)}的${deviceName(p.target)}，状况由${Math.round(before)}改善到${Math.round(belongings.condition)}。${p.reply}`,
-        );
-        rememberSharedWalk(life, p.host, p.target, e, 'repair');
-      }
+      if (p.progress >= 12) finishRepair(life, p);
     }
   }
+}
+function finishRepair(life: DailyLife, p: Pastime) {
+  p.phase = 'done';
+  const belongings = life.belongings[p.target],
+    before = belongings.condition;
+  const attention = p.work?.approach === 'listen' ? 6 : 0;
+  belongings.condition = Math.min(
+    100,
+    before + (p.choice === 'replace' ? 40 : 12) + attention,
+  );
+  belongings.repairs = Math.min(999999, belongings.repairs + 1);
+  life.people[p.host].energy = Math.max(0, life.people[p.host].energy - 4);
+  p.reply = pastimeVoice(
+    life,
+    p,
+    p.choice === 'replace' ? 'repaired' : 'adjusted',
+  );
+  const e = log(
+    life,
+    `${names(life, p.host)}帮忙检修了${names(life, p.target)}的${deviceName(p.target)}，状况由${Math.round(before)}改善到${Math.round(belongings.condition)}。${p.work?.approach === 'listen' ? '先听清了使用时的问题，连接处也检查得更仔细。' : ''}${p.reply}`,
+  );
+  rememberSharedWalk(life, p.host, p.target, e, 'repair');
 }
 export function pastimeHolds(
   life: DailyLife,
@@ -466,6 +565,24 @@ export function parsePastimes(value: unknown, life: DailyLife): Pastime[] {
     )
       throw new Error('共同活动记录无效');
     seen.add(p.id);
+    if (p.work !== undefined) {
+      const w = p.work;
+      if (
+        p.kind !== 'repair' ||
+        !w ||
+        !['diagnose', 'adjust', 'test'].includes(w.stage) ||
+        (w.approach !== undefined &&
+          !['listen', 'look'].includes(w.approach)) ||
+        (w.stage === 'diagnose'
+          ? w.approach !== undefined || p.progress !== 0
+          : w.approach === undefined) ||
+        (p.phase === 'active' &&
+          p.progress !==
+            (w.stage === 'diagnose' ? 0 : w.stage === 'adjust' ? 3 : 9)) ||
+        (p.phase === 'done' && w.stage !== 'test')
+      )
+        throw new Error('检修步骤记录无效');
+    }
     if (livePastime(p) && currentPastime(life, p)) {
       if (busy.has(p.host)) throw new Error('共同活动重复');
       busy.add(p.host);
@@ -505,6 +622,16 @@ export function parsePastimes(value: unknown, life: DailyLife): Pastime[] {
       progress: p.progress,
       reply: p.reply,
       ...(p.appointment === undefined ? {} : { appointment: p.appointment }),
+      ...(p.work === undefined
+        ? {}
+        : {
+            work: {
+              stage: p.work.stage,
+              ...(p.work.approach === undefined
+                ? {}
+                : { approach: p.work.approach }),
+            },
+          }),
     };
   });
 }

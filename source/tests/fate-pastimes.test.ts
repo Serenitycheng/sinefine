@@ -38,6 +38,21 @@ function setup() {
   }
   return { life, actors };
 }
+function finishPlayerRepair(
+  life: ReturnType<typeof createDailyLife>,
+  actors: ReturnType<typeof createStreetActors>,
+) {
+  for (const command of [
+    'repair-look',
+    'repair-adjust',
+    'repair-test',
+  ] as const)
+    assert.equal(
+      actOnPastime(life, actors, 'rin', command, 'shirou').ok,
+      true,
+      command,
+    );
+}
 void test('free meal follows preparation, consent, physical attendance and remembered completion exactly once', () => {
   const { life, actors } = setup();
   assert.equal(
@@ -119,7 +134,7 @@ void test('prepared meal does not override refusal and ingredients are spent onc
     parseDailyLife(JSON.parse(JSON.stringify(snapshotLife(life, actors)))),
   );
 });
-void test('repair pauses on departure and refresh; replacement improves the real item with no repeat reward', () => {
+void test('repair pauses on departure and refresh; replacement requires actual steps with no repeat reward', () => {
   const { life, actors } = setup();
   life.belongings.rin.parts = 1;
   assert.equal(
@@ -128,17 +143,24 @@ void test('repair pauses on departure and refresh; replacement improves the real
   );
   assert.equal(life.belongings.rin.parts, 0);
   const before = life.belongings.shirou.condition;
-  advancePastimes(life, actors, 4, 'rin');
-  assert.equal(life.pastimes![0].progress, 4);
+  actOnPastime(life, actors, 'rin', 'repair-look', 'shirou');
+  assert.equal(life.pastimes![0].progress, 3);
   const actor = actors.find((a) => a.id === 'rin')!;
   actor.x += 200;
   advancePastimes(life, actors, 5, 'rin');
-  assert.equal(life.pastimes![0].progress, 4);
+  assert.equal(life.pastimes![0].progress, 3);
+  assert.equal(
+    actOnPastime(life, actors, 'rin', 'repair-adjust', 'shirou').ok,
+    false,
+  );
   Object.assign(actor, DISTRICT_PLACES.cafe);
   const restored = parseDailyLife(
     JSON.parse(JSON.stringify(snapshotLife(life, actors))),
   );
-  advancePastimes(restored, actors, 8, 'rin');
+  actOnPastime(restored, actors, 'rin', 'repair-adjust', 'shirou');
+  assert.equal(restored.pastimes![0].phase, 'active');
+  assert.equal(restored.belongings.shirou.condition, before);
+  actOnPastime(restored, actors, 'rin', 'repair-test', 'shirou');
   assert.equal(restored.pastimes![0].phase, 'done');
   assert.equal(
     restored.belongings.shirou.condition,
@@ -166,7 +188,7 @@ void test('free inspection, cancellation, no materials and existing plans have d
     true,
   );
   const before = life.belongings.shirou.condition;
-  advancePastimes(life, actors, 12, 'rin');
+  finishPlayerRepair(life, actors);
   assert.equal(life.belongings.shirou.condition, before + 12);
   assert.match(life.pastimes![0].reply, /松动/);
   const other = setup();
@@ -246,7 +268,7 @@ void test('the full engine walks both participants to an actual cafe meal withou
 void test('three simulated days preserve completed help across bounded journals and backup restore', () => {
   const { life, actors } = setup();
   actOnPastime(life, actors, 'rin', 'repair-inspect', 'shirou');
-  advancePastimes(life, actors, 12, 'rin');
+  finishPlayerRepair(life, actors);
   for (let i = 0; i < 10800; i++)
     advanceDailyLife(life, actors, 0.05, {
       running: true,
@@ -335,7 +357,7 @@ void test("a full activity journal evicts finished records before another reside
 void test('real shared memories still inform recall after completed activities leave the bounded journal', () => {
   const { life, actors } = setup();
   actOnPastime(life, actors, 'rin', 'repair-inspect', 'shirou');
-  advancePastimes(life, actors, 12, 'rin');
+  finishPlayerRepair(life, actors);
   const completedId = life.pastimes![0].id;
   Object.assign(
     actors.find((a) => a.id === 'sakura')!,

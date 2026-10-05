@@ -45,6 +45,8 @@ import {
 } from '@/lib/fate-indoor-map';
 import { FateIndoorScene } from './fate-indoor-scene';
 import styles from './fate-interior.module.css';
+import { StreetCarePanel } from './street-care-panel';
+import type { HomeCareAction } from '@/lib/fate-self-care';
 
 export type InteriorView = HomeId | 'directory';
 export type IndoorSprite = {
@@ -295,6 +297,7 @@ export function FateInterior({
   moving,
   onWalkTo,
   onDirection,
+  onCare,
 }: {
   view: InteriorView;
   life: DailyLife;
@@ -309,6 +312,7 @@ export function FateInterior({
   moving: boolean;
   onWalkTo: (point: Point) => void;
   onDirection: (key: string, pressed: boolean) => void;
+  onCare: (action: HomeCareAction) => { ok: boolean; message: string };
 }) {
   const [selectedId, setSelectedId] = useState<PartnerId | null>(null);
   const detail = useRef<HTMLElement>(null);
@@ -546,6 +550,16 @@ export function FateInterior({
                   ? '沿室内走廊进入各房间；人物会按自己的日常进出。点击屋内人物查看近况。'
                   : '点击房间里的人物，看看近况。他们会按自己的日常进出。'}
               </p>
+              {playable && (
+                <StreetCarePanel
+                  key={`${controlled}-${view}`}
+                  life={life}
+                  controlled={controlled}
+                  home={view}
+                  onAction={onCare}
+                  onWalkTo={onWalkTo}
+                />
+              )}
               {meal && (
                 <p className={styles.mealNote}>
                   <Soup size={18} />

@@ -21,6 +21,7 @@ import {
   type LifeEvent,
 } from '@/lib/fate-life';
 import { actOnPastime, type PastimeCommand } from '@/lib/fate-pastimes';
+import { takeHomeCare, type HomeCareAction } from '@/lib/fate-self-care';
 import { playerAppointment } from '@/lib/fate-meetups';
 import { isPartner, type PartnerId } from '@/lib/fate-cast';
 import { pairConversationHistory, type Exchange } from '@/lib/fate-state';
@@ -44,6 +45,7 @@ import {
   type IndoorPosition,
 } from '@/lib/fate-indoor-map';
 import type { Point } from '@/lib/street';
+import { teleportStreetActor } from '@/lib/fate-navigation';
 import {
   startPublicOuting,
   choosePublicOuting,
@@ -554,6 +556,35 @@ export function useStreetLife(
     },
     [actors, publish],
   );
+  const teleport = useCallback(
+    (destination: Point) => {
+      const opt = opts.current;
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        opt.mode !== 'control' ||
+        opt.overlay ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return { ok: false, message: '请先进入角色，或处理存档提示。' };
+      const result = teleportStreetActor(
+        life.current,
+        actors.current,
+        opt.active,
+        destination,
+      );
+      if (result.ok) {
+        cancel();
+        sinceIndoorView.current = 0;
+        sinceIndoorSave.current = 0;
+        publish();
+        saveLatest();
+      }
+      return result;
+    },
+    [actors, cancel, publish, saveLatest],
+  );
   const outing = useCallback(
     (
       command:
@@ -694,6 +725,37 @@ export function useStreetLife(
     },
     [actors, publish],
   );
+  const homeCare = useCallback(
+    (action: HomeCareAction) => {
+      const opt = opts.current;
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        opt.mode !== 'control' ||
+        opt.overlay ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return {
+          ok: false,
+          message: '先处理当前对话或存档提示，再安排居家时间。',
+        };
+      cancel();
+      const result = takeHomeCare(
+        life.current,
+        actors.current,
+        opt.active,
+        action,
+      );
+      if (result.ok) {
+        for (const encounter of result.encounters) remember(encounter);
+        publish();
+        saveLatest();
+      }
+      return result;
+    },
+    [actors, cancel, publish, remember, saveLatest],
+  );
   function resetPlans() {
     cancel();
     for (const id of LIFE_IDS) life.current.people[id].activity = null;
@@ -725,11 +787,13 @@ export function useStreetLife(
     leaveHome,
     moveInside,
     visitPublic,
+    teleport,
     interaction,
     nearestResident,
     commitConversation,
     manageAppointment,
     pastime,
+    homeCare,
     resetPlans,
   };
 }

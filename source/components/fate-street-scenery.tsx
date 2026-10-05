@@ -578,6 +578,9 @@ export const FateStreetScenery = memo(function FateStreetScenery({
                 <text x="120" y="1590">
                   圆藏山
                 </text>
+                <text x="615" y="1410">
+                  洋馆丘陵
+                </text>
                 <text x="2390" y="850">
                   中央公园
                 </text>

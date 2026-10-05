@@ -136,6 +136,8 @@ import {
 } from './fate-indoor-map';
 import { roomPoint } from './fate-indoor-layout';
 import { indoorRoom } from './fate-indoor-map';
+import { parseHomeCareEvent, type HomeCareEvent } from './fate-self-care';
+import type { PlayerCare } from './fate-player-time';
 
 export const LIFE_PLACES = {
   school: SCHOOL_GATE,
@@ -195,6 +197,7 @@ export type LifeDialogue = {
 };
 export type LifePlan = { action: LifeAction; reason: string };
 export type LifeEvent = {
+  care?: HomeCareEvent;
   conversation?: ConversationOutcome;
   interaction?: {
     exchangeId: string;
@@ -284,6 +287,7 @@ export function recentLifeEvents(life: DailyLife, id: PartnerId) {
   return life.events
     .filter((e) => {
       const belongs =
+        e.care?.person === id ||
         e.item?.person === id ||
         e.publicVisit?.person === id ||
         e.publicVisit?.target === id ||
@@ -295,6 +299,7 @@ export function recentLifeEvents(life: DailyLife, id: PartnerId) {
         e.interaction?.target === id ||
         e.meal?.participants.includes(id);
       const hasWaver =
+        e.care?.person === 'waver' ||
         e.item?.person === 'waver' ||
         e.publicVisit?.person === 'waver' ||
         e.publicVisit?.target === 'waver' ||
@@ -670,6 +675,7 @@ export function advanceDailyLife(
     controlled: ActorId | null;
     clockRate?: number;
     motionRate?: number;
+    controlledCare?: PlayerCare;
   },
 ): LifeEvent | null {
   const seconds = Number.isFinite(dt) ? clamp(dt, 0, 0.05) : 0;
@@ -733,12 +739,11 @@ export function advanceDailyLife(
   for (const id of LIFE_IDS) {
     const actor = actors.find((a) => a.id === id)!;
     const person = life.people[id];
-    if (id === options.controlled) {
-      person.activity = null;
-      continue;
-    }
     const asleep =
-      person.activity?.kind === 'sleep' && person.activity.phase === 'doing';
+      id === options.controlled
+        ? options.controlledCare === 'sleep'
+        : person.activity?.kind === 'sleep' &&
+          person.activity.phase === 'doing';
     person.hunger = clamp(
       person.hunger + elapsed * (asleep ? 0.018 : 0.09),
       0,
@@ -746,6 +751,20 @@ export function advanceDailyLife(
     );
     person.energy = clamp(person.energy - elapsed * 0.035, 0, 100);
     person.social = clamp(person.social + elapsed * 0.04, 0, 100);
+    if (id === options.controlled) {
+      if (options.controlledCare === 'eat') {
+        person.hunger = clamp(person.hunger - elapsed * 2.8, 0, 100);
+        person.energy = clamp(person.energy + elapsed * 0.3, 0, 100);
+      } else if (options.controlledCare) {
+        person.energy = clamp(
+          person.energy + elapsed * (asleep ? 0.4 : 1.2),
+          0,
+          100,
+        );
+      }
+      person.activity = null;
+      continue;
+    }
     if (
       life.minutes < life.holdUntil &&
       conversation &&
@@ -2071,6 +2090,9 @@ export function parseDailyLife(value: unknown): DailyLife {
     previousId = event.id;
     if (event.waverStage !== undefined) parseWaverStage(event.waverStage);
     const clean: LifeEvent = {
+      ...(event.care === undefined
+        ? {}
+        : { care: parseHomeCareEvent(event.care, event.minute) }),
       ...(event.item === undefined ? {} : { item: parseItemEvent(event.item) }),
       ...(event.schedule === undefined
         ? {}

@@ -224,6 +224,7 @@
 }
 .placeCard > div {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 .placeCard .publicVisit {
@@ -273,16 +274,35 @@
 }
 @media (max-width: 800px) {
   .atlas {
-    flex: 0 0 240px;
+    position: absolute;
+    inset: 0;
+    z-index: 10;
     width: 100%;
+    height: 100%;
     border-left: 0;
-    border-top: 1px solid #ffffff18;
+    border-top: 0;
   }
-  .atlas .miniature {
+  .atlas .miniature,
+  .atlas .legend {
     display: none;
   }
   .atlas header {
-    padding-top: 12px;
+    flex: none;
+    padding: 8px 14px;
+  }
+  .atlas header small {
+    display: none;
+  }
+  .atlas h2 {
+    margin: 0;
+    font-size: 16px;
+  }
+  .atlas header button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .atlas .scroll {
+    overscroll-behavior-y: contain;
   }
   .placeCard {
     left: 10px;

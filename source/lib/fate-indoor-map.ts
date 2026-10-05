@@ -22,6 +22,23 @@ export function nearHomeEntrance(point: Point, home: HomeId): boolean {
   );
 }
 
+export function nearbyHomeEntrance(point: Point): HomeId | null {
+  let nearest: HomeId | null = null;
+  let distance = 75;
+  for (const entry of Object.values(HOME_ENTRANCES)) {
+    const legacy = FATE_HOMES[entry.home];
+    const gap = Math.min(
+      Math.hypot(point.x - entry.door.x, point.y - entry.door.y),
+      Math.hypot(point.x - legacy.x, point.y - legacy.y),
+    );
+    if (gap <= distance) {
+      nearest = entry.home;
+      distance = gap;
+    }
+  }
+  return nearest;
+}
+
 const AREAS: Rect[] = [
   { left: 44, right: 326, top: 44, bottom: 202 },
   { left: 394, right: 676, top: 44, bottom: 202 },
@@ -160,10 +177,8 @@ export function stepIndoor(
     const x = next.x + dx / steps;
     const y = next.y + dy / steps;
     if (isIndoorWalkable({ x, y }, home)) next = { x, y };
-    else if (isIndoorWalkable({ x, y: next.y }, home))
-      next = { x, y: next.y };
-    else if (isIndoorWalkable({ x: next.x, y }, home))
-      next = { x: next.x, y };
+    else if (isIndoorWalkable({ x, y: next.y }, home)) next = { x, y: next.y };
+    else if (isIndoorWalkable({ x: next.x, y }, home)) next = { x: next.x, y };
     else break;
   }
   return next;

@@ -36,8 +36,6 @@ import {
   clamp,
   createStreetActors,
   directionFromKeys,
-  nearestWalkable,
-  pathTo,
   placeName,
   screenToWorld,
   stepActor,
@@ -48,6 +46,8 @@ import {
 import { pickGamepad, readGamepad, type PadHistory } from '@/lib/gamepad';
 import {
   sceneCameraFor,
+  cameraAnchor,
+  panCamera,
   easeCamera,
   DEFAULT_ZOOM,
   ZOOM_LIMITS,
@@ -79,7 +79,13 @@ import {
   INDOOR_SPEED,
   indoorRoute,
   nearHomeEntrance,
+  nearbyHomeEntrance,
 } from '@/lib/fate-indoor-map';
+import {
+  planStreetWalk,
+  streetJourneyStatus,
+  type StreetJourney,
+} from '@/lib/fate-navigation';
 import { HOME_ENTRANCES } from '@/lib/fate-home-entrances';
 import { FATE_HOMES } from '@/lib/fate-housing';
 import { DistrictAtlas, DistrictPlaceCard } from './fate-district-map';
@@ -168,6 +174,12 @@ export default function StreetWalk({
     [waverStage],
   );
   const [nearby, setNearby] = useState<PartnerId | null>(null);
+  const [nearbyHome, setNearbyHome] = useState<keyof typeof FATE_HOMES | null>(
+    null,
+  );
+  const journey = useRef<StreetJourney | null>(null);
+  const [journeyLabel, setJourneyLabel] = useState<string | null>(null);
+  const [routeNotice, setRouteNotice] = useState('');
   const [nearbyStatus, setNearbyStatus] = useState<InteractionStatus | null>(
     null,
   );
@@ -279,12 +291,15 @@ export default function StreetWalk({
   });
   const scenePlaceRef = useRef(scenePlace);
   const following = useRef<ActorId | null>(null);
+  const manualCamera = useRef<Point | null>(null);
   const pointer = useRef<{
     id: number;
     x: number;
     y: number;
     latest: Point;
     world: Point;
+    scale: number;
+    scene: CameraScene;
     dragged: boolean;
   } | null>(null);
   const pinch = useRef<{
@@ -304,7 +319,15 @@ export default function StreetWalk({
     interior: false,
   });
   const setZoom = useCallback(
-    (next: number | ((current: number) => number), view?: CameraScene) => {
+    (
+      next: number | ((current: number) => number),
+      view?: CameraScene,
+      fromPinch = false,
+    ) => {
+      if (!fromPinch) {
+        pointer.current = null;
+        pinch.current = null;
+      }
       const targetScene = view ?? settings.current.scene;
       setZoomLevels((levels) => ({
         ...levels,
@@ -324,7 +347,6 @@ export default function StreetWalk({
     center: () => void;
     talk: () => void;
     back: () => void;
-    leaveInterior: () => void;
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
   const period = lifePeriod(daily.view.minutes);
@@ -412,7 +434,15 @@ export default function StreetWalk({
       pointer.current = null;
     };
     const wheel = (event: WheelEvent) => {
-      if (!settings.current.ready || settings.current.interior) return;
+      if (
+        !settings.current.ready ||
+        settings.current.interior ||
+        overlay.current ||
+        event.ctrlKey ||
+        event.metaKey ||
+        !event.deltaY
+      )
+        return;
       event.preventDefault();
       setZoom((current) => current * Math.exp(-Math.sign(event.deltaY) * 0.1));
     };
@@ -435,6 +465,11 @@ export default function StreetWalk({
       )
         return;
       if (overlay.current) return;
+      if (key === 'escape' && !e.repeat && !settings.current.interior) {
+        e.preventDefault();
+        padActions.current?.back();
+        return;
+      }
       if (settings.current.interior) {
         if (key === 'e' && !e.repeat && settings.current.mode === 'control') {
           e.preventDefault();
@@ -442,7 +477,7 @@ export default function StreetWalk({
         }
         if (key === 'escape' && !e.repeat) {
           e.preventDefault();
-          padActions.current?.leaveInterior();
+          padActions.current?.back();
         }
         if (MOVE_KEYS.has(key) && settings.current.mode === 'control') {
           e.preventDefault();
@@ -471,6 +506,17 @@ export default function StreetWalk({
     window.addEventListener('keydown', keyDown);
     window.addEventListener('keyup', keyUp);
     window.addEventListener('blur', stop);
+    const focusChanged = (event: FocusEvent) => {
+      if (
+        (event.target as HTMLElement)?.closest(
+          'input,textarea,select,[contenteditable="true"],[role="dialog"]',
+        )
+      ) {
+        keys.current.clear();
+        touchKeys.current.clear();
+      }
+    };
+    document.addEventListener('focusin', focusChanged);
     document.addEventListener('visibilitychange', stop);
     let raf = 0,
       last = 0,
@@ -519,12 +565,16 @@ export default function StreetWalk({
             continue;
           }
           if (settings.current.interior) {
-            if (action === 'back') padActions.current?.leaveInterior();
+            if (action === 'back') padActions.current?.back();
             if (action === 'talk') padActions.current?.talk();
             continue;
           }
           if (action === 'talk') {
             padActions.current?.talk();
+            continue;
+          }
+          if (action === 'back') {
+            padActions.current?.back();
             continue;
           }
           if (action === 'previous' || action === 'next') {
@@ -598,6 +648,8 @@ export default function StreetWalk({
         );
         const input = keyboard.x || keyboard.y ? keyboard : sampled.move;
         const walkingInput = input;
+        if (opts.mode === 'control' && (input.x || input.y))
+          manualCamera.current = null;
         if (opts.mode === 'observe') {
           const look =
             keyboard.x || keyboard.y
@@ -605,7 +657,11 @@ export default function StreetWalk({
               : sampled.look.x || sampled.look.y
                 ? sampled.look
                 : sampled.move;
-          if (look.x || look.y) following.current = null;
+          if (look.x || look.y) {
+            following.current = null;
+            if (manualCamera.current) freeView.current = manualCamera.current;
+            manualCamera.current = null;
+          }
           freeView.current = {
             x: clamp(freeView.current.x + look.x * 350 * dt, 0, STREET.width),
             y: clamp(freeView.current.y + look.y * 350 * dt, 0, STREET.height),
@@ -642,15 +698,37 @@ export default function StreetWalk({
           }
         }
         const selected = actors.current.find((p) => p.id === opts.active)!;
+        const route = journey.current;
+        if (route) {
+          const status =
+            opts.mode === 'control'
+              ? streetJourneyStatus(route, selected, walkingInput)
+              : 'cancelled';
+          if (status !== 'walking') {
+            journey.current = null;
+            setJourneyLabel(null);
+            const message =
+              status === 'arrived'
+                ? `已到达${route.label}；可查看附近入口或活动。`
+                : status === 'manual'
+                  ? '已改为手动行走。'
+                  : '已停止沿路前往。';
+            setHint(message);
+            setRouteNotice(status === 'manual' ? '' : message);
+          }
+        }
         if (now - interactionCheckedAt >= 120) {
           interactionCheckedAt = now;
           const near = dailyActions.current.nearestResident();
           const status = near ? dailyActions.current.interaction(near) : null;
-          const signature = `${near ?? ''}:${status?.message ?? ''}`;
+          const home =
+            opts.mode === 'control' ? nearbyHomeEntrance(selected) : null;
+          const signature = `${near ?? ''}:${status?.message ?? ''}:${home ?? ''}`;
           if (signature !== reportedInteraction) {
             reportedInteraction = signature;
             setNearby(near);
             setNearbyStatus(status);
+            setNearbyHome(home);
           }
           for (const actor of actors.current) {
             const node = actorElements.current.get(actor.id);
@@ -671,7 +749,9 @@ export default function StreetWalk({
           : undefined;
         if (opts.mode === 'observe' && followed)
           freeView.current = { x: followed.x, y: followed.y };
-        const point = opts.mode === 'control' ? selected : freeView.current;
+        const point =
+          manualCamera.current ??
+          (opts.mode === 'control' ? selected : freeView.current);
         if (opts.scene === 'street') {
           const place = nearbyStreetPlace(point, scenePlaceRef.current);
           if (place.id !== scenePlaceRef.current.id) {
@@ -691,6 +771,7 @@ export default function StreetWalk({
           target,
           dt,
           cameraScene.current !== opts.scene ||
+            Boolean(pointer.current?.dragged && !pinch.current) ||
             window.matchMedia('(prefers-reduced-motion: reduce)').matches,
         );
         cameraScene.current = opts.scene;
@@ -732,12 +813,17 @@ export default function StreetWalk({
       window.removeEventListener('keydown', keyDown);
       window.removeEventListener('keyup', keyUp);
       window.removeEventListener('blur', stop);
+      document.removeEventListener('focusin', focusChanged);
       document.removeEventListener('visibilitychange', stop);
       host.removeEventListener('wheel', wheel);
     };
   }, [setZoom]);
 
   function choose(id: ActorId) {
+    manualCamera.current = null;
+    setRouteNotice('');
+    journey.current = null;
+    setJourneyLabel(null);
     if (settings.current.mode === 'control') dailyActions.current.cancel();
     // Watching somebody must not interrupt that person or clear everyone else's route.
     const old = actors.current.find((p) => p.id === settings.current.active)!;
@@ -763,6 +849,10 @@ export default function StreetWalk({
       stage.current?.focus({ preventScroll: true });
   }
   function switchMode() {
+    manualCamera.current = null;
+    setRouteNotice('');
+    journey.current = null;
+    setJourneyLabel(null);
     dailyActions.current.cancel();
     const next = settings.current.mode === 'control' ? 'observe' : 'control';
     const selected = actors.current.find(
@@ -788,6 +878,7 @@ export default function StreetWalk({
     stage.current?.focus({ preventScroll: true });
   }
   function recenter() {
+    manualCamera.current = null;
     const selected = actors.current.find(
       (p) => p.id === settings.current.active,
     )!;
@@ -798,14 +889,14 @@ export default function StreetWalk({
     }
     freeView.current = { x: selected.x, y: selected.y };
     following.current = selected.id;
-    settings.current = { ...settings.current, zoom: DEFAULT_ZOOM };
-    setZoom(DEFAULT_ZOOM);
   }
   function openDialog(
     value: 'settings' | PartnerId,
     speaker: ActorId = settings.current.active,
     preserveRoutes = settings.current.interior,
   ) {
+    journey.current = null;
+    setJourneyLabel(null);
     dailyActions.current.cancel();
     overlay.current = true;
     keys.current.clear();
@@ -843,6 +934,9 @@ export default function StreetWalk({
       setHint('请先进入角色，沿街走到住宅门前。');
       return;
     }
+    journey.current = null;
+    setJourneyLabel(null);
+    setRouteNotice('');
     keys.current.clear();
     touchKeys.current.clear();
     indoorPath.current = [];
@@ -888,16 +982,49 @@ export default function StreetWalk({
   function talk() {
     if (settings.current.mode !== 'control') return;
     const near = dailyActions.current.nearestResident();
+    const status = near ? dailyActions.current.interaction(near) : null;
+    if (!settings.current.interior && !status?.ok) {
+      const actor = actors.current.find(
+        (item) => item.id === settings.current.active,
+      )!;
+      const home = nearbyHomeEntrance(actor);
+      if (home) {
+        enterInterior(home);
+        return;
+      }
+    }
     if (!near) {
-      setHint('先靠近同一房间或道路上的人物，再按 E 或点击交谈。');
+      setHint('靠近人物或住宅入口，再按 E 或点击提示操作。');
       return;
     }
-    const status = dailyActions.current.interaction(near);
-    if (!status.ok) {
-      setHint(status.message);
+    if (!status?.ok) {
+      setHint(status?.message ?? '请再靠近一些。');
       return;
     }
     openDialog(near, settings.current.active, settings.current.interior);
+  }
+  function stopWalking() {
+    if (settings.current.mode !== 'control') return;
+    const actor = actors.current.find(
+      (item) => item.id === settings.current.active,
+    )!;
+    actor.path = [];
+    indoorPath.current = [];
+    keys.current.clear();
+    touchKeys.current.clear();
+    journey.current = null;
+    setJourneyLabel(null);
+    setRouteNotice('已停下；点击路面或使用方向键继续。');
+    setHint('已停下；点击路面或使用方向键继续。');
+    stage.current?.focus({ preventScroll: true });
+  }
+  function goBack() {
+    if (dialog) closeDialog();
+    else if (selectedPlace) setSelectedPlace(null);
+    else if (atlasOpen) setAtlasOpen(false);
+    else if (lifePanel) setLifePanel(false);
+    else if (settings.current.interior) leaveInterior();
+    else stopWalking();
   }
   useEffect(() => {
     padActions.current = {
@@ -905,8 +1032,7 @@ export default function StreetWalk({
       toggle: switchMode,
       center: recenter,
       talk,
-      back: closeDialog,
-      leaveInterior,
+      back: goBack,
     };
   });
   function selectHomeEntrance(event: { currentTarget: HTMLButtonElement }) {
@@ -924,6 +1050,7 @@ export default function StreetWalk({
     setPublicNotice('');
     setAtlasOpen(false);
     if (settings.current.mode === 'observe') {
+      manualCamera.current = null;
       following.current = null;
       freeView.current = { ...placeDestination(place) };
     }
@@ -939,9 +1066,10 @@ export default function StreetWalk({
       return;
     }
     const point =
-      settings.current.mode === 'control'
+      manualCamera.current ??
+      (settings.current.mode === 'control'
         ? actors.current.find((p) => p.id === settings.current.active)!
-        : freeView.current;
+        : freeView.current);
     const place = nearbyStreetPlace(point);
     scenePlaceRef.current = place;
     setScenePlace(place);
@@ -956,22 +1084,72 @@ export default function StreetWalk({
   }
   function travelToPlace(destination: DistrictLandmark) {
     if (settings.current.mode === 'observe') switchMode();
-    const actor = actors.current.find((a) => a.id === settings.current.active)!;
-    const route = pathTo(actor, placeDestination(destination));
-    if (!route.length) {
-      setHint('当前位置没有可通行的道路');
-      return;
-    }
+    if (!startWalking(placeDestination(destination), destination.name)) return;
     settings.current = { ...settings.current, scene: 'street' };
     setScene('street');
     setAtlasOpen(false);
     setSelectedPlace(null);
-    actor.path = route;
-    setHint(`正在沿连续街道前往${destination.name}；方向键可随时改变路线`);
+  }
+  function startWalking(point: Point, label: string, groundClick = false) {
+    if (
+      !settings.current.ready ||
+      settings.current.mode !== 'control' ||
+      overlay.current
+    )
+      return false;
+    const actor = actors.current.find(
+      (item) => item.id === settings.current.active,
+    )!;
+    const plan = planStreetWalk(actor, point, groundClick);
+    if (plan.status !== 'walking') {
+      if (plan.status === 'arrived') {
+        actor.path = [];
+        journey.current = null;
+        setJourneyLabel(null);
+      }
+      const previous = journey.current;
+      const message =
+        previous && actor.path.length
+          ? `${plan.message}仍在前往${previous.label}，可点“停止行走”。`
+          : plan.message;
+      setHint(message);
+      setRouteNotice(message);
+      return false;
+    }
+    keys.current.clear();
+    touchKeys.current.clear();
+    actor.path = plan.path;
+    manualCamera.current = null;
+    journey.current = { actor: actor.id, destination: plan.destination, label };
+    setJourneyLabel(label);
+    setRouteNotice('');
+    setHint(`正在前往${label}；方向键可改向，Esc 可停止。`);
     stage.current?.focus({ preventScroll: true });
+    return true;
   }
   function walkToPlace() {
     if (selectedPlace) travelToPlace(selectedPlace);
+  }
+  function teleportToPlace() {
+    if (!selectedPlace) return;
+    const result = daily.teleport(placeDestination(selectedPlace));
+    setPublicNotice(result.message);
+    if (!result.ok) return;
+    keys.current.clear();
+    touchKeys.current.clear();
+    pointer.current = null;
+    pinch.current = null;
+    indoorPath.current = [];
+    journey.current = null;
+    setJourneyLabel(null);
+    recenter();
+    cameraScene.current = null;
+    const message = `已传送到${selectedPlace.name}，可在附近互动。`;
+    setRouteNotice(message);
+    setHint(message);
+    setAtlasOpen(false);
+    setSelectedPlace(null);
+    stage.current?.focus({ preventScroll: true });
   }
   function doPublicAction(action: PublicVisitAction, target?: PartnerId) {
     if (!selectedPlace || selectedPlace.kind === 'home') return;
@@ -984,20 +1162,9 @@ export default function StreetWalk({
     setHint(result.message);
   }
   function walkToOutingPoint(point: Point) {
-    if (settings.current.mode !== 'control') return;
-    const actor = actors.current.find(
-      (item) => item.id === settings.current.active,
-    )!;
-    const route = pathTo(actor, point);
-    if (!route.length) {
-      setHint('这条路暂时走不通。');
-      return;
-    }
-    actor.path = route;
+    if (!startWalking(point, '河岸观察点')) return;
     setSelectedPlace(null);
     setAtlasOpen(false);
-    setHint('沿步道前往观察点；方向键可随时改变路线。');
-    stage.current?.focus({ preventScroll: true });
   }
   function onPointerDown(e: PointerEvent<HTMLDivElement>) {
     if ((e.target as HTMLElement).closest('button')) return;
@@ -1025,7 +1192,14 @@ export default function StreetWalk({
       x: e.clientX,
       y: e.clientY,
       latest: { x: e.clientX, y: e.clientY },
-      world: { ...freeView.current },
+      world: cameraAnchor(
+        camera.current,
+        viewport.current.width,
+        viewport.current.height,
+        settings.current.scene,
+      ),
+      scale: camera.current.scale,
+      scene: settings.current.scene,
       dragged: false,
     };
   }
@@ -1044,31 +1218,19 @@ export default function StreetWalk({
         gesture.firstPoint.x - gesture.secondPoint.x,
         gesture.firstPoint.y - gesture.secondPoint.y,
       );
-      setZoom((gesture.zoom * distance) / gesture.distance);
+      setZoom((gesture.zoom * distance) / gesture.distance, undefined, true);
       return;
     }
     if (!p || p.id !== e.pointerId) return;
     if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 6) p.dragged = true;
-    if (mode === 'observe' && p.dragged) {
+    if (p.dragged) {
       following.current = null;
-      freeView.current = {
-        x: clamp(
-          p.world.x -
-            (e.clientX - p.x) /
-              camera.current.scale /
-              (scene === 'street' ? STREET_SCENE_SCALE : 1),
-          0,
-          STREET.width,
-        ),
-        y: clamp(
-          p.world.y -
-            (e.clientY - p.y) /
-              camera.current.scale /
-              (scene === 'street' ? STREET_SCENE_SCALE : 1),
-          0,
-          STREET.height,
-        ),
-      };
+      manualCamera.current = panCamera(
+        p.world,
+        { x: e.clientX - p.x, y: e.clientY - p.y },
+        p.scale,
+        p.scene,
+      );
     }
   }
   function onPointerUp(e: PointerEvent<HTMLDivElement>) {
@@ -1079,29 +1241,23 @@ export default function StreetWalk({
     }
     const p = pointer.current;
     pointer.current = null;
-    if (!p || p.dragged || mode !== 'control') return;
+    if (!p || p.id !== e.pointerId || p.dragged || mode !== 'control') return;
     const rect = e.currentTarget.getBoundingClientRect();
     const wanted = screenToWorld(
       e.clientX - rect.left,
       e.clientY - rect.top,
       camera.current,
     );
-    const actor = actors.current.find((a) => a.id === active)!;
     const requested =
       scene === 'street'
         ? { x: wanted.x / STREET_SCENE_SCALE, y: wanted.y / STREET_SCENE_SCALE }
         : wanted;
-    const destination = nearestWalkable(requested);
-    if (
-      Math.hypot(requested.x - destination.x, requested.y - destination.y) > 145
-    ) {
-      setHint('点一下人物脚边的路面，就能走过去');
-      return;
-    }
-    actor.path = pathTo(actor, destination);
-    setHint('正在前往 · 随时按方向键改变方向');
+    startWalking(requested, '选中的路面', true);
   }
   function reset() {
+    manualCamera.current = null;
+    journey.current = null;
+    setJourneyLabel(null);
     dailyActions.current.cancel();
     actors.current = createStreetActors();
     daily.resetPlans();
@@ -1264,7 +1420,7 @@ export default function StreetWalk({
               pointerEvents: interiorView ? 'none' : undefined,
             }}
             role="application"
-            aria-label="冬木市连续街道；观察模式可拖动镜头，进入角色后可单独控制人物行走"
+            aria-label="冬木市连续街道；拖动查看地图，点击路面或方向键控制人物行走"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -1507,17 +1663,45 @@ export default function StreetWalk({
                 <button
                   className={styles.talkButton}
                   onClick={talk}
-                  disabled={!nearby || !fate.loaded || !nearbyStatus?.ok}
-                  title={nearbyStatus?.message}
-                >
-                  <MessageCircle size={16} />
-                  {nearby
-                    ? nearbyStatus?.ok
-                      ? `与${fatePerson(nearby, waverStage)!.name}交谈`
+                  disabled={!fate.loaded || (!nearbyStatus?.ok && !nearbyHome)}
+                  title={
+                    !nearbyStatus?.ok && nearbyHome
+                      ? '按 E 或手柄 A 进入住宅'
                       : nearbyStatus?.message
-                    : '靠近街道上的人物交谈'}
+                  }
+                >
+                  {!nearbyStatus?.ok && nearbyHome ? (
+                    <House size={16} />
+                  ) : (
+                    <MessageCircle size={16} />
+                  )}
+                  {!nearbyStatus?.ok && nearbyHome
+                    ? `进入${FATE_HOMES[nearbyHome].name}`
+                    : nearby
+                      ? nearbyStatus?.ok
+                        ? `与${fatePerson(nearby, waverStage)!.name}交谈`
+                        : nearbyStatus?.message
+                      : '靠近人物交谈，或走到住宅入口'}
                   <kbd>E / A</kbd>
                 </button>
+              )}
+              {mode === 'control' && (journeyLabel || routeNotice) && (
+                <div className={styles.navigationNotice}>
+                  <output>{routeNotice || `正在前往 · ${journeyLabel}`}</output>
+                  {journeyLabel ? (
+                    <button type="button" onClick={stopWalking}>
+                      停止行走 <kbd>Esc</kbd>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setRouteNotice('')}
+                      aria-label="收起行走提示"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               )}
               <div className={styles.cameraTools}>
                 <button
@@ -1530,11 +1714,18 @@ export default function StreetWalk({
                 </button>
                 <button
                   onClick={recenter}
-                  className={styles.zoomReset}
                   aria-label="镜头回到人物"
-                  title={`当前 ${zoomPercent}%；回到人物并恢复 100%`}
+                  title="镜头回到人物，保留当前缩放"
                 >
                   <Focus size={14} />
+                </button>
+                <button
+                  type="button"
+                  className={styles.zoomReset}
+                  onClick={() => setZoom(DEFAULT_ZOOM)}
+                  aria-label="恢复默认缩放"
+                  title={`当前 ${zoomPercent}%；点击恢复 100%`}
+                >
                   <span>{zoomPercent}%</span>
                 </button>
                 <button
@@ -1609,6 +1800,7 @@ export default function StreetWalk({
                     ) <= PUBLIC_VISIT_RADIUS
               }
               onWalk={walkToPlace}
+              onTeleport={teleportToPlace}
               onPublicAction={doPublicAction}
               activity={
                 selectedPlace.id === 'cafe' || selectedPlace.id === 'park' ? (
@@ -1674,6 +1866,13 @@ export default function StreetWalk({
                 moving={indoorMoving}
                 onWalkTo={walkInside}
                 onDirection={indoorDirection}
+                onCare={(action) => {
+                  keys.current.clear();
+                  touchKeys.current.clear();
+                  indoorPath.current = [];
+                  setIndoorMoving(false);
+                  return daily.homeCare(action);
+                }}
               />
             </div>
           )}
@@ -1705,6 +1904,18 @@ export default function StreetWalk({
             storageNotice={fate.storageNotice}
             onSettings={() => openDialog('settings')}
             onClose={() => setLifePanel(false)}
+            onHome={(home) => {
+              const place = DISTRICT_LANDMARKS.find(
+                (place) => place.id === home,
+              )!;
+              if (daily.view.indoor) {
+                setLifePanel(false);
+                setHint('已经在屋内，走到餐桌或休息间即可安排日常。');
+              } else {
+                setLifePanel(false);
+                travelToPlace(place);
+              }
+            }}
           />
         ) : !interiorView ? (
           <StreetObserver
@@ -1785,12 +1996,15 @@ export default function StreetWalk({
                 <p>
                   街区是一张连续场景；镜头会跟随人物，经过路口和桥梁时不会切换画面
                 </p>
-                <p>自由观察：拖动画面</p>
                 <p>
-                  右上角 ＋ / −、滚轮或双指：缩放；倍率按钮回到人物并恢复 100%
+                  拖动画面可查看其他地区，控制人物时也能拖动；开始行走或点定位恢复跟随
                 </p>
                 <p>
-                  街区可调 35%—250%，地图可调 80%—500%；两种视图分别保留倍率
+                  右上角 ＋ /
+                  −、滚轮或双指：缩放；定位按钮只回到人物，倍率按钮恢复 100%
+                </p>
+                <p>
+                  街区可调 5%—1000%，地图可调 25%—2000%；两种视图分别保留倍率
                 </p>
                 <p className={styles.helpLabel}>手柄 · 连接后按任意按钮</p>
                 <p>左摇杆 / 十字键：走动</p>
@@ -1798,8 +2012,8 @@ export default function StreetWalk({
                 <p>Y（△）：切换自由观察</p>
                 <p>右摇杆：自由观察时移动镜头</p>
                 <p>Menu / Options：镜头回到人物</p>
-                <p>E / A（×）：靠近人物后交谈</p>
-                <p>B（○）/ Esc：关闭交谈</p>
+                <p>E / A（×）：与附近可交谈人物交谈；住宅门前可直接进屋</p>
+                <p>B（○）/ Esc：关闭当前面板；沿路行走时停止</p>
                 <p>
                   点击「开始日常」观察二十一位 Fate 人物自主行动。连接 DeepSeek
                   并开启「AI

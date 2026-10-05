@@ -122,6 +122,54 @@
   outline: 2px solid #f2d68e;
   outline-offset: 3px;
 }
+.navigationNotice {
+  position: absolute;
+  z-index: 6;
+  left: 14px;
+  bottom: 66px;
+  max-width: calc(100% - 28px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 10px;
+  background: #182b26f2;
+  color: #f1e6cb;
+  border: 1px solid #ccbd9270;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.navigationNotice output {
+  min-width: 0;
+  line-height: 1.5;
+}
+.navigationNotice button {
+  flex: none;
+  min-height: 32px;
+  padding: 4px 9px;
+  border: 1px solid #d8cba66b;
+  border-radius: 4px;
+  background: #c3b78916;
+  color: inherit;
+}
+.navigationNotice kbd {
+  padding-left: 4px;
+  color: #bac8bd;
+}
+@media (max-width: 800px) {
+  .navigationNotice {
+    bottom: 12px;
+    max-width: calc(100% - 150px);
+    gap: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  .gamepadStatus:not(.gamepadConnected) {
+    display: none;
+  }
+  .navigationNotice kbd {
+    display: none;
+  }
+}
 .nearbyActor .actorName {
   border-color: #f2d68e;
 }

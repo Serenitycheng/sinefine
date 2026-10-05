@@ -1,4 +1,4 @@
-import { actOnPastime, advancePastimes } from '../lib/fate-pastimes';
+import { actOnPastime } from '../lib/fate-pastimes';
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
@@ -629,12 +629,28 @@ void test('completed and in-progress small activities survive the cloud API and 
     actOnPastime(life, actors, 'rin', 'repair-replace', 'shirou').ok,
     true,
   );
-  advancePastimes(life, actors, 12, 'rin');
+  for (const command of [
+    'repair-look',
+    'repair-adjust',
+    'repair-test',
+  ] as const)
+    assert.equal(actOnPastime(life, actors, 'rin', command, 'shirou').ok, true);
+  for (const id of ['irisviel', 'illya'] as const) {
+    Object.assign(
+      actors.find((a) => a.id === id)!,
+      DISTRICT_PLACES.cafe,
+      { path: [] },
+    );
+    Object.assign(life.people[id], { activity: null, energy: 80, hunger: 20 });
+  }
   assert.equal(
     actOnPastime(life, actors, 'illya', 'repair-inspect', 'irisviel').ok,
     true,
   );
-  advancePastimes(life, actors, 4, 'illya');
+  assert.equal(
+    actOnPastime(life, actors, 'illya', 'repair-listen', 'irisviel').ok,
+    true,
+  );
   const remote = createFateBackup({
     ...emptyFateSave(),
     life: snapshotLife(life, actors),
