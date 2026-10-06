@@ -24,21 +24,24 @@ import {
   Footprints,
   House,
   Box,
+  Camera,
+  RotateCcw,
+  CornerUpLeft,
   Minus,
   Plus,
   Square,
+  Armchair,
   X,
 } from 'lucide-react';
 import {
   ART_SAMPLE,
+  SAMPLE_ALLEY,
   SAMPLE_PLACES,
   constrainSampleCamera,
-  moveInSample,
   sampleCamera,
   sampleDirection,
   sampleDistance,
   sampleFrame,
-  sampleRoute,
   sampleScreenToWorld,
   sampleZoom,
   type SampleCamera,
@@ -47,6 +50,60 @@ import {
   type SamplePoint,
 } from '@/lib/fate-art-sample';
 import { ART_SPRITE_FRAMES } from '@/lib/fate-art-sprite';
+import {
+  SAMPLE_BENCH,
+  BENCH_SPRITE,
+  BENCH_SPRITE_CELL,
+  atSampleBench,
+  arriveAtSampleBench,
+  sampleBenchSeat,
+  type BenchPosture,
+} from '@/lib/fate-art-bench';
+import {
+  NEUTRAL_LOOK,
+  SAMPLE_LOOK,
+  constrainSampleLook,
+  paintedFollowCamera,
+  projectPaintedPoint,
+  unprojectPaintedGround,
+  type SampleLook,
+} from '@/lib/fate-art-depth';
+import type { PaintedRenderer } from '@/lib/fate-art-depth-runtime';
+import { sampleAlleyLook, stepSampleSpring } from '@/lib/fate-art-camera';
+import {
+  ALLEY_AHEAD,
+  NEIGHBORHOOD_CENTER,
+  NEIGHBORHOOD_PLACES,
+  sampleSceneIndex,
+  sampleViewWalkScale,
+  type SampleScene,
+} from '@/lib/fate-art-alley';
+import {
+  PAINTED_VIEWS,
+  ROAD_MODES,
+  ROAD_MODE_LABELS,
+  VIEW_PAINTINGS,
+  beginViewCut,
+  stepViewCut,
+  viewCutCover,
+  viewArea,
+  viewForArea,
+  isRoadView,
+  sampleViewPoint,
+  onViewPaving,
+  viewActorScale,
+  type PaintedView,
+  type RoadMode,
+  type ViewCut,
+} from '@/lib/fate-art-views';
+import {
+  advanceVisibleSampleRoute,
+  visibleSampleRoute,
+  moveVisibleSampleInput,
+  sampleNavigableScene,
+  sampleNavigableView,
+  sampleClickTarget,
+} from '@/lib/fate-art-navigation';
 import styles from './fate-art-sample.module.css';
 
 type View = {
@@ -55,12 +112,19 @@ type View = {
   direction: SampleDirection;
   frame: number;
   moving: boolean;
+  posture: BenchPosture;
+  look: SampleLook;
+  scene: SampleScene;
+  cut: ViewCut;
 };
 type Drag = {
   id: number;
   start: SamplePoint;
   camera: SampleCamera;
   moved: boolean;
+  mode: 'pan' | 'look';
+  look: SampleLook;
+  view: PaintedView;
 };
 const ARROWS = [
   { key: 'ArrowUp', label: '向上行走', Icon: ArrowUp },
@@ -68,7 +132,7 @@ const ARROWS = [
   { key: 'ArrowDown', label: '向下行走', Icon: ArrowDown },
   { key: 'ArrowRight', label: '向右行走', Icon: ArrowRight },
 ] as const;
-
+const AREA_PLACES = [...SAMPLE_PLACES, ...NEIGHBORHOOD_PLACES];
 function directionKeys(keys: Set<string>) {
   const x =
     Number(keys.has('d') || keys.has('ArrowRight')) -
@@ -83,16 +147,33 @@ function directionKeys(keys: Set<string>) {
 export default function FateArtSample() {
   const surface = useRef<HTMLDivElement>(null);
   const closeButton = useRef<HTMLButtonElement>(null);
-  const dimensions = useRef({ width: 1, height: 1 });
+  const images = useRef<Partial<Record<PaintedView, HTMLImageElement>>>({});
+  const spriteImage = useRef<HTMLImageElement>(null);
+  const depthHost = useRef<HTMLDivElement>(null);
+  const depthRenderer = useRef<PaintedRenderer | null>(null);
   const point = useRef<SamplePoint>({ ...ART_SAMPLE.start });
+  const scene = useRef<SampleScene>('street');
+  const roadModeRef = useRef<RoadMode>('overview');
+  const cut = useRef(beginViewCut('street'));
+  const look = useRef<SampleLook>({ ...NEUTRAL_LOOK });
+  const desiredLook = useRef<SampleLook>({ ...NEUTRAL_LOOK });
+  const lookVelocity = useRef({ yaw: 0, tilt: 0 });
+  const turnFollow = useRef(true);
+  const reducedMotion = useRef(false);
+  const dimensions = useRef({ width: 1, height: 1 });
   const camera = useRef<SampleCamera>({ x: 0, y: 0, scale: 1 });
+  const cameraVelocity = useRef({ x: 0, y: 0 });
   const panCamera = useRef<SampleCamera | null>(null);
   const cameraMode = useRef<'follow' | 'pan'>('follow');
+  const travelLead = useRef({ x: 0, y: 0 });
   const keys = useRef(new Set<string>());
   const keyOrigins = useRef(new Map<string, SamplePoint>());
-  const pendingTap = useRef<SamplePoint>({ x: 0, y: 0 });
+  const keyView = useRef<PaintedView>('street');
+  const pendingTap = useRef({ x: 0, y: 0 });
   const route = useRef<SamplePoint[]>([]);
   const routePlace = useRef<SamplePlace | null>(null);
+  const routeRetries = useRef(0);
+  const posture = useRef<BenchPosture>('standing');
   const drag = useRef<Drag | null>(null);
   const pointers = useRef(new Map<number, SamplePoint>());
   const pinch = useRef<{ distance: number; zoom: number } | null>(null);
@@ -100,25 +181,130 @@ export default function FateArtSample() {
   const direction = useRef<SampleDirection>('down');
   const distance = useRef(0);
   const modal = useRef<SamplePlace | null>(null);
-  const [zoom, setZoom] = useState(1.05);
-  const [paintingReady, setPaintingReady] = useState(false);
+  const [loaded, setLoaded] = useState<Partial<Record<PaintedView, boolean>>>(
+    {},
+  );
   const [spriteReady, setSpriteReady] = useState(false);
+  const [benchReady, setBenchReady] = useState(false);
+  const [benchFailed, setBenchFailed] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [depthStatus, setDepthStatus] = useState<
+    'loading' | 'ready' | 'unavailable'
+  >('loading');
+  const [zoom, setZoom] = useState(1.05);
+  const [roadMode, setRoadMode] = useState<RoadMode>('overview');
+  const [lookSetting, setLookSetting] = useState<SampleLook>({
+    ...NEUTRAL_LOOK,
+  });
+  const [cameraPanel, setCameraPanel] = useState(false);
+  const [turnDrag, setTurnDrag] = useState(false);
+  const [followTurns, setFollowTurns] = useState(true);
   const [markers, setMarkers] = useState(true);
   const [place, setPlace] = useState<SamplePlace | null>(null);
   const [target, setTarget] = useState<SamplePoint | null>(null);
-  const [notice, setNotice] = useState('沿街走走，看看住宅与咖啡店。');
+  const [notice, setNotice] = useState('沿街走走，也可以切到沿路或平视前路。');
   const [view, setView] = useState<View>({
     point: { ...ART_SAMPLE.start },
     camera: { x: 0, y: 0, scale: 1 },
     direction: 'down',
     frame: 0,
     moving: false,
+    posture: 'standing',
+    look: { ...NEUTRAL_LOOK },
+    scene: 'street',
+    cut: beginViewCut('street'),
   });
-  const ready = paintingReady && spriteReady && !failed;
-  const nearest = SAMPLE_PLACES.find(
-    (p) => sampleDistance(p.point, view.point) < 45,
+  const ready =
+    PAINTED_VIEWS.every((name) => loaded[name]) && spriteReady && !failed;
+  const nearest = AREA_PLACES.find(
+    (p) =>
+      sampleDistance(p.point, view.point) <
+      45 / sampleViewWalkScale(sampleSceneIndex(view.scene)),
   );
+  const inAlley = view.scene === 'alley';
+  const inNeighborhood = view.scene === 'neighborhood';
+
+  const changeRoadMode = useCallback((next: RoadMode) => {
+    const selected = sampleNavigableView(scene.current, point.current, next);
+    roadModeRef.current = next;
+    setRoadMode(next);
+    desiredLook.current = { ...NEUTRAL_LOOK };
+    setLookSetting({ ...NEUTRAL_LOOK });
+    cameraMode.current = 'follow';
+    panCamera.current = null;
+    setNotice(
+      scene.current === 'alley'
+        ? `离开小巷后使用「${ROAD_MODE_LABELS[next]}」。`
+        : selected !== viewForArea(scene.current, next)
+          ? '这里暂用沿路或平视取景，回到路口后恢复所选角度。'
+          : `切到「${ROAD_MODE_LABELS[next]}」，人物位置和目的地保持不变。`,
+    );
+  }, []);
+  const changeLook = useCallback((value: SampleLook) => {
+    if (!depthRenderer.current) return;
+    turnFollow.current = false;
+    setFollowTurns(false);
+    desiredLook.current = constrainSampleLook(value);
+    setLookSetting(desiredLook.current);
+  }, []);
+  useEffect(() => {
+    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => {
+      reducedMotion.current = preference.matches;
+    };
+    update();
+    preference.addEventListener('change', update);
+    return () => preference.removeEventListener('change', update);
+  }, []);
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    let renderer: PaintedRenderer | null = null;
+    const fallback = () => {
+      if (cancelled) return;
+      renderer?.dispose();
+      depthRenderer.current = null;
+      look.current = desiredLook.current = { ...NEUTRAL_LOOK };
+      lookVelocity.current = { yaw: 0, tilt: 0 };
+      setLookSetting({ ...NEUTRAL_LOOK });
+      setView((v) => ({ ...v, look: { ...NEUTRAL_LOOK } }));
+      setDepthStatus('unavailable');
+      setTurnDrag(false);
+    };
+    void import('@/lib/fate-art-depth-runtime')
+      .then(({ mountPaintedRelief }) => {
+        if (cancelled || !depthHost.current || !spriteImage.current) return;
+        renderer = mountPaintedRelief(
+          depthHost.current,
+          images.current as Record<PaintedView, HTMLImageElement>,
+          spriteImage.current,
+          fallback,
+        );
+        depthRenderer.current = renderer;
+        renderer.draw({
+          point: sampleViewPoint(point.current, cut.current.shown),
+          view: cut.current.shown,
+          direction: direction.current,
+          frame: 0,
+          look: look.current,
+          actorScale: viewActorScale(point.current, cut.current.shown),
+          actorVisible:
+            posture.current !== 'sitting' &&
+            !isRoadView(cut.current.shown) &&
+            onViewPaving(
+              sampleViewPoint(point.current, cut.current.shown),
+              cut.current.shown,
+            ),
+        });
+        setDepthStatus('ready');
+      })
+      .catch(fallback);
+    return () => {
+      cancelled = true;
+      renderer?.dispose();
+      if (depthRenderer.current === renderer) depthRenderer.current = null;
+    };
+  }, [ready]);
 
   const stop = useCallback(() => {
     keys.current.clear();
@@ -126,15 +312,30 @@ export default function FateArtSample() {
     pendingTap.current = { x: 0, y: 0 };
     route.current = [];
     routePlace.current = null;
+    routeRetries.current = 0;
+    if (posture.current === 'approaching') {
+      posture.current = 'standing';
+      setView((v) => ({ ...v, posture: 'standing' }));
+    }
     setTarget(null);
   }, []);
-
   const pressWalkKey = useCallback((key: string) => {
+    if (posture.current !== 'standing') {
+      const wasSeated = posture.current === 'sitting';
+      posture.current = 'standing';
+      route.current = [];
+      routePlace.current = null;
+      setTarget(null);
+      setView((v) => ({ ...v, posture: 'standing' }));
+      setNotice(
+        wasSeated ? '已起身，继续沿街走走。' : '已取消坐下，改为手动行走。',
+      );
+    }
+    if (!keys.current.size) keyView.current = cut.current.shown;
     if (!keys.current.has(key))
       keyOrigins.current.set(key, { ...point.current });
     keys.current.add(key);
   }, []);
-
   const releaseWalkKey = useCallback((key: string) => {
     const origin = keyOrigins.current.get(key);
     if (origin && sampleDistance(origin, point.current) < 0.001) {
@@ -147,19 +348,16 @@ export default function FateArtSample() {
     keys.current.delete(key);
     keyOrigins.current.delete(key);
   }, []);
-
   const focusPerson = useCallback(() => {
     cameraMode.current = 'follow';
     panCamera.current = null;
     surface.current?.focus({ preventScroll: true });
   }, []);
-
   const closePlace = useCallback(() => {
     modal.current = null;
     setPlace(null);
     surface.current?.focus({ preventScroll: true });
   }, []);
-
   const inspect = useCallback(
     (p: SamplePlace) => {
       stop();
@@ -168,19 +366,19 @@ export default function FateArtSample() {
     },
     [stop],
   );
-
   useEffect(() => {
     if (place) closeButton.current?.focus({ preventScroll: true });
   }, [place]);
-
   const walkTo = useCallback(
     (target: SamplePoint, destination: SamplePlace | null = null) => {
-      const path = sampleRoute(point.current, target);
+      stop();
+      posture.current = 'standing';
+      setView((v) => ({ ...v, posture: 'standing' }));
+      const path = visibleSampleRoute(point.current, target, cut.current.shown);
       if (!path) {
         setNotice('这里是围墙或庭院，请点击路面或门前步道。');
-        return;
+        return false;
       }
-      stop();
       route.current = path;
       routePlace.current = destination;
       setTarget(target);
@@ -190,54 +388,79 @@ export default function FateArtSample() {
           : '正走向这里，可随时停下或改向。',
       );
       focusPerson();
+      return true;
     },
     [focusPerson, stop],
   );
-
+  const standUp = useCallback(() => {
+    stop();
+    posture.current = 'standing';
+    setView((v) => ({ ...v, posture: 'standing' }));
+    setNotice('已起身，可以继续走路。');
+    focusPerson();
+  }, [focusPerson, stop]);
+  const sitOnBench = useCallback(() => {
+    if (posture.current === 'sitting') {
+      standUp();
+      return;
+    }
+    if (!benchReady) {
+      setNotice(benchFailed ? '坐姿未能载入，请刷新重试。' : '正在准备坐姿…');
+      return;
+    }
+    if (atSampleBench(point.current)) {
+      stop();
+      posture.current = 'sitting';
+      setView((v) => ({ ...v, posture: 'sitting', moving: false }));
+      setNotice('坐在树下歇一会儿。按 E 起身，方向键也可以继续走。');
+      focusPerson();
+    } else if (walkTo(SAMPLE_BENCH.point, SAMPLE_BENCH)) {
+      posture.current = 'approaching';
+      setView((v) => ({ ...v, posture: 'approaching' }));
+      setNotice('正走向树下长椅，到椅边后坐下。改向或停下可取消。');
+    }
+  }, [benchFailed, benchReady, focusPerson, standUp, stop, walkTo]);
+  const walkAlley = () => {
+    const returning = scene.current !== 'street';
+    walkTo(returning ? SAMPLE_ALLEY.street : SAMPLE_ALLEY.inside);
+    setNotice(
+      returning
+        ? '沿石板路返回主街，镜头会恢复你选的取景。'
+        : '从咖啡店旁转入小巷，镜头会自动看向前路。',
+    );
+  };
   const changeZoom = useCallback((value: number, at?: SamplePoint) => {
-    const next = sampleZoom(value);
-    const size = dimensions.current;
-    const anchor = at ?? { x: size.width / 2, y: size.height / 2 };
-    const world = sampleScreenToWorld(anchor, camera.current);
-    const scale = sampleCamera(
-      point.current,
-      size.width,
-      size.height,
-      next,
-    ).scale;
+    const next = sampleZoom(value),
+      size = dimensions.current,
+      anchor = at ?? { x: size.width / 2, y: size.height / 2 };
+    const ground = sampleScreenToWorld(anchor, camera.current),
+      scale = sampleCamera(point.current, size.width, size.height, next).scale;
     zoomRef.current = next;
     setZoom(next);
-    camera.current = constrainSampleCamera(
-      { x: world.x - anchor.x / scale, y: world.y - anchor.y / scale, scale },
+    camera.current = panCamera.current = constrainSampleCamera(
+      { x: ground.x - anchor.x / scale, y: ground.y - anchor.y / scale, scale },
       size.width,
       size.height,
     );
     cameraMode.current = 'pan';
-    panCamera.current = camera.current;
-    setView((current) => ({ ...current, camera: camera.current }));
+    cameraVelocity.current = { x: 0, y: 0 };
+    setView((v) => ({ ...v, camera: camera.current }));
   }, []);
-
   const showWhole = () => {
-    const { width, height } = dimensions.current;
-    const fit = Math.min(width / ART_SAMPLE.width, height / ART_SAMPLE.height);
-    const cover = Math.max(
-      width / ART_SAMPLE.width,
-      height / ART_SAMPLE.height,
-    );
-    // Full composition can be smaller than the ordinary zoom-out limit on a phone.
-    const next = fit / cover;
-    zoomRef.current = next;
-    setZoom(next);
-    camera.current = {
+    const { width, height } = dimensions.current,
+      fit = Math.min(width / ART_SAMPLE.width, height / ART_SAMPLE.height),
+      cover = Math.max(width / ART_SAMPLE.width, height / ART_SAMPLE.height);
+    zoomRef.current = fit / cover;
+    setZoom(zoomRef.current);
+    camera.current = panCamera.current = {
       x: (ART_SAMPLE.width - width / fit) / 2,
       y: (ART_SAMPLE.height - height / fit) / 2,
       scale: fit,
     };
     cameraMode.current = 'pan';
-    panCamera.current = camera.current;
-    setView((current) => ({ ...current, camera: camera.current }));
+    cameraVelocity.current = { x: 0, y: 0 };
+    setView((v) => ({ ...v, camera: camera.current }));
   };
-
   useEffect(() => {
     const element = surface.current;
     if (!element) return;
@@ -245,15 +468,27 @@ export default function FateArtSample() {
       const { width, height } = element.getBoundingClientRect();
       if (width < 1 || height < 1) return;
       dimensions.current = { width, height };
-      camera.current = sampleCamera(
-        point.current,
+      const shown = cut.current.shown;
+      const seat =
+        posture.current === 'sitting' ? sampleBenchSeat(shown) : null;
+      camera.current = paintedFollowCamera(
+        projectPaintedPoint(
+          seat?.point ?? sampleViewPoint(point.current, shown),
+          look.current,
+          seat?.height ?? 0,
+          shown,
+        ),
+        look.current,
         width,
         height,
         zoomRef.current,
+        look.current,
+        shown,
       );
       cameraMode.current = 'follow';
+      cameraVelocity.current = { x: 0, y: 0 };
       panCamera.current = null;
-      setView((current) => ({ ...current, camera: camera.current }));
+      setView((v) => ({ ...v, camera: camera.current }));
     };
     resize();
     const observer = new ResizeObserver(resize);
@@ -263,14 +498,18 @@ export default function FateArtSample() {
 
   useEffect(() => {
     if (!ready) return;
-    let frameId = 0;
-    let last = 0;
-    let wasMoving = false;
+    let frameId = 0,
+      last = 0,
+      wasMoving = false,
+      lastPosture: BenchPosture = 'standing',
+      first = true;
     const draw = (now: number) => {
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
-      let input = directionKeys(keys.current);
-      let tap = false;
+      const oldCut = cut.current,
+        shown = oldCut.shown;
+      let input = directionKeys(keys.current),
+        tap = false;
       if (
         !input.x &&
         !input.y &&
@@ -284,92 +523,302 @@ export default function FateArtSample() {
         tap = true;
       }
       pendingTap.current = { x: 0, y: 0 };
-      let delta = { x: 0, y: 0 };
-      if (!modal.current && (input.x || input.y)) {
+      const walkingInput = input.x || input.y;
+      const frameTravel = ART_SAMPLE.walkSpeed * dt;
+      let next = point.current;
+      // Both the camera and steering swap while fully covered. A held key keeps
+      // its world direction until released; a new key follows the new camera.
+      if (!modal.current && !oldCut.changing && walkingInput) {
         if (route.current.length) {
           setTarget(null);
           setNotice('已改为手动行走。');
         }
         route.current = [];
         routePlace.current = null;
+        routeRetries.current = 0;
+        posture.current = 'standing';
         cameraMode.current = 'follow';
-        delta = {
-          x: input.x * (tap ? 2 : ART_SAMPLE.walkSpeed * dt),
-          y: input.y * (tap ? 2 : ART_SAMPLE.walkSpeed * dt),
-        };
-      } else if (!modal.current && route.current.length) {
-        const target = route.current[0];
-        const remaining = sampleDistance(point.current, target);
-        const travel = Math.min(remaining, ART_SAMPLE.walkSpeed * dt);
-        if (remaining > 0)
-          delta = {
-            x: ((target.x - point.current.x) / remaining) * travel,
-            y: ((target.y - point.current.y) / remaining) * travel,
-          };
-        if (remaining <= travel + 0.01) {
-          route.current.shift();
-          if (!route.current.length) {
-            setTarget(null);
-            const destination = routePlace.current;
-            setNotice(
-              destination
-                ? `已到${destination.name}，可按 E 看看这里。`
-                : '已走到这里。',
-            );
+        next = moveVisibleSampleInput(
+          point.current,
+          input,
+          tap ? 2 : frameTravel,
+          shown,
+          look.current,
+          keyView.current,
+        );
+      } else if (!modal.current && !oldCut.changing && route.current.length) {
+        const destination = route.current.at(-1)!;
+        const advanced = advanceVisibleSampleRoute(
+          point.current,
+          route.current,
+          frameTravel,
+          shown,
+        );
+        next = advanced.point;
+        route.current.splice(0, advanced.used);
+        if (advanced.blocked) {
+          const retry =
+            routeRetries.current < 2
+              ? visibleSampleRoute(next, destination, shown)
+              : null;
+          routeRetries.current++;
+          if (retry) {
+            route.current = retry;
+          } else {
+            route.current = [];
             routePlace.current = null;
+            posture.current = 'standing';
+            setTarget(null);
+            setNotice('前方被挡住了，请重新选择路面上的位置。');
           }
+        } else if (!route.current.length) {
+          setTarget(null);
+          posture.current = arriveAtSampleBench(posture.current, next, true);
+          setNotice(
+            posture.current === 'sitting'
+              ? '坐在树下歇一会儿。按 E 起身，方向键也可以继续走。'
+              : routePlace.current
+                ? `已到${routePlace.current.name}，可按 E 看看这里。`
+                : '已走到这里。',
+          );
+          routePlace.current = null;
         }
       }
-      const next = moveInSample(point.current, delta);
       const travelled = sampleDistance(point.current, next);
-      const moving = travelled > 0.001;
-      if (moving) {
-        direction.current = sampleDirection({
-          x: next.x - point.current.x,
-          y: next.y - point.current.y,
-        });
-        distance.current += travelled;
+      let screenMovement = { x: 0, y: 0 };
+      if (travelled > 1e-10) {
+        const a = projectPaintedPoint(
+            sampleViewPoint(point.current, shown),
+            look.current,
+            0,
+            shown,
+          ),
+          b = projectPaintedPoint(
+            sampleViewPoint(next, shown),
+            look.current,
+            0,
+            shown,
+          );
+        screenMovement = { x: b.x - a.x, y: b.y - a.y };
+        distance.current +=
+          Math.hypot(screenMovement.x, screenMovement.y) /
+          viewActorScale(next, shown);
         point.current = next;
       }
+      const moving = Math.hypot(screenMovement.x, screenMovement.y) > 0.001;
+      if (moving) direction.current = sampleDirection(screenMovement);
+      const oldScene = scene.current;
+      const nextScene = sampleNavigableScene(
+        oldScene,
+        point.current,
+        roadModeRef.current,
+      );
+      const targetView = sampleNavigableView(
+        nextScene,
+        point.current,
+        roadModeRef.current,
+      );
+      // Keep area controls consistent with the painting selected at a seam.
+      scene.current = viewArea(targetView);
+      cut.current = stepViewCut(oldCut, targetView, dt, reducedMotion.current);
+      const switched = shown !== cut.current.shown,
+        viewName = cut.current.shown;
+      if (switched) {
+        travelLead.current = { x: 0, y: 0 };
+        cameraMode.current = 'follow';
+        panCamera.current = null;
+        cameraVelocity.current = { x: 0, y: 0 };
+      }
+      const oldLook = look.current;
+      const seat =
+        posture.current === 'sitting' ? sampleBenchSeat(viewName) : null;
+      const actorPoint =
+        seat?.point ?? sampleViewPoint(point.current, viewName);
+      const lookTarget = !depthRenderer.current
+        ? NEUTRAL_LOOK
+        : turnFollow.current && !reducedMotion.current
+          ? viewName === 'street'
+            ? sampleAlleyLook(point.current)
+            : NEUTRAL_LOOK
+          : desiredLook.current;
+      const nextLook = { ...oldLook };
+      for (const axis of ['yaw', 'tilt'] as const) {
+        const spring = reducedMotion.current
+          ? { value: lookTarget[axis], velocity: 0 }
+          : stepSampleSpring(
+              { value: oldLook[axis], velocity: lookVelocity.current[axis] },
+              lookTarget[axis],
+              dt,
+              turnFollow.current ? 5 : 9,
+            );
+        nextLook[axis] = spring.value;
+        lookVelocity.current[axis] = spring.velocity;
+      }
+      const lookChanged =
+        Math.abs(nextLook.yaw - oldLook.yaw) +
+          Math.abs(nextLook.tilt - oldLook.tilt) >
+        0.00001;
       const { width, height } = dimensions.current;
+      if (lookChanged && !switched) {
+        const pivot =
+          cameraMode.current === 'follow'
+            ? actorPoint
+            : unprojectPaintedGround(
+                {
+                  x: camera.current.x + width / camera.current.scale / 2,
+                  y: camera.current.y + height / camera.current.scale / 2,
+                },
+                oldLook,
+                viewName,
+              );
+        const anchorHeight =
+          cameraMode.current === 'follow' ? (seat?.height ?? 0) : 0;
+        const before = projectPaintedPoint(
+            pivot,
+            oldLook,
+            anchorHeight,
+            viewName,
+          ),
+          after = projectPaintedPoint(pivot, nextLook, anchorHeight, viewName),
+          shift = { x: after.x - before.x, y: after.y - before.y };
+        camera.current = {
+          ...camera.current,
+          x: camera.current.x + shift.x,
+          y: camera.current.y + shift.y,
+        };
+        if (panCamera.current)
+          panCamera.current = {
+            ...panCamera.current,
+            x: panCamera.current.x + shift.x,
+            y: panCamera.current.y + shift.y,
+          };
+      }
+      look.current = nextLook;
+      const foot = projectPaintedPoint(
+        actorPoint,
+        nextLook,
+        seat?.height ?? 0,
+        viewName,
+      );
+      const moveLength = Math.hypot(screenMovement.x, screenMovement.y);
+      const leadTarget =
+        moving && !switched && !reducedMotion.current
+          ? {
+              x: (screenMovement.x / moveLength) * 36,
+              y: (screenMovement.y / moveLength) * 36,
+            }
+          : { x: 0, y: 0 };
+      const blend = 1 - Math.exp(-dt * 3.5);
+      travelLead.current = {
+        x: travelLead.current.x + (leadTarget.x - travelLead.current.x) * blend,
+        y: travelLead.current.y + (leadTarget.y - travelLead.current.y) * blend,
+      };
       const targetCamera =
         cameraMode.current === 'follow'
-          ? sampleCamera(point.current, width, height, zoomRef.current)
+          ? paintedFollowCamera(
+              {
+                x: foot.x + travelLead.current.x,
+                y: foot.y + travelLead.current.y,
+              },
+              nextLook,
+              width,
+              height,
+              zoomRef.current,
+              lookTarget,
+              viewName,
+            )
           : (panCamera.current ?? camera.current);
-      const blend = 1 - Math.exp(-dt * 9);
-      const changed =
+      let changed =
         sampleDistance(camera.current, targetCamera) > 0.01 ||
-        Math.abs(camera.current.scale - targetCamera.scale) > 0.00001;
-      if (changed)
+        Math.abs(camera.current.scale - targetCamera.scale) > 0.00001 ||
+        Math.hypot(cameraVelocity.current.x, cameraVelocity.current.y) > 0.01;
+      if (switched || reducedMotion.current) {
+        camera.current = targetCamera;
+        cameraVelocity.current = { x: 0, y: 0 };
+        changed = true;
+      } else if (changed) {
+        const x = stepSampleSpring(
+            { value: camera.current.x, velocity: cameraVelocity.current.x },
+            targetCamera.x,
+            dt,
+            8,
+          ),
+          y = stepSampleSpring(
+            { value: camera.current.y, velocity: cameraVelocity.current.y },
+            targetCamera.y,
+            dt,
+            8,
+          );
         camera.current = {
-          x: camera.current.x + (targetCamera.x - camera.current.x) * blend,
-          y: camera.current.y + (targetCamera.y - camera.current.y) * blend,
+          x: x.value,
+          y: y.value,
           scale:
             camera.current.scale +
-            (targetCamera.scale - camera.current.scale) * blend,
+            (targetCamera.scale - camera.current.scale) *
+              (1 - Math.exp(-dt * 8)),
         };
-      if (moving || changed || wasMoving !== moving)
+        cameraVelocity.current = { x: x.velocity, y: y.velocity };
+      }
+      if (
+        first ||
+        moving ||
+        changed ||
+        lookChanged ||
+        cut.current !== oldCut ||
+        scene.current !== oldScene ||
+        posture.current !== lastPosture ||
+        wasMoving !== moving
+      ) {
+        const frame = sampleFrame(distance.current, moving);
+        depthRenderer.current?.draw({
+          point: sampleViewPoint(point.current, viewName),
+          direction: direction.current,
+          frame,
+          look: nextLook,
+          view: viewName,
+          actorScale: viewActorScale(point.current, viewName),
+          actorVisible:
+            posture.current !== 'sitting' &&
+            !isRoadView(viewName) &&
+            onViewPaving(sampleViewPoint(point.current, viewName), viewName),
+        });
         setView({
           point: point.current,
           camera: camera.current,
           direction: direction.current,
-          frame: sampleFrame(distance.current, moving),
+          frame,
           moving,
+          posture: posture.current,
+          look: nextLook,
+          scene: scene.current,
+          cut: cut.current,
         });
+      }
+      first = false;
       wasMoving = moving;
+      lastPosture = posture.current;
       frameId = requestAnimationFrame(draw);
     };
     frameId = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(frameId);
-  }, [ready]);
+  }, [ready, depthStatus]);
 
   useEffect(() => {
     const down = (event: KeyboardEvent) => {
       if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey)
         return;
+      if (event.key === 'Escape') {
+        if (modal.current) closePlace();
+        else if (cameraPanel) setCameraPanel(false);
+        else {
+          stop();
+          setNotice('已停下，可以再选一个方向。');
+        }
+        return;
+      }
       if (
         event.target instanceof HTMLElement &&
-        event.target.closest('input, textarea, [contenteditable="true"]')
+        event.target.closest('input,textarea,[contenteditable="true"]')
       )
         return;
       const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
@@ -378,8 +827,8 @@ export default function FateArtSample() {
           ?.closest('dialog')
           ?.querySelectorAll<HTMLButtonElement>('button');
         if (buttons?.length) {
-          const first = buttons[0];
-          const last = buttons[buttons.length - 1];
+          const first = buttons[0],
+            last = buttons[buttons.length - 1];
           if (event.shiftKey && document.activeElement === first) {
             event.preventDefault();
             last.focus();
@@ -390,15 +839,31 @@ export default function FateArtSample() {
         }
         return;
       }
-      if (key === 'Escape') {
-        if (modal.current) closePlace();
-        else {
-          stop();
-          setNotice('已停下，可以再选一个方向。');
-        }
+      if (modal.current || !ready) return;
+      if (key === 'v' && !event.repeat) {
+        event.preventDefault();
+        changeRoadMode(
+          ROAD_MODES[
+            (ROAD_MODES.indexOf(roadModeRef.current) + 1) % ROAD_MODES.length
+          ],
+        );
         return;
       }
-      if (modal.current || !ready) return;
+      if (key === 'q' || key === 'r' || key === 'c') {
+        event.preventDefault();
+        changeLook(
+          key === 'c'
+            ? { ...NEUTRAL_LOOK }
+            : {
+                ...(turnFollow.current ? look.current : desiredLook.current),
+                yaw:
+                  (turnFollow.current
+                    ? look.current.yaw
+                    : desiredLook.current.yaw) + (key === 'q' ? -2 : 2),
+              },
+        );
+        return;
+      }
       if (
         [
           'w',
@@ -414,13 +879,16 @@ export default function FateArtSample() {
         event.preventDefault();
         pressWalkKey(key);
       } else if (key === 'e' && !event.repeat) {
-        const p = SAMPLE_PLACES.find(
-          (candidate) => sampleDistance(candidate.point, point.current) < 45,
+        const p = AREA_PLACES.find(
+          (p) =>
+            sampleDistance(p.point, point.current) <
+            45 / sampleViewWalkScale(sampleSceneIndex(scene.current)),
         );
         if (p) {
           event.preventDefault();
-          inspect(p);
-        } else setNotice('走近住宅木门或咖啡店门前，就能查看这里。');
+          if (p.id === 'bench') sitOnBench();
+          else inspect(p);
+        } else setNotice('走近门前或树下长椅，就能查看这里。');
       }
     };
     const up = (event: KeyboardEvent) =>
@@ -443,8 +911,18 @@ export default function FateArtSample() {
       window.removeEventListener('blur', pause);
       document.removeEventListener('visibilitychange', pause);
     };
-  }, [closePlace, inspect, pressWalkKey, ready, releaseWalkKey, stop]);
-
+  }, [
+    cameraPanel,
+    changeRoadMode,
+    changeLook,
+    closePlace,
+    inspect,
+    sitOnBench,
+    pressWalkKey,
+    ready,
+    releaseWalkKey,
+    stop,
+  ]);
   useEffect(() => {
     const element = surface.current;
     if (!element) return;
@@ -452,7 +930,9 @@ export default function FateArtSample() {
       if (
         !ready ||
         modal.current ||
-        (event.target instanceof Element && event.target.closest('button'))
+        cut.current.changing ||
+        (event.target instanceof Element &&
+          event.target.closest('button,[data-camera-ui]'))
       )
         return;
       event.preventDefault();
@@ -463,10 +943,16 @@ export default function FateArtSample() {
         { x: event.clientX - bounds.left, y: event.clientY - bounds.top },
       );
     };
+    const contextMenu = (event: Event) => {
+      if (ready) event.preventDefault();
+    };
     element.addEventListener('wheel', wheel, { passive: false });
-    return () => element.removeEventListener('wheel', wheel);
+    element.addEventListener('contextmenu', contextMenu);
+    return () => {
+      element.removeEventListener('wheel', wheel);
+      element.removeEventListener('contextmenu', contextMenu);
+    };
   }, [changeZoom, ready]);
-
   const localPoint = (event: PointerEvent<HTMLDivElement>) => {
     const bounds = event.currentTarget.getBoundingClientRect();
     return { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
@@ -475,8 +961,10 @@ export default function FateArtSample() {
     if (
       !ready ||
       modal.current ||
-      event.button !== 0 ||
-      (event.target instanceof Element && event.target.closest('button'))
+      cut.current.changing ||
+      (event.button !== 0 && event.button !== 2) ||
+      (event.target instanceof Element &&
+        event.target.closest('button,[data-camera-ui]'))
     )
       return;
     const at = localPoint(event);
@@ -488,14 +976,20 @@ export default function FateArtSample() {
       pinch.current = { distance: sampleDistance(a, b), zoom: zoomRef.current };
       drag.current = null;
       stop();
-    } else if (pointers.current.size === 1) {
+    } else if (pointers.current.size === 1)
       drag.current = {
         id: event.pointerId,
         start: at,
         camera: camera.current,
         moved: false,
+        mode:
+          depthStatus === 'ready' &&
+          (turnDrag || event.button === 2 || event.shiftKey)
+            ? 'look'
+            : 'pan',
+        look: { ...(turnFollow.current ? look.current : desiredLook.current) },
+        view: cut.current.shown,
       };
-    }
   };
   const pointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (!pointers.current.has(event.pointerId)) return;
@@ -503,39 +997,51 @@ export default function FateArtSample() {
     pointers.current.set(event.pointerId, at);
     if (pointers.current.size === 2 && pinch.current) {
       const [a, b] = [...pointers.current.values()];
-      const distance = sampleDistance(a, b);
       if (pinch.current.distance > 0)
-        changeZoom((pinch.current.zoom * distance) / pinch.current.distance, {
-          x: (a.x + b.x) / 2,
-          y: (a.y + b.y) / 2,
-        });
+        changeZoom(
+          (pinch.current.zoom * sampleDistance(a, b)) / pinch.current.distance,
+          { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 },
+        );
       return;
     }
     const current = drag.current;
-    if (!current || current.id !== event.pointerId) return;
+    if (
+      !current ||
+      current.id !== event.pointerId ||
+      current.view !== cut.current.shown ||
+      cut.current.changing
+    )
+      return;
     if (!current.moved && sampleDistance(current.start, at) < 6) return;
+    if (current.mode === 'look') {
+      current.moved = true;
+      changeLook({
+        yaw: current.look.yaw + (at.x - current.start.x) * 0.065,
+        tilt: current.look.tilt + (at.y - current.start.y) * 0.025,
+      });
+      return;
+    }
     if (!current.moved) stop();
     current.moved = true;
     cameraMode.current = 'pan';
-    const { width, height } = dimensions.current;
-    camera.current = constrainSampleCamera(
+    camera.current = panCamera.current = constrainSampleCamera(
       {
         ...current.camera,
         x: current.camera.x - (at.x - current.start.x) / current.camera.scale,
         y: current.camera.y - (at.y - current.start.y) / current.camera.scale,
       },
-      width,
-      height,
+      dimensions.current.width,
+      dimensions.current.height,
     );
-    panCamera.current = camera.current;
+    cameraVelocity.current = { x: 0, y: 0 };
     setView((v) => ({ ...v, camera: camera.current }));
   };
   const pointerEnd = (
     event: PointerEvent<HTMLDivElement>,
     cancelled = false,
   ) => {
-    const current = drag.current;
-    const wasPinch = Boolean(pinch.current);
+    const current = drag.current,
+      wasPinch = Boolean(pinch.current);
     pointers.current.delete(event.pointerId);
     if (event.currentTarget.hasPointerCapture(event.pointerId))
       event.currentTarget.releasePointerCapture(event.pointerId);
@@ -543,15 +1049,38 @@ export default function FateArtSample() {
       !cancelled &&
       !wasPinch &&
       current?.id === event.pointerId &&
-      !current.moved
-    )
-      walkTo(sampleScreenToWorld(localPoint(event), camera.current));
+      !current.moved &&
+      current.mode === 'pan' &&
+      event.button === 0 &&
+      current.view === cut.current.shown &&
+      !cut.current.changing
+    ) {
+      const projected = sampleScreenToWorld(localPoint(event), camera.current);
+      const local = depthRenderer.current
+        ? depthRenderer.current.groundAt(projected)
+        : unprojectPaintedGround(projected, look.current, cut.current.shown);
+      const target = local && sampleClickTarget(local, cut.current.shown);
+      if (target) walkTo(target);
+      else setNotice('这里是建筑或树丛，请选择看得见的路面。');
+    }
     drag.current = null;
     if (!pointers.current.size) pinch.current = null;
   };
-
-  const anchor = ART_SPRITE_FRAMES[view.direction][view.frame];
-  const spriteScale = 0.48 * anchor.scale;
+  const shown = view.cut.shown;
+  const seat = view.posture === 'sitting' ? sampleBenchSeat(shown) : null;
+  const projected = (p: SamplePoint) =>
+    projectPaintedPoint(sampleViewPoint(p, shown), view.look, 0, shown);
+  const visiblePerson = seat
+    ? projectPaintedPoint(seat.point, view.look, seat.height, shown)
+    : projected(view.point);
+  const screenPerson = {
+    x: (visiblePerson.x - view.camera.x) * view.camera.scale,
+    y: (visiblePerson.y - view.camera.y) * view.camera.scale,
+  };
+  const actorScale = viewActorScale(view.point, shown);
+  const grounded = onViewPaving(sampleViewPoint(view.point, shown), shown);
+  const anchor = ART_SPRITE_FRAMES[view.direction][view.frame],
+    spriteScale = 0.48 * anchor.scale * actorScale;
   const row = ['down', 'left', 'right', 'up'].indexOf(view.direction);
   const spriteStyle: CSSProperties = {
     width: 256 * spriteScale,
@@ -560,13 +1089,28 @@ export default function FateArtSample() {
     backgroundPosition: `${(view.frame / 5) * 100}% ${(row / 3) * 100}%`,
     transform: `translate(${-anchor.x * spriteScale}px, ${-anchor.y * spriteScale}px)`,
   };
+  const seatedStyle: CSSProperties | undefined = seat
+    ? {
+        width: BENCH_SPRITE_CELL * seat.scale,
+        height: BENCH_SPRITE_CELL * seat.scale,
+        backgroundImage: `url(${BENCH_SPRITE})`,
+        backgroundPosition: `${seat.column * 100}% ${seat.row * 100}%`,
+        transform: `translate(${-seat.hip.x * seat.scale}px, ${-seat.hip.y * seat.scale}px)`,
+      }
+    : undefined;
+  const visiblePlaces =
+    viewArea(shown) === 'street'
+      ? SAMPLE_PLACES
+      : viewArea(shown) === 'neighborhood'
+        ? NEIGHBORHOOD_PLACES
+        : [];
 
   return (
     <main className={styles.shell}>
       <header className={styles.header} inert={Boolean(place)}>
         <div className={styles.identity}>
           <span className={styles.brand}>SINE FINE</span>
-          <h1>街道美术小样</h1>
+          <h1>住宅街区试点</h1>
         </div>
         <p className={styles.sampleNote}>独立预览 · 不改变日常进度</p>
         <Link href="/fate/art-sample-3d" className={styles.comparison}>
@@ -583,11 +1127,19 @@ export default function FateArtSample() {
         ref={surface}
         role="application"
         tabIndex={0}
-        aria-label="住宅街美术小样，WASD 或方向键行走，点击路面前往，拖动查看，E 查看门前"
+        aria-label="住宅街区试点，WASD行走，V切换取景，右键拖动或Q/R转向，C回正，E查看地点或坐下起身"
+        data-camera-yaw={view.look.yaw.toFixed(2)}
+        data-camera-tilt={view.look.tilt.toFixed(2)}
+        data-camera-mode={turnDrag ? 'turn' : 'pan'}
+        data-camera-follow={followTurns ? 'turns' : 'manual'}
+        data-area={view.scene}
+        data-painted-view={shown}
+        data-view-transition={view.cut.changing ? 'changing' : 'settled'}
+        data-view-cover={viewCutCover(view.cut).toFixed(3)}
         onPointerDown={pointerDown}
         onPointerMove={pointerMove}
-        onPointerUp={(event) => pointerEnd(event)}
-        onPointerCancel={(event) => pointerEnd(event, true)}
+        onPointerUp={(e) => pointerEnd(e)}
+        onPointerCancel={(e) => pointerEnd(e, true)}
       >
         <div
           className={styles.world}
@@ -597,21 +1149,36 @@ export default function FateArtSample() {
             transform: `scale(${view.camera.scale}) translate(${-view.camera.x}px, ${-view.camera.y}px)`,
             visibility: ready ? 'visible' : 'hidden',
           }}
+          inert={Boolean(place) || view.cut.changing}
         >
+          {PAINTED_VIEWS.map((name) => (
+            <Image
+              key={name}
+              ref={(node) => {
+                if (node) images.current[name] = node;
+                else delete images.current[name];
+              }}
+              className={styles.painting}
+              style={{
+                visibility:
+                  depthStatus !== 'ready' && shown === name
+                    ? 'visible'
+                    : 'hidden',
+              }}
+              src={VIEW_PAINTINGS[name]}
+              width={ART_SAMPLE.width}
+              height={ART_SAMPLE.height}
+              unoptimized
+              loading="eager"
+              alt=""
+              draggable={false}
+              decoding="async"
+              onLoad={() => setLoaded((v) => ({ ...v, [name]: true }))}
+              onError={() => setFailed(true)}
+            />
+          ))}
           <Image
-            className={styles.painting}
-            src={ART_SAMPLE.background}
-            width={ART_SAMPLE.width}
-            height={ART_SAMPLE.height}
-            unoptimized
-            loading="eager"
-            alt="蓝瓦日式住宅与街角咖啡店连在同一条树影街道上"
-            draggable={false}
-            decoding="async"
-            onLoad={() => setPaintingReady(true)}
-            onError={() => setFailed(true)}
-          />
-          <Image
+            ref={spriteImage}
             hidden
             src={ART_SAMPLE.sprite}
             width={1536}
@@ -622,60 +1189,158 @@ export default function FateArtSample() {
             onLoad={() => setSpriteReady(true)}
             onError={() => setFailed(true)}
           />
+          <div
+            ref={depthHost}
+            className={styles.depthLayer}
+            aria-hidden="true"
+          />
+          <Image
+            hidden
+            src={BENCH_SPRITE}
+            width={BENCH_SPRITE_CELL * 2}
+            height={BENCH_SPRITE_CELL * 2}
+            unoptimized
+            loading="eager"
+            alt=""
+            onLoad={() => setBenchReady(true)}
+            onError={() => setBenchFailed(true)}
+          />
           {markers &&
-            SAMPLE_PLACES.filter(
-              (p) => sampleDistance(p.point, view.point) > 45,
-            ).map((p) => (
-              <button
-                type="button"
-                className={styles.placeMarker}
-                key={p.id}
-                style={{ left: p.point.x, top: p.point.y }}
-                onClick={() => inspect(p)}
-                aria-label={`查看${p.name}`}
-              >
-                <span className={styles.placeDot} />
-                <span className={styles.placeName}>
-                  {p.id === 'home' ? '住宅' : '咖啡店'}
-                </span>
-              </button>
-            ))}
+            !view.cut.changing &&
+            visiblePlaces
+              .filter((p) => p !== nearest)
+              .map((p) => {
+                const at = projected(p.point);
+                return (
+                  <button
+                    type="button"
+                    className={styles.placeMarker}
+                    key={p.id}
+                    style={{ left: at.x, top: at.y }}
+                    onClick={() => inspect(p)}
+                    aria-label={`查看${p.name}`}
+                  >
+                    <span className={styles.placeDot} />
+                    <span className={styles.placeName}>{p.name}</span>
+                  </button>
+                );
+              })}
           {target && (
             <span
               className={styles.target}
-              style={{
-                left: target.x,
-                top: target.y,
-              }}
+              style={{ left: projected(target).x, top: projected(target).y }}
             />
           )}
-          <div
-            className={styles.character}
-            style={{ left: view.point.x, top: view.point.y }}
-            data-x={view.point.x.toFixed(1)}
-            data-y={view.point.y.toFixed(1)}
-            data-direction={view.direction}
-            data-frame={view.frame}
-            aria-label={`伊莉雅${view.moving ? '正在行走' : '已停下'}`}
-          >
-            <span className={styles.shadow} />
-            <span className={styles.sprite} style={spriteStyle} />
-          </div>
+          {markers && viewArea(shown) === 'street' && !view.cut.changing && (
+            <button
+              type="button"
+              className={styles.placeMarker}
+              style={{
+                left: projected(SAMPLE_ALLEY.bend).x,
+                top: projected(SAMPLE_ALLEY.bend).y,
+              }}
+              onClick={walkAlley}
+              aria-label="走进咖啡店旁的小巷"
+            >
+              <span className={styles.placeDot} />
+              <span className={styles.placeName}>小巷</span>
+            </button>
+          )}
+          {markers && shown === 'alley' && !view.cut.changing && (
+            <button
+              type="button"
+              className={styles.placeMarker}
+              style={{
+                left: projected(ALLEY_AHEAD).x,
+                top: projected(ALLEY_AHEAD).y,
+              }}
+              onClick={() => walkTo(NEIGHBORHOOD_CENTER)}
+              aria-label="穿过小巷前往林荫支路"
+            >
+              <span className={styles.placeDot} />
+              <span className={styles.placeName}>林荫支路</span>
+            </button>
+          )}
         </div>
+        <div
+          className={styles.character}
+          style={{
+            left: screenPerson.x,
+            top: screenPerson.y,
+            transform: `scale(${view.camera.scale})`,
+          }}
+          data-x={view.point.x.toFixed(1)}
+          data-y={view.point.y.toFixed(1)}
+          data-direction={view.direction}
+          data-frame={view.frame}
+          data-grounded={grounded ? 'true' : 'false'}
+          data-posture={view.posture}
+          data-supported-by={seat ? 'bench' : 'pavement'}
+          aria-label={`伊莉雅${seat ? '坐在长椅上' : view.moving ? '正在行走' : '已停下'}`}
+        >
+          {seat && (
+            <span
+              className={`${styles.sprite} ${styles.seatedSprite}`}
+              style={seatedStyle}
+            />
+          )}
+          {!seat &&
+            grounded &&
+            (depthStatus !== 'ready' || isRoadView(shown)) && (
+              <>
+                <span
+                  className={styles.shadow}
+                  style={{ transform: `scale(${actorScale})` }}
+                />
+                <span className={styles.sprite} style={spriteStyle} />
+              </>
+            )}
+        </div>
+        <div
+          className={styles.sceneTransition}
+          style={{ opacity: viewCutCover(view.cut) }}
+          aria-hidden="true"
+        />
         {!ready && (
           <output className={styles.loading}>
             {failed ? '画面未能载入，请刷新重试。' : '正在铺开这段街道…'}
           </output>
         )}
+        <fieldset
+          className={styles.roadModes}
+          aria-label="街道取景"
+          data-camera-ui
+          inert={Boolean(place)}
+        >
+          {ROAD_MODES.map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              disabled={!ready}
+              aria-pressed={
+                inAlley
+                  ? roadMode === mode
+                  : shown === viewForArea(view.scene, mode)
+              }
+              onClick={() => changeRoadMode(mode)}
+            >
+              {ROAD_MODE_LABELS[mode]}
+            </button>
+          ))}
+          {inAlley && <span>小巷自动取景 · 出巷后恢复</span>}
+        </fieldset>
         <div className={styles.sceneTitle}>
           <span className={styles.sunDot} />
-          <span>住宅街</span>
+          <span>
+            {inNeighborhood ? '林荫支路' : inAlley ? '咖啡店小巷' : '住宅街'}
+          </span>
           <span className={styles.season}>初夏的午后</span>
         </div>
         <div
           className={styles.cameraTools}
           aria-label="画面缩放与定位"
           inert={Boolean(place)}
+          data-camera-ui
         >
           <button
             type="button"
@@ -714,6 +1379,17 @@ export default function FateArtSample() {
           </button>
           <button
             type="button"
+            aria-label="调整观察角度"
+            title="观察角度"
+            aria-expanded={cameraPanel}
+            aria-controls="sample-camera-panel"
+            onClick={() => setCameraPanel((value) => !value)}
+            disabled={!ready}
+          >
+            <Camera size={18} />
+          </button>
+          <button
+            type="button"
             aria-label={markers ? '隐藏地点标记' : '显示地点标记'}
             title="地点标记"
             aria-pressed={markers}
@@ -723,21 +1399,173 @@ export default function FateArtSample() {
             {markers ? <Eye size={18} /> : <EyeOff size={18} />}
           </button>
         </div>
+        {cameraPanel && (
+          <section
+            id="sample-camera-panel"
+            className={styles.cameraPanel}
+            data-camera-ui
+            inert={Boolean(place)}
+            aria-label="观察角度"
+          >
+            <div className={styles.cameraPanelTitle}>
+              <span>沿街看看</span>
+              <button
+                type="button"
+                aria-label="关闭观察角度"
+                onClick={() => setCameraPanel(false)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <button
+              className={styles.followTurns}
+              type="button"
+              disabled={depthStatus !== 'ready'}
+              aria-pressed={followTurns}
+              onClick={() => {
+                const enabled = !turnFollow.current;
+                turnFollow.current = enabled;
+                setFollowTurns(enabled);
+                if (!enabled) {
+                  desiredLook.current = { ...look.current };
+                  setLookSetting(desiredLook.current);
+                }
+              }}
+            >
+              <CornerUpLeft size={15} />
+              {followTurns ? '转弯随行：开启' : '转弯随行：关闭'}
+            </button>
+            <div className={styles.lookPresets}>
+              <button
+                type="button"
+                disabled={depthStatus !== 'ready'}
+                onClick={() => changeLook({ yaw: -14, tilt: 0 })}
+              >
+                <ArrowLeft size={15} />
+                左看
+              </button>
+              <button
+                type="button"
+                disabled={depthStatus !== 'ready'}
+                onClick={() => changeLook({ ...NEUTRAL_LOOK })}
+              >
+                <RotateCcw size={14} />
+                回正
+              </button>
+              <button
+                type="button"
+                disabled={depthStatus !== 'ready'}
+                onClick={() => changeLook({ yaw: 14, tilt: 0 })}
+              >
+                右看
+                <ArrowRight size={15} />
+              </button>
+            </div>
+            <label>
+              左右转向{' '}
+              <output>
+                {(followTurns ? view.look.yaw : lookSetting.yaw).toFixed(0)}°
+              </output>
+              <input
+                aria-label="左右转向角度"
+                type="range"
+                min={-SAMPLE_LOOK.yaw}
+                max={SAMPLE_LOOK.yaw}
+                step="0.5"
+                value={followTurns ? view.look.yaw : lookSetting.yaw}
+                disabled={depthStatus !== 'ready'}
+                onChange={(event) =>
+                  changeLook({
+                    ...(turnFollow.current
+                      ? look.current
+                      : desiredLook.current),
+                    yaw: Number(event.target.value),
+                  })
+                }
+              />
+            </label>
+            <label>
+              上下观察{' '}
+              <output>
+                {(followTurns ? view.look.tilt : lookSetting.tilt) > 0
+                  ? '+'
+                  : ''}
+                {(followTurns ? view.look.tilt : lookSetting.tilt).toFixed(0)}°
+              </output>
+              <input
+                aria-label="上下观察角度"
+                type="range"
+                min={-SAMPLE_LOOK.tilt}
+                max={SAMPLE_LOOK.tilt}
+                step="0.5"
+                value={followTurns ? view.look.tilt : lookSetting.tilt}
+                disabled={depthStatus !== 'ready'}
+                onChange={(event) =>
+                  changeLook({
+                    ...(turnFollow.current
+                      ? look.current
+                      : desiredLook.current),
+                    tilt: Number(event.target.value),
+                  })
+                }
+              />
+            </label>
+            <button
+              className={styles.turnMode}
+              type="button"
+              disabled={depthStatus !== 'ready'}
+              aria-pressed={turnDrag}
+              onClick={() => setTurnDrag((value) => !value)}
+            >
+              {turnDrag ? '拖动：转动镜头' : '拖动：浏览街道'}
+            </button>
+            <p>
+              {depthStatus === 'unavailable'
+                ? '当前设备使用原画视角，仍可行走、拖动与缩放。'
+                : depthStatus === 'loading'
+                  ? '正在准备观察角度…'
+                  : 'V 切换取景 · 右键拖动观察 · Q / R 左右转向 · C 回正。平视和沿路都可继续行走。'}
+            </p>
+          </section>
+        )}
         <div className={styles.personStatus}>
           <Footprints size={17} />
           <span>伊莉雅</span>
           <span className={styles.personAction}>
-            {view.moving ? '沿街慢走' : '停在树影里'}
+            {view.posture === 'sitting'
+              ? '坐在树下休息'
+              : view.posture === 'approaching'
+                ? '走向树下长椅'
+                : view.moving
+                  ? inAlley
+                    ? '沿石板路慢走'
+                    : '沿街慢走'
+                  : '停在树影里'}
           </span>
         </div>
         {nearest && !place && (
           <button
             type="button"
             className={styles.nearby}
-            onClick={() => inspect(nearest)}
+            disabled={nearest.id === 'bench' && !benchReady}
+            onClick={() =>
+              nearest.id === 'bench' ? sitOnBench() : inspect(nearest)
+            }
           >
-            {nearest.id === 'home' ? <House size={18} /> : <Coffee size={18} />}
-            <span>看看{nearest.id === 'home' ? '住宅门前' : '咖啡店门前'}</span>
+            {nearest.id === 'home' || nearest.id === 'lane-home' ? (
+              <House size={18} />
+            ) : nearest.id === 'bench' ? (
+              <Armchair size={18} />
+            ) : (
+              <Coffee size={18} />
+            )}
+            <span>
+              {nearest.id === 'bench'
+                ? view.posture === 'sitting'
+                  ? '起身继续走'
+                  : '坐在长椅上'
+                : `看看${nearest.name}`}
+            </span>
             <kbd>E</kbd>
           </button>
         )}
@@ -782,26 +1610,38 @@ export default function FateArtSample() {
             >
               <X size={20} />
             </button>
-            <span className={styles.cardEyebrow}>门前一角</span>
+            <span className={styles.cardEyebrow}>
+              {place.id === 'bench' ? '树影下的一角' : '门前一角'}
+            </span>
             <h2 id="art-place-title">{place.name}</h2>
             <p>{place.description}</p>
             <p className={styles.indoorNote}>
-              本次小样展示街道与门前，室内另行打磨。
+              {place.id === 'bench'
+                ? '走到椅边就能坐下。坐着可以换取景，按 E 或方向键起身。'
+                : '本次试点展示街道与门前，室内另行打磨。'}
             </p>
             <button
               className={styles.goButton}
               type="button"
+              disabled={place.id === 'bench' && !benchReady}
               onClick={() => {
                 const p = place;
                 const arrived = sampleDistance(p.point, point.current) < 4;
                 closePlace();
-                if (!arrived) walkTo(p.point, p);
+                if (p.id === 'bench') sitOnBench();
+                else if (!arrived) walkTo(p.point, p);
               }}
             >
               <Footprints size={17} />
-              {sampleDistance(place.point, view.point) < 4
-                ? '再沿街走走'
-                : '走到门前'}
+              {place.id === 'bench'
+                ? view.posture === 'sitting'
+                  ? '起身继续走'
+                  : atSampleBench(view.point)
+                    ? '坐下休息'
+                    : '走过去坐下'
+                : sampleDistance(place.point, view.point) < 4
+                  ? '再沿街走走'
+                  : '走到门前'}
             </button>
           </dialog>
         )}
@@ -824,6 +1664,30 @@ export default function FateArtSample() {
             <Coffee size={16} />
             咖啡店
           </button>
+          <button type="button" disabled={!ready} onClick={walkAlley}>
+            <CornerUpLeft size={16} />
+            {view.scene !== 'street' ? '返回主街' : '走进小巷'}
+          </button>
+          {!inNeighborhood && (
+            <button
+              type="button"
+              disabled={!ready}
+              onClick={() => walkTo(NEIGHBORHOOD_CENTER)}
+            >
+              <Footprints size={16} />
+              林荫支路
+            </button>
+          )}
+          {inNeighborhood && (
+            <button
+              type="button"
+              disabled={!ready || !benchReady}
+              onClick={sitOnBench}
+            >
+              <Armchair size={16} />
+              树下长椅
+            </button>
+          )}
           <button
             type="button"
             disabled={!ready}
@@ -839,7 +1703,7 @@ export default function FateArtSample() {
         <div className={styles.message}>
           <output aria-live="polite">{notice}</output>
           <p className={styles.instructions}>
-            WASD / 方向键行走 · 点击路面前往 · 拖动画面 · E 查看门前
+            WASD 行走 · V 换取景 · 拖动浏览 · 右键转向 · E 查看
           </p>
         </div>
       </footer>

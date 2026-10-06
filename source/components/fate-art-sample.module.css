@@ -73,7 +73,7 @@
   position: relative;
   flex: 1;
   min-height: 270px;
-  overflow: hidden;
+  overflow: clip;
   background: #202c29;
   touch-action: none;
   user-select: none;
@@ -93,11 +93,22 @@
   transform-origin: 0 0;
   will-change: transform;
 }
+.alleyWorld {
+  pointer-events: none;
+}
+.alleyWorld .placeMarker {
+  pointer-events: auto;
+}
 .painting {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
+  pointer-events: none;
+}
+.depthLayer {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
 }
 .loading {
@@ -127,6 +138,45 @@
   gap: 11px;
   font-size: 14px;
   pointer-events: none;
+}
+.roadModes {
+  margin: 0;
+  min-width: 0;
+  position: absolute;
+  left: 20px;
+  top: 78px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 4px;
+  max-width: calc(100% - 40px);
+  background: #1b2a26ed;
+  border: 1px solid #d5c99f55;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+}
+.roadModes button {
+  cursor: pointer;
+  border: none;
+  border-radius: 5px;
+  min-height: 36px;
+  padding: 0 12px;
+  font-size: 12px;
+  color: #d0d8c6;
+  background: transparent;
+}
+.roadModes button[aria-pressed='true'] {
+  color: #26372e;
+  background: #ddcda1;
+}
+.roadModes button:hover:not([aria-pressed='true']) {
+  background: #d4c69b20;
+}
+.roadModes span {
+  flex-basis: 100%;
+  padding: 3px 8px 4px;
+  color: #bac7af;
+  font-size: 10px;
 }
 .sunDot {
   width: 6px;
@@ -168,6 +218,98 @@
   color: #c8d0b8;
   font-variant-numeric: tabular-nums;
 }
+.cameraTools button[aria-expanded='true'] {
+  background: #d4c69b28;
+  color: #f3e1b1;
+}
+.cameraPanel {
+  position: absolute;
+  z-index: 4;
+  right: 20px;
+  top: 78px;
+  width: min(294px, calc(100% - 24px));
+  border: 1px solid #d5c99f66;
+  border-radius: 10px;
+  padding: 14px;
+  color: #e3e3ce;
+  background: #1b2d27f5;
+  box-shadow: 0 12px 32px #12221a3b;
+  backdrop-filter: blur(10px);
+}
+.cameraPanelTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-size: 14px;
+  color: #e3d4a8;
+}
+.cameraPanel button {
+  min-height: 40px;
+  border: 1px solid #c8b9844d;
+  border-radius: 5px;
+  background: #c8b9840a;
+  color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  font-size: 12px;
+}
+.cameraPanel button:hover,
+.cameraPanel button[aria-pressed='true'] {
+  background: #c8b98424;
+}
+.cameraPanel button:disabled {
+  opacity: 0.45;
+}
+.cameraPanelTitle button {
+  border: none;
+  min-height: 32px;
+  width: 32px;
+}
+.lookPresets {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 15px;
+}
+.cameraPanel .followTurns {
+  width: 100%;
+  margin-bottom: 10px;
+}
+.cameraPanel label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 12px;
+}
+.cameraPanel output {
+  font-variant-numeric: tabular-nums;
+  color: #c5cba8;
+}
+.cameraPanel input {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: 30px;
+  margin: 0;
+  accent-color: #d6c596;
+  touch-action: pan-x;
+}
+.cameraPanel .turnMode {
+  width: 100%;
+  margin-top: 13px;
+}
+.cameraPanel p {
+  margin: 10px 0 0;
+  font-size: 10px;
+  line-height: 1.8;
+  color: #adc0aa;
+}
+.viewport[data-camera-mode='turn'] {
+  cursor: ew-resize;
+}
 .personStatus {
   bottom: 22px;
   left: 20px;
@@ -189,6 +331,7 @@
   width: 0;
   height: 0;
   pointer-events: none;
+  transform-origin: 0 0;
 }
 .sprite {
   position: absolute;
@@ -198,6 +341,23 @@
   background-repeat: no-repeat;
   background-size: 600% 400%;
   filter: drop-shadow(0 1px 1px #1c283128);
+}
+.seatedSprite {
+  background-size: 200% 200%;
+  animation: sitSettle 240ms ease-out both;
+}
+@keyframes sitSettle {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seatedSprite {
+    animation: none;
+  }
 }
 .shadow {
   position: absolute;
@@ -209,6 +369,12 @@
   background: #293c4a59;
   filter: blur(1.5px);
   transform: rotate(-8deg);
+}
+.sceneTransition {
+  position: absolute;
+  inset: 0;
+  background: #233029;
+  pointer-events: none;
 }
 .placeMarker {
   position: absolute;
@@ -305,6 +471,7 @@
   background: #6a7860;
 }
 .placeCard {
+  z-index: 5;
   margin: 0;
   color: #ecebdc;
   position: absolute;
@@ -375,7 +542,10 @@
 .destinations {
   display: flex;
   gap: 6px;
+  flex-wrap: wrap;
   flex-shrink: 0;
+  max-width: 100%;
+  min-width: 0;
 }
 .destinations button {
   display: flex;
@@ -448,6 +618,27 @@
     min-width: 36px;
     font-size: 10px;
   }
+  .cameraPanel {
+    top: 63px;
+    right: 12px;
+    max-height: calc(100% - 78px);
+    overflow: auto;
+  }
+  .roadModes {
+    left: 12px;
+    top: 63px;
+    max-width: calc(100% - 24px);
+  }
+  .roadModes button {
+    min-height: 40px;
+    padding-inline: 11px;
+  }
+  .cameraPanel button {
+    min-height: 44px;
+  }
+  .cameraPanelTitle button {
+    min-height: 32px;
+  }
   .personStatus {
     left: 12px;
     bottom: 20px;
@@ -485,7 +676,8 @@
     min-height: 116px;
   }
   .destinations button {
-    padding: 9px 12px;
+    padding: 9px 8px;
+    gap: 5px;
   }
   .message .instructions {
     font-size: 10px;
@@ -500,5 +692,25 @@
   .footer {
     min-height: 64px;
     padding-block: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .header {
+    gap: 8px;
+    padding-inline: 12px;
+  }
+  .brand {
+    font-size: 18px;
+  }
+  .comparison {
+    font-size: 11px;
+    gap: 4px;
+  }
+  .sceneTitle {
+    top: 62px;
+  }
+  .roadModes {
+    top: 106px;
   }
 }
