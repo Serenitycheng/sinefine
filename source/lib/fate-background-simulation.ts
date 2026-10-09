@@ -61,10 +61,15 @@ export async function runBackgroundRound(
         e.decision &&
         life.people[e.decision.person].activity?.phase === 'going',
     );
-    const event = encounter ?? decision;
+    // Passing greetings are local journal events, not an AI encounter or plan.
+    const event = encounter?.dialogue ? encounter : decision;
     // Prioritize actual encounters. A decision can be used near the end of a
     // quiet round; at most one upstream call is made per 30-minute round.
-    if (!called && event && (encounter || life.minutes >= until - 5)) {
+    if (
+      !called &&
+      event &&
+      (encounter?.dialogue || life.minutes >= until - 5)
+    ) {
       called = true;
       const target = event.dialogue?.target ?? event.decision!.person;
       const speaker = event.dialogue?.speaker ?? 'admin';

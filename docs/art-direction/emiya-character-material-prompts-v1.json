@@ -1,0 +1,26 @@
+{
+  "date": "2026-10-09",
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "id": "illya-life",
+      "prompt": "Use case: identity-preserve.\nAsset type: transparent game character action sprite sheet, twelve sprites in an exact regular grid, 6 columns and 2 rows, no gutters, no borders, no labels.\nInput image is the APPROVED Illyasviel game walking sheet. Keep this same child identity, silver-white long hair, red eyes, purple winter cap and long purple coat, white scarf, lilac dress and purple boots, identical polished soft anime rendering and natural child proportions. Do not change clothes or make a chibi toddler.\nGenerate genuinely transparent RGBA pixels. No background, checkerboard, shadows or floor. Each equal cell contains exactly ONE full figure, fully inside its cell, with generous empty padding. Rows represent TWO subtle animation phases of exactly the same six actions; keep heads, torso sizes and contact anchors consistent between the two rows.\nColumn order LEFT TO RIGHT, both rows:\n1. Sitting naturally on the floor beside a low family table, legs tucked and hands resting, facing front-right. No furniture in the sprite.\n2. Kneeling with an open book, facing front-right; second row turns one page.\n3. Standing cooking facing LEFT, one hand holds a wooden ladle at waist level, the other steadies a small bowl; second row small natural stirring movement. No pot, stove or table in the sprite.\n4. Sitting at a low meal setting, holding a small rice bowl and chopsticks facing front-right; second row raises chopsticks.\n5. Lying calmly on her side with knees lightly bent and eyes closed, head on LEFT, no bed or futon drawn; second row subtle breathing, never change identity or body length.\n6. Sitting on a bench with lower legs hanging naturally, facing front-right, hands on lap; second row slight head movement. No bench in the sprite.\nAll twelve characters have the SAME head and body scale. Standing cooking figure has normal full height, seated/kneeling/lying figures naturally occupy less vertical space: do not stretch seated characters to standing height. Ensure complete hats, hair, fingertips and boots in every cell. Keep all sprite contact points near the lower part of their cell. Landscape approximately 3:1 sheet, clean consistent cell layout, transparent alpha.",
+      "reference": "source/public/fate/art-sample/illya-walk-v1.png",
+      "output": "source/public/fate/character-art/illya-life-v1.png"
+    },
+    {
+      "id": "shirou-walk",
+      "prompt": "Use case: identity-preserve.\nAsset type: transparent RGBA directional game walking sprite sheet, EXACTLY 6 columns by 4 rows, 24 full-body sprites.\nInput image 1 is Shirou Emiya identity reference, input image 2 shows this game's approved Illya walking proportions/render quality/grid convention. Preserve Shirou's reddish-brown short spiky hair, amber-brown eyes, lean teen male natural proportions, navy and white raglan casual shirt, dark blue trousers and simple indoor dark slippers. This is domestic walking: remove weapons, jacket, magic, effects and scenery. No chibi, no armour and no adult Archer identity.\nFour rows from TOP to BOTTOM: facing DOWN/front, LEFT, RIGHT, UP/back. Six columns: one neutral standing idle then five successive natural walk phases with alternating planted feet, small opposing arm swing and stable head/body height. Exactly one full figure in each equal cell; no frames, labels, shadow, floor or background. Preserve genuinely transparent pixels. Keep empty padding between cells and align bottom contact height and body centre within each row, no clipped heads or feet. Same character, clothes, proportions and scale in every frame; no duplicate wrong directions, no hopping or large exaggerated steps. Full sheet at native resolution, width to height about 1.5:1.",
+      "references": [
+        "source/public/fate/portraits/shirou.png",
+        "source/public/fate/art-sample/illya-walk-v1.png"
+      ],
+      "output": "source/public/fate/character-art/shirou-walk-soft-v1.png"
+    },
+    {
+      "id": "materials",
+      "prompt": "Use case: stylized-concept.\nAsset type: game material texture atlas, SQUARE, exactly 2 by 2 equal seamless texture tiles with no gutter or border.\nTop-left: warm honey cedar wood, quiet fine long grain and soft hand-painted variation, no big knot or plank seams.\nTop-right: blue-sage woven cotton and linen fabric, subtle fibres, soft low-contrast thread, no garment, folds or seams.\nBottom-left: aged warm grey stone with understated fine mineral texture, no large cracks.\nBottom-right: pale ivory glazed ceramic with restrained softly brushed texture and faint natural highlights, no objects.\nUse polished Japanese anime background brushwork and gentle warm daylight colour harmony. Low contrast tileable material samples, each tile filling its entire quadrant. No scene, furniture, people, letters, arrows, grid lines, watermark or photoreal noisy texture. Native square approximately 2048x2048.",
+      "output": "source/public/fate/interior-art/emiya-materials-soft-v1.png"
+    }
+  ]
+}

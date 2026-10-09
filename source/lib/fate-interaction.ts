@@ -15,6 +15,7 @@ import {
 } from './fate-life';
 import { nearestDistrictLandmark } from './fate-district';
 import type { Exchange } from './fate-state';
+import { GREETING_DURATION } from './fate-greetings';
 import {
   rememberEncounter,
   conversationSummary,
@@ -54,7 +55,30 @@ export function liveEncounter(life: DailyLife): LifeEvent | null {
 /** One visible turn at a time keeps neighbouring speakers' bubbles from overlapping. */
 export function liveSpeech(life: DailyLife) {
   const event = liveEncounter(life);
-  if (!event?.dialogue) return null;
+  if (!event?.dialogue) {
+    const passing = life.events.findLast((e) => e.greeting);
+    if (
+      !passing?.greeting ||
+      life.minutes < passing.minute ||
+      life.minutes >= passing.minute + GREETING_DURATION
+    )
+      return null;
+    const { speaker, target, turns } = passing.greeting;
+    if (
+      [speaker, target].some(
+        (id) => occupiedHome(life, id) || lifeIndoors(life.people[id]),
+      )
+    )
+      return null;
+    const a = life.positions[speaker],
+      b = life.positions[target];
+    if (Math.hypot(a.x - b.x, a.y - b.y) > 160 || !samePavement(a, b))
+      return null;
+    const progress = (life.minutes - passing.minute) / GREETING_DURATION;
+    const turn =
+      turns[Math.min(turns.length - 1, Math.floor(progress * turns.length))];
+    return { ...turn, source: 'preset' as const, passing: true };
+  }
   const d = event.dialogue;
   const turns = d.turns ?? [
     { speaker: d.speaker, text: d.message },

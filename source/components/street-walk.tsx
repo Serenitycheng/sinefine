@@ -1555,7 +1555,9 @@ export default function StreetWalk({
                           title={
                             speech.source === 'deepseek'
                               ? 'AI 现场交谈'
-                              : '预设现场交谈'
+                              : 'passing' in speech
+                                ? '路过招呼'
+                                : '预设现场交谈'
                           }
                         >
                           {speech.text}

@@ -78,6 +78,12 @@ import {
 import { addedEncounters } from './fate-new-encounters';
 import { recoveryEncounter } from './fate-recovery-encounters';
 import { varyEncounter } from './fate-encounter-variation';
+import {
+  passingGreeting,
+  greetingJournal,
+  parsePassingGreeting,
+  type PassingGreeting,
+} from './fate-greetings';
 import { storedDialogueTurns, type DialogueTurn } from './fate-dialogue';
 import {
   activeMeal,
@@ -197,6 +203,7 @@ export type LifeDialogue = {
 };
 export type LifePlan = { action: LifeAction; reason: string };
 export type LifeEvent = {
+  greeting?: PassingGreeting;
   care?: HomeCareEvent;
   conversation?: ConversationOutcome;
   interaction?: {
@@ -255,6 +262,8 @@ export type DailyLife = {
   holdUntil: number;
   encounters: number;
   lastEncounters: Record<string, number>;
+  /** Independent from longer conversations; older saves may omit this. */
+  lastGreetings?: Record<string, number>;
 };
 export const LIFE_IDS = STREET_PARTNERS;
 export function lifeHabits(id: PartnerId, stage: WaverStage = 'young') {
@@ -295,6 +304,8 @@ export function recentLifeEvents(life: DailyLife, id: PartnerId) {
         e.decision?.person === id ||
         e.dialogue?.speaker === id ||
         e.dialogue?.target === id ||
+        e.greeting?.speaker === id ||
+        e.greeting?.target === id ||
         e.interaction?.speaker === id ||
         e.interaction?.target === id ||
         e.meal?.participants.includes(id);
@@ -438,6 +449,7 @@ export function createDailyLife(): DailyLife {
     holdUntil: 0,
     encounters: 0,
     lastEncounters: {},
+    lastGreetings: {},
   };
 }
 export function lifeTime(minutes: number) {
@@ -694,6 +706,9 @@ export function advanceDailyLife(
     : 1;
   const motionSeconds = seconds * motionRate;
   const elapsed = seconds * options.speed * clockRate;
+  const moving = new Set<ActorId>(
+    actors.filter((a) => a.path.length > 0 || a.frame > 0).map((a) => a.id),
+  );
   life.minutes += elapsed;
   advanceEconomy(life.economy, life.minutes);
   reconcileAppointments(life, actors, elapsed, options.controlled, (text) =>
@@ -960,11 +975,27 @@ export function advanceDailyLife(
       }
     }
   }
+  const greet = () => {
+    const greeting = passingGreeting(
+      life,
+      actors,
+      options.controlled,
+      moving,
+      (id) => !occupiedHome(life, id) && !lifeIndoors(life.people[id]),
+    );
+    if (!greeting) return null;
+    const event = addEvent(life, greetingJournal(life, greeting));
+    event.greeting = greeting;
+    life.lastGreetings ??= {};
+    life.lastGreetings[encounterKey(greeting.speaker, greeting.target)] =
+      life.minutes;
+    return event;
+  };
   if (
     life.minutes < life.nextEncounter &&
     !life.appointments.some((a) => a.status === 'meeting' && !a.talked)
   )
-    return null;
+    return greet();
   const eligible = LIFE_IDS.filter(
     (id) =>
       id !== options.controlled &&
@@ -1219,7 +1250,9 @@ export function advanceDailyLife(
     rememberEncounter(life, event);
     return event;
   }
-  return null;
+  // An already due conversation or appointment takes priority over a passing
+  // bubble. A greeting must not swallow the engine's actual encounter event.
+  return greet();
 }
 
 export function occupiedHome(life: DailyLife, id: PartnerId): HomeId | null {
@@ -2104,6 +2137,9 @@ export function parseDailyLife(value: unknown): DailyLife {
       id: event.id,
       minute: event.minute,
       text: event.text,
+      ...(event.greeting === undefined
+        ? {}
+        : { greeting: parsePassingGreeting(event.greeting) }),
     };
     if (event.publicVisit !== undefined) {
       const visit = event.publicVisit;
@@ -2225,6 +2261,36 @@ export function parseDailyLife(value: unknown): DailyLife {
     return clean;
   });
   // Older saves had only the journal. Preserve every encounter time still available there.
+  if (x.lastGreetings !== undefined) {
+    if (
+      !x.lastGreetings ||
+      typeof x.lastGreetings !== 'object' ||
+      Array.isArray(x.lastGreetings) ||
+      Object.keys(x.lastGreetings).length > LIFE_IDS.length * LIFE_IDS.length
+    )
+      throw new Error('招呼时间记录无效');
+    for (const [key, minute] of Object.entries(x.lastGreetings)) {
+      const [a, b, extra] = key.split('|');
+      if (
+        extra !== undefined ||
+        !isPartner(a) ||
+        !isPartner(b) ||
+        a === b ||
+        key !== encounterKey(a, b) ||
+        !number(minute, x.minutes)
+      )
+        throw new Error('招呼时间记录无效');
+      result.lastGreetings![key] = minute;
+    }
+  }
+  for (const event of result.events) {
+    if (!event.greeting) continue;
+    const key = encounterKey(event.greeting.speaker, event.greeting.target);
+    result.lastGreetings![key] = Math.max(
+      result.lastGreetings![key] ?? 0,
+      event.minute,
+    );
+  }
   for (const event of result.events) {
     if (!event.dialogue) continue;
     const key = encounterKey(event.dialogue.speaker, event.dialogue.target);

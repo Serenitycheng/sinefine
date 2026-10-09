@@ -1,0 +1,527 @@
+{
+  "actions": {
+    "path": "/fate/character-art/illya-life-v2.png",
+    "width": 2172,
+    "height": 724,
+    "scale": 0.8313458262350937,
+    "frames": {
+      "sit": [
+        {
+          "x": 51,
+          "y": 136,
+          "width": 236,
+          "height": 253,
+          "anchorX": 119,
+          "anchorY": 249,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 230,
+            "height": 247
+          }
+        },
+        {
+          "x": 52,
+          "y": 464,
+          "width": 236,
+          "height": 252,
+          "anchorX": 119,
+          "anchorY": 248,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 230,
+            "height": 246
+          }
+        }
+      ],
+      "read": [
+        {
+          "x": 420,
+          "y": 134,
+          "width": 239,
+          "height": 258,
+          "anchorX": 126,
+          "anchorY": 254,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 233,
+            "height": 252
+          }
+        },
+        {
+          "x": 421,
+          "y": 467,
+          "width": 240,
+          "height": 251,
+          "anchorX": 130,
+          "anchorY": 247,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 234,
+            "height": 245
+          }
+        }
+      ],
+      "cook": [
+        {
+          "x": 822,
+          "y": 69,
+          "width": 187,
+          "height": 298,
+          "anchorX": 99,
+          "anchorY": 294,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 181,
+            "height": 292
+          }
+        },
+        {
+          "x": 841,
+          "y": 412,
+          "width": 171,
+          "height": 301,
+          "anchorX": 77,
+          "anchorY": 297,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 165,
+            "height": 295
+          }
+        }
+      ],
+      "eat": [
+        {
+          "x": 1132,
+          "y": 148,
+          "width": 219,
+          "height": 240,
+          "anchorX": 119,
+          "anchorY": 236,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 213,
+            "height": 234
+          }
+        },
+        {
+          "x": 1132,
+          "y": 476,
+          "width": 219,
+          "height": 238,
+          "anchorX": 117,
+          "anchorY": 234,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 213,
+            "height": 232
+          }
+        }
+      ],
+      "sleep": [
+        {
+          "x": 1468,
+          "y": 243,
+          "width": 353,
+          "height": 141,
+          "anchorX": 123,
+          "anchorY": 137,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 347,
+            "height": 135
+          }
+        },
+        {
+          "x": 1467,
+          "y": 569,
+          "width": 355,
+          "height": 141,
+          "anchorX": 124,
+          "anchorY": 137,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 349,
+            "height": 135
+          }
+        }
+      ],
+      "bench": [
+        {
+          "x": 1886,
+          "y": 98,
+          "width": 224,
+          "height": 311,
+          "anchorX": 127,
+          "anchorY": 185,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 218,
+            "height": 305
+          }
+        }
+      ]
+    }
+  },
+  "walking": {
+    "path": "/fate/character-art/shirou-walk-soft-v1.png",
+    "width": 1536,
+    "height": 1024,
+    "frames": {
+      "down": [
+        {
+          "x": 104,
+          "y": 6,
+          "width": 89,
+          "height": 241,
+          "anchorX": 44,
+          "anchorY": 237,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 83,
+            "height": 235
+          }
+        },
+        {
+          "x": 350,
+          "y": 6,
+          "width": 93,
+          "height": 244,
+          "anchorX": 47,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 87,
+            "height": 238
+          }
+        },
+        {
+          "x": 597,
+          "y": 6,
+          "width": 95,
+          "height": 244,
+          "anchorX": 49,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 89,
+            "height": 238
+          }
+        },
+        {
+          "x": 843,
+          "y": 6,
+          "width": 92,
+          "height": 243,
+          "anchorX": 48,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 86,
+            "height": 237
+          }
+        },
+        {
+          "x": 1093,
+          "y": 7,
+          "width": 92,
+          "height": 243,
+          "anchorX": 47,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 86,
+            "height": 237
+          }
+        },
+        {
+          "x": 1339,
+          "y": 6,
+          "width": 95,
+          "height": 241,
+          "anchorX": 49,
+          "anchorY": 237,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 89,
+            "height": 235
+          }
+        }
+      ],
+      "left": [
+        {
+          "x": 103,
+          "y": 256,
+          "width": 77,
+          "height": 246,
+          "anchorX": 40,
+          "anchorY": 242,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 71,
+            "height": 240
+          }
+        },
+        {
+          "x": 330,
+          "y": 256,
+          "width": 138,
+          "height": 247,
+          "anchorX": 65,
+          "anchorY": 243,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 132,
+            "height": 241
+          }
+        },
+        {
+          "x": 582,
+          "y": 256,
+          "width": 125,
+          "height": 247,
+          "anchorX": 58,
+          "anchorY": 243,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 119,
+            "height": 241
+          }
+        },
+        {
+          "x": 831,
+          "y": 255,
+          "width": 128,
+          "height": 248,
+          "anchorX": 57,
+          "anchorY": 244,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 122,
+            "height": 242
+          }
+        },
+        {
+          "x": 1079,
+          "y": 255,
+          "width": 130,
+          "height": 248,
+          "anchorX": 57,
+          "anchorY": 244,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 124,
+            "height": 242
+          }
+        },
+        {
+          "x": 1333,
+          "y": 255,
+          "width": 120,
+          "height": 248,
+          "anchorX": 54,
+          "anchorY": 244,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 114,
+            "height": 242
+          }
+        }
+      ],
+      "right": [
+        {
+          "x": 109,
+          "y": 509,
+          "width": 78,
+          "height": 246,
+          "anchorX": 38,
+          "anchorY": 242,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 72,
+            "height": 240
+          }
+        },
+        {
+          "x": 326,
+          "y": 509,
+          "width": 138,
+          "height": 247,
+          "anchorX": 74,
+          "anchorY": 243,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 132,
+            "height": 241
+          }
+        },
+        {
+          "x": 579,
+          "y": 508,
+          "width": 127,
+          "height": 247,
+          "anchorX": 68,
+          "anchorY": 243,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 121,
+            "height": 241
+          }
+        },
+        {
+          "x": 825,
+          "y": 509,
+          "width": 131,
+          "height": 247,
+          "anchorX": 68,
+          "anchorY": 243,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 125,
+            "height": 241
+          }
+        },
+        {
+          "x": 1070,
+          "y": 509,
+          "width": 138,
+          "height": 247,
+          "anchorX": 71,
+          "anchorY": 243,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 132,
+            "height": 241
+          }
+        },
+        {
+          "x": 1332,
+          "y": 509,
+          "width": 112,
+          "height": 246,
+          "anchorX": 61,
+          "anchorY": 242,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 106,
+            "height": 240
+          }
+        }
+      ],
+      "up": [
+        {
+          "x": 102,
+          "y": 761,
+          "width": 87,
+          "height": 242,
+          "anchorX": 44,
+          "anchorY": 238,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 81,
+            "height": 236
+          }
+        },
+        {
+          "x": 351,
+          "y": 760,
+          "width": 93,
+          "height": 243,
+          "anchorX": 44,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 87,
+            "height": 237
+          }
+        },
+        {
+          "x": 597,
+          "y": 760,
+          "width": 91,
+          "height": 243,
+          "anchorX": 46,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 85,
+            "height": 237
+          }
+        },
+        {
+          "x": 844,
+          "y": 760,
+          "width": 92,
+          "height": 243,
+          "anchorX": 47,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 86,
+            "height": 237
+          }
+        },
+        {
+          "x": 1095,
+          "y": 760,
+          "width": 95,
+          "height": 243,
+          "anchorX": 44,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 89,
+            "height": 237
+          }
+        },
+        {
+          "x": 1344,
+          "y": 760,
+          "width": 90,
+          "height": 243,
+          "anchorX": 45,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 84,
+            "height": 237
+          }
+        }
+      ]
+    }
+  }
+}

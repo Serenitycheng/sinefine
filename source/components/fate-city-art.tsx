@@ -2,7 +2,7 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- This application surface implements keyboard walking; controls and modal dialogs remain semantic elements. */
 
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ArrowLeft,
   Map as MapIcon,
@@ -18,6 +18,7 @@ import {
   Square,
 } from 'lucide-react';
 import FateCityAtlas from './fate-city-atlas';
+import FateCityInterior from './fate-city-interior';
 import FateCityMinimap from './fate-city-minimap';
 import FateCityWayfinding from './fate-city-wayfinding';
 import FateCityArtLayer, { type CityArtActorView } from './fate-city-art-layer';
@@ -37,12 +38,15 @@ import {
 } from '@/lib/fate-city-art';
 import {
   cityPilotRoute,
+  cityPilotClickRoute,
+  cityPilotLine,
   advanceCityPilotInput,
   advanceCityPilotRoute,
   cityPilotFrameTravel,
   CITY_PILOT_STRIDE,
   cityPilotWalkable,
   cityPilotInputCrossing,
+  cityPilotJunctionChoices,
   cityArtJourney,
   type CityArtJourneyLeg,
 } from '@/lib/fate-city-art-navigation';
@@ -62,8 +66,19 @@ import {
   type CityArtDestinationRequest,
 } from '@/lib/fate-city-art-destinations';
 import { CHARACTER_ART, CHARACTER_ART_ACTIONS } from '@/lib/fate-character-art';
-import { INTERIOR_ART, STORE_INTERIOR_ART } from '@/lib/fate-interior-art';
+import {
+  CITY_INTERIOR_IDS,
+  CITY_INTERIOR_SCENES,
+  cityInteriorScene,
+  type CityInteriorScene,
+} from '@/lib/fate-city-interior-scenes';
 import type { CityPoint } from '@/lib/fate-city-layout';
+import { ART_SPRITE_FRAMES } from '@/lib/fate-art-sprite';
+import {
+  cityWalkFacing,
+  cityCameraFollow,
+  cityCameraZoomAnchor,
+} from '@/lib/fate-city-art-controls';
 import styles from './fate-city-art.module.css';
 
 type Direction = 'down' | 'left' | 'right' | 'up';
@@ -126,6 +141,8 @@ export default function FateCityArt() {
   const activeMode = useRef<CityArtMode>('overview');
   const ready = useRef<Record<string, boolean>>({});
   const transitioning = useRef(false);
+  const changingAngle = useRef(false);
+  const trackingCamera = useRef(false);
   const transitionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const heading = useRef<CityPoint>({ x: 1, y: 0 });
   const heldHeading = useRef<{ input: string; vector: CityPoint } | null>(null);
@@ -139,15 +156,20 @@ export default function FateCityArt() {
   const [zoom, setZoom] = useState(1),
     [size, setSize] = useState({ width: 1000, height: 650 }),
     [pan, setPan] = useState({ x: 0, y: 0 });
-  const [following, setFollowing] = useState(false),
+  const [following, setFollowing] = useState(true),
     [message, setMessage] = useState('选择门口沿路前往，也可以直接行走。');
   const [browsing, setBrowsing] = useState(false);
   const [opened, setOpened] = useState<ArtPlace | null>(null);
+  const [interior, setInterior] = useState<CityInteriorScene | null>(null);
   const surface = useRef<HTMLDivElement>(null),
     position = useRef<CityPoint>({ ...MIYAMA_PILOT.start });
   const initiallyFramed = useRef(false);
   const previousSize = useRef({ width: 1000, height: 650 });
-  const framing = useRef({ zoom: 1, following: false });
+  const framing = useRef({ zoom: 1, following: true });
+  const browsingRef = useRef(false);
+  const pointers = useRef(new Map<number, CityPoint>());
+  const pinch = useRef<{ span: number; center: CityPoint } | null>(null);
+  const gestureClick = useRef(false);
   const direction = useRef<Direction>('right'),
     travelled = useRef(0),
     route = useRef<CityPoint[]>([]),
@@ -159,14 +181,15 @@ export default function FateCityArt() {
     y: number;
     pan: CityPoint;
     moved: boolean;
+    stopped: boolean;
   } | null>(null);
   const hold = useRef<CityPoint>({ x: 0, y: 0 });
   const painting = cityArtCamera(mode, scene);
   const scale =
     Math.min(size.width / painting.width, size.height / painting.height) * zoom;
   const player = cityPilotPaint(view.point, mode, scene);
-  // At normal scale show the entire painting. Following is an explicit option
-  // at close range; returning to the map never resets world position or zoom.
+  // Following scrolls only outside the comfortable walking window. The full
+  // painting still fits at normal scale; browsing never changes world position.
   const baseOrigin = following
     ? {
         x: size.width * 0.52 - player.x * scale,
@@ -194,10 +217,19 @@ export default function FateCityArt() {
     x: origin.x - baseOrigin.x,
     y: origin.y - baseOrigin.y,
   };
+  const spriteAnchor = ART_SPRITE_FRAMES[view.direction][view.frame];
+  const visibleSpriteScale = actorScale * spriteAnchor.scale * scale;
+  const actorBounds = {
+    x: origin.x + player.x * scale - spriteAnchor.x * visibleSpriteScale - 10,
+    y: origin.y + player.y * scale - spriteAnchor.y * visibleSpriteScale - 10,
+    width: 256 * visibleSpriteScale + 20,
+    height: 256 * visibleSpriteScale + 20,
+  };
   const transform = useRef({ origin, scale });
-  useEffect(() => {
+  useLayoutEffect(() => {
     transform.current = { origin, scale };
     framing.current = { zoom, following };
+    browsingRef.current = browsing;
   });
   useEffect(() => {
     // Only decode this street's three views and neighboring street fronts.
@@ -292,7 +324,7 @@ export default function FateCityArt() {
     setOutgoing({
       mode,
       scene,
-      view: { point, direction: direction.current, frame: 0 },
+      view: { point, direction: direction.current, frame: view.frame },
       origin: transform.current.origin,
       scale: transform.current.scale,
       actorScale,
@@ -309,7 +341,13 @@ export default function FateCityArt() {
     );
     activeMode.current = next;
     activeScene.current = nextScene;
-    if (keys.current.size || hold.current.x || hold.current.y) {
+    // Hold world heading across a street boundary. An explicit angle change
+    // must immediately rebind keys to the new visible directions instead.
+    heldHeading.current = null;
+    if (
+      nextScene !== scene &&
+      (keys.current.size || hold.current.x || hold.current.y)
+    ) {
       const k = keys.current;
       const x =
         Number(k.has('d') || k.has('arrowright')) -
@@ -325,8 +363,9 @@ export default function FateCityArt() {
       };
     }
     transitioning.current = true;
+    changingAngle.current = next !== mode;
     direction.current = nextDirection;
-    setView({ point, direction: nextDirection, frame: 0 });
+    setView({ point, direction: nextDirection, frame: view.frame });
     setMode(next);
     setScene(nextScene);
     setMessage(
@@ -337,9 +376,10 @@ export default function FateCityArt() {
     const duration = window.matchMedia('(prefers-reduced-motion: reduce)')
       .matches
       ? 1
-      : 380;
+      : 220;
     transitionTimer.current = setTimeout(() => {
       transitioning.current = false;
+      changingAngle.current = false;
       setOutgoing(null);
       transitionTimer.current = null;
     }, duration);
@@ -356,9 +396,112 @@ export default function FateCityArt() {
     journey.current = [];
     waitingForStreet.current = null;
     heldHeading.current = null;
+    trackingCamera.current = false;
   };
+  const zoomCamera = (
+    nextZoom: number,
+    anchor?: CityPoint,
+    nextAnchor?: CityPoint,
+  ) => {
+    if (opened || transitioning.current) return;
+    const next = clamp(nextZoom, 0.5, 8);
+    const current = transform.current;
+    const camera = cityArtCamera(activeMode.current, activeScene.current);
+    const foot = cityPilotPaint(
+      position.current,
+      activeMode.current,
+      activeScene.current,
+    );
+    const at = anchor ?? {
+      x: current.origin.x + foot.x * current.scale,
+      y: current.origin.y + foot.y * current.scale,
+    };
+    const nextScale = (current.scale * next) / framing.current.zoom;
+    const desired = cityCameraZoomAnchor(
+      current.origin,
+      current.scale,
+      nextScale,
+      at,
+      nextAnchor,
+    );
+    const safe = cityCameraOrigin(
+      desired,
+      foot,
+      nextScale,
+      size,
+      camera,
+      cityCameraActorScale(
+        cityArtDepth(position.current, activeMode.current, activeScene.current),
+        nextScale,
+        size,
+      ),
+      !browsingRef.current,
+    );
+    const base = framing.current.following
+      ? {
+          x: size.width * 0.52 - foot.x * nextScale,
+          y: size.height * 0.66 - foot.y * nextScale,
+        }
+      : {
+          x: (size.width - camera.width * nextScale) / 2,
+          y: (size.height - camera.height * nextScale) / 2,
+        };
+    // Wheel events may be batched: update the input transform synchronously so
+    // consecutive gestures all refer to the camera that is about to be drawn.
+    framing.current.zoom = next;
+    transform.current = { origin: safe, scale: nextScale };
+    trackingCamera.current = false;
+    setZoom(next);
+    setPan({ x: safe.x - base.x, y: safe.y - base.y });
+    surface.current?.focus({ preventScroll: true });
+  };
+  const resetCamera = () => {
+    trackingCamera.current = false;
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+    setFollowing(false);
+    setBrowsing(false);
+    surface.current?.focus({ preventScroll: true });
+  };
+  const toggleFollowing = () => {
+    const next = !following;
+    const foot = cityPilotPaint(
+      position.current,
+      activeMode.current,
+      activeScene.current,
+    );
+    const base = next
+      ? {
+          x: size.width * 0.52 - foot.x * scale,
+          y: size.height * 0.66 - foot.y * scale,
+        }
+      : {
+          x: (size.width - painting.width * scale) / 2,
+          y: (size.height - painting.height * scale) / 2,
+        };
+    setPan({ x: origin.x - base.x, y: origin.y - base.y });
+    trackingCamera.current = next;
+    setFollowing(next);
+    setBrowsing(false);
+    surface.current?.focus({ preventScroll: true });
+  };
+  const cameraControls = useRef({
+    zoomCamera,
+    resetCamera,
+    toggleFollowing,
+    blocked: false,
+  });
+  useLayoutEffect(() => {
+    cameraControls.current = {
+      zoomCamera,
+      resetCamera,
+      toggleFollowing,
+      blocked: Boolean(opened) || transitioning.current,
+    };
+  });
   const switchTab = (next: typeof tab) => {
     stop();
+    setInterior(null);
     setOpened(null);
     setTab(next);
   };
@@ -368,6 +511,7 @@ export default function FateCityArt() {
     ].reduce<ArtPlace | null>(
       (best, place) =>
         distance(position.current, place.point) < 22 &&
+        cityPilotLine(position.current, place.point, activeScene.current) &&
         (!best ||
           distance(position.current, place.point) <
             distance(position.current, best.point))
@@ -392,7 +536,14 @@ export default function FateCityArt() {
       return;
     stop();
     setBrowsing(false);
-    const path = cityPilotRoute(position.current, point, activeScene.current);
+    const path = place
+      ? cityPilotRoute(position.current, point, activeScene.current)
+      : cityPilotClickRoute(
+          position.current,
+          point,
+          activeMode.current,
+          activeScene.current,
+        );
     if (!path) {
       setMessage('这里没有可达的铺装通路，请选择路面或门口。');
       return;
@@ -452,6 +603,10 @@ export default function FateCityArt() {
     );
     setMapMessage('点击建筑、店面或道路，从当前位置沿路前往。');
   };
+  const walkConnectionRef = useRef(walkConnection);
+  useLayoutEffect(() => {
+    walkConnectionRef.current = walkConnection;
+  });
   const previewScene = (nextScene: CityArtScene) => {
     stop();
     const point = { ...CITY_ART_SCENES[nextScene].start };
@@ -523,9 +678,10 @@ export default function FateCityArt() {
       last = 0,
       wasMoving = false;
     const clear = () => {
-      keys.current.clear();
-      hold.current = { x: 0, y: 0 };
-      heldHeading.current = null;
+      stop();
+      drag.current = null;
+      pointers.current.clear();
+      pinch.current = null;
       last = 0;
     };
     const down = (event: KeyboardEvent) => {
@@ -555,31 +711,67 @@ export default function FateCityArt() {
         // directions pressed here, without requiring a second press afterward.
         return;
       }
+      if (key === 'escape') {
+        event.preventDefault();
+        clear();
+        setMessage('已停步。');
+        return;
+      }
       if (transitioning.current) return;
-      if (key === 'e' && !event.repeat) {
+      if (/^[1-4]$/.test(key) && !event.repeat) {
+        const exit = cityPilotJunctionChoices(
+          position.current,
+          activeScene.current,
+        )[Number(key) - 1];
+        if (exit) {
+          event.preventDefault();
+          walkConnectionRef.current(exit.scene, exit.point);
+        }
+      } else if (key === 'e' && !event.repeat) {
         event.preventDefault();
         inspectRef.current();
-      } else if (key === 'v' && !event.repeat) {
+      } else if (['v', 'q', 'r'].includes(key) && !event.repeat) {
         event.preventDefault();
         const current = CITY_ART_MODES.indexOf(activeMode.current);
         switchCameraRef.current(
-          CITY_ART_MODES[(current + 1) % CITY_ART_MODES.length],
+          CITY_ART_MODES[
+            (current + (key === 'q' ? 2 : 1)) % CITY_ART_MODES.length
+          ],
         );
-      } else if (key === 'escape') {
+      } else if (
+        ['+', '=', '-', 'home', 'f', 'm'].includes(key) &&
+        !event.repeat
+      ) {
         event.preventDefault();
-        clear();
-        route.current = [];
-        setTab('map');
+        if (key === 'home') cameraControls.current.resetCamera();
+        else if (key === 'f') cameraControls.current.toggleFollowing();
+        else if (key === 'm') {
+          stop();
+          setTab('map');
+        } else
+          cameraControls.current.zoomCamera(
+            framing.current.zoom * (key === '-' ? 1 / 1.2 : 1.2),
+          );
       }
     };
     const up = (event: KeyboardEvent) =>
       keys.current.delete(event.key.toLowerCase());
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
-    window.addEventListener('blur', clear);
-    document.addEventListener('visibilitychange', clear);
+    const blur = () => {
+      clear();
+      setMessage('已暂停行走，点击路面或方向键继续。');
+    };
+    const visibility = () => {
+      if (document.hidden) blur();
+    };
+    window.addEventListener('blur', blur);
+    document.addEventListener('visibilitychange', visibility);
     const tick = (now: number) => {
-      const travel = cityPilotFrameTravel(last ? (now - last) / 1000 : 0);
+      const seconds = last
+        ? Math.max(0, Math.min((now - last) / 1000, 0.1))
+        : 0;
+      const travel = cityPilotFrameTravel(seconds);
       last = now;
       const old = position.current;
       let next = { ...old };
@@ -601,7 +793,7 @@ export default function FateCityArt() {
       const cameraScene = activeScene.current;
       if (
         !document.hidden &&
-        !transitioning.current &&
+        (!transitioning.current || !changingAngle.current) &&
         ready.current[viewKey(cameraScene, cameraMode)]
       ) {
         if (input.x || input.y) {
@@ -670,13 +862,53 @@ export default function FateCityArt() {
       const moved = distance(old, next) > 1e-6;
       if (moved) {
         heading.current = { x: next.x - old.x, y: next.y - old.y };
-        direction.current = face(
-          cityPilotPaint(old, cameraMode, cameraScene),
-          cityPilotPaint(next, cameraMode, cameraScene),
+        const a = cityPilotPaint(old, cameraMode, cameraScene),
+          b = cityPilotPaint(next, cameraMode, cameraScene);
+        direction.current = cityWalkFacing(
+          { x: b.x - a.x, y: b.y - a.y },
+          direction.current,
         );
         travelled.current += walked;
       }
       position.current = next;
+      if (moved && !browsingRef.current) trackingCamera.current = true;
+      if (
+        framing.current.following &&
+        !browsingRef.current &&
+        !transitioning.current &&
+        trackingCamera.current
+      ) {
+        const camera = cityArtCamera(cameraMode, cameraScene);
+        const foot = cityPilotPaint(next, cameraMode, cameraScene);
+        const current = transform.current;
+        const wanted = cityCameraFollow(
+          current.origin,
+          foot,
+          current.scale,
+          previousSize.current,
+          seconds,
+        );
+        const safe = cityCameraOrigin(
+          wanted,
+          foot,
+          current.scale,
+          previousSize.current,
+          camera,
+          cityCameraActorScale(
+            cityArtDepth(next, cameraMode, cameraScene),
+            current.scale,
+            previousSize.current,
+          ),
+        );
+        const base = {
+          x: previousSize.current.width * 0.52 - foot.x * current.scale,
+          y: previousSize.current.height * 0.66 - foot.y * current.scale,
+        };
+        const offset = { x: safe.x - base.x, y: safe.y - base.y };
+        // Keep the previous origin by adjusting pan even inside the dead zone.
+        // Otherwise the old base expression would glue the camera to the feet.
+        setPan((old) => (distance(old, offset) > 1e-6 ? offset : old));
+      }
       if (!input.x && !input.y) heldHeading.current = null;
       const leg = journey.current[0];
       const queued =
@@ -751,30 +983,64 @@ export default function FateCityArt() {
       clear();
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
-      window.removeEventListener('blur', clear);
-      document.removeEventListener('visibilitychange', clear);
+      window.removeEventListener('blur', blur);
+      document.removeEventListener('visibilitychange', visibility);
     };
   }, [tab, opened]);
   useEffect(() => {
     const element = surface.current;
     if (!element || tab !== 'street') return;
     const wheel = (event: WheelEvent) => {
+      if (cameraControls.current.blocked) return;
       event.preventDefault();
-      setZoom((old) => clamp(old * Math.exp(-event.deltaY * 0.001), 0.5, 8));
+      const rect = element.getBoundingClientRect();
+      cameraControls.current.zoomCamera(
+        framing.current.zoom * Math.exp(-event.deltaY * 0.001),
+        { x: event.clientX - rect.left, y: event.clientY - rect.top },
+      );
     };
     element.addEventListener('wheel', wheel, { passive: false });
-    return () => element.removeEventListener('wheel', wheel);
+    const context = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest('button,a,dialog'))
+        event.preventDefault();
+    };
+    element.addEventListener('contextmenu', context);
+    return () => {
+      element.removeEventListener('wheel', wheel);
+      element.removeEventListener('contextmenu', context);
+    };
   }, [tab]);
   const close = () => {
     setOpened(null);
     surface.current?.focus({ preventScroll: true });
   };
+  const exitInterior = () => {
+    stop();
+    setInterior(null);
+    setOpened(null);
+    setMessage('已回到原来的门口，可以继续沿街行走。');
+    requestAnimationFrame(() =>
+      surface.current?.focus({ preventScroll: true }),
+    );
+  };
   useEffect(() => {
-    if (!opened) return;
+    if (!opened || interior) return;
     const element =
+      surface.current?.querySelector<HTMLButtonElement>(
+        '[data-enter-interior]',
+      ) ??
       surface.current?.querySelector<HTMLButtonElement>('[data-close-place]');
     element?.focus();
     const key = (event: KeyboardEvent) => {
+      if (
+        event.key.toLowerCase() === 'e' &&
+        !event.repeat &&
+        cityInteriorScene(opened.id)
+      ) {
+        event.preventDefault();
+        stop();
+        setInterior(cityInteriorScene(opened.id));
+      }
       if (event.key === 'Escape') {
         event.preventDefault();
         setOpened(null);
@@ -797,8 +1063,13 @@ export default function FateCityArt() {
     };
     window.addEventListener('keydown', key);
     return () => window.removeEventListener('keydown', key);
-  }, [opened]);
-  const nearby = places.find((place) => distance(view.point, place.point) < 22);
+  }, [opened, interior]);
+  const nearby = places.find(
+    (place) =>
+      distance(view.point, place.point) < 22 &&
+      cityPilotLine(view.point, place.point, scene),
+  );
+  const junctionChoices = cityPilotJunctionChoices(view.point, scene);
 
   return (
     <main className={styles.shell}>
@@ -842,7 +1113,7 @@ export default function FateCityArt() {
         ref={surface}
         role="application"
         tabIndex={0}
-        aria-label={`${CITY_ART_SCENES[scene].name}，WASD行走，点路面前往，拖动浏览，滚轮缩放，V切换取景，E查看门口，Escape打开地图`}
+        aria-label={`${CITY_ART_SCENES[scene].name}，WASD行走，点路面或入口前往，拖动浏览，滚轮或双指缩放，Q/R或V切换取景，E交互，Escape停止，M打开地图`}
         data-city-road={CITY_ART_SCENES[scene].roadId}
         data-city-scene={scene}
         data-city-mode={mode}
@@ -854,41 +1125,164 @@ export default function FateCityArt() {
         data-city-zoom={zoom.toFixed(3)}
         data-city-following={following}
         data-city-browsing={browsing}
+        data-camera-origin-x={origin.x}
+        data-camera-origin-y={origin.y}
+        data-camera-scale={scale}
         data-city-load={load[viewKey(scene, mode)]}
+        onPointerDownCapture={(event) => {
+          if (!pointers.current.size) gestureClick.current = false;
+          if (
+            event.pointerType !== 'touch' ||
+            !pointers.current.size ||
+            tab !== 'street' ||
+            opened ||
+            transitioning.current
+          )
+            return;
+          if (!pinch.current && pointers.current.size === 1) {
+            // Catch a second finger before entrance labels or the direction pad
+            // interpret it as their own action. Overlay labels must not break
+            // a pinch that began on the street.
+            event.preventDefault();
+            event.stopPropagation();
+            pointers.current.set(event.pointerId, {
+              x: event.clientX,
+              y: event.clientY,
+            });
+            event.currentTarget.setPointerCapture(event.pointerId);
+            const [a, b] = [...pointers.current.values()];
+            const rect = event.currentTarget.getBoundingClientRect();
+            pinch.current = {
+              span: distance(a, b),
+              center: {
+                x: (a.x + b.x) / 2 - rect.left,
+                y: (a.y + b.y) / 2 - rect.top,
+              },
+            };
+            gestureClick.current = true;
+            drag.current = null;
+            stop();
+            setBrowsing(true);
+          } else if (pinch.current) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
+        onClickCapture={(event) => {
+          if (gestureClick.current && event.detail > 0) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        }}
         onPointerDown={(event) => {
+          const touchLabel =
+            event.pointerType === 'touch' &&
+            Boolean(
+              (event.target as HTMLElement).closest(
+                '[data-street-exit],[data-street-entrance]',
+              ),
+            );
           if (
             tab !== 'street' ||
             opened ||
             transitioning.current ||
             !ready.current[viewKey(activeScene.current, activeMode.current)] ||
-            event.button !== 0 ||
-            (event.target as HTMLElement).closest(
-              'button,input,select,a,[role="dialog"]',
-            )
+            ![0, 1, 2].includes(event.button) ||
+            (!touchLabel &&
+              (event.target as HTMLElement).closest(
+                'button,input,select,a,dialog,[role="dialog"]',
+              ))
           )
             return;
+          if (touchLabel) {
+            // A single tap keeps the label's ordinary button action. Remember
+            // its finger only so a second touch can promote it to a pinch.
+            pointers.current.set(event.pointerId, {
+              x: event.clientX,
+              y: event.clientY,
+            });
+            return;
+          }
           surface.current?.focus({ preventScroll: true });
+          event.preventDefault();
+          pointers.current.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+          });
+          event.currentTarget.setPointerCapture(event.pointerId);
+          if (pointers.current.size === 2) {
+            const [a, b] = [...pointers.current.values()];
+            const rect = event.currentTarget.getBoundingClientRect();
+            pinch.current = {
+              span: distance(a, b),
+              center: {
+                x: (a.x + b.x) / 2 - rect.left,
+                y: (a.y + b.y) / 2 - rect.top,
+              },
+            };
+            drag.current = null;
+            stop();
+            setBrowsing(true);
+            return;
+          }
           drag.current = {
             id: event.pointerId,
             x: event.clientX,
             y: event.clientY,
             pan: { ...effectivePan },
-            moved: false,
+            moved: event.button !== 0,
+            stopped: false,
           };
-          event.currentTarget.setPointerCapture(event.pointerId);
         }}
         onPointerMove={(event) => {
+          if (!pointers.current.has(event.pointerId)) return;
+          pointers.current.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+          });
+          if (pinch.current && pointers.current.size === 2) {
+            const [a, b] = [...pointers.current.values()];
+            const rect = event.currentTarget.getBoundingClientRect();
+            const span = distance(a, b);
+            const center = {
+              x: (a.x + b.x) / 2 - rect.left,
+              y: (a.y + b.y) / 2 - rect.top,
+            };
+            if (span > 5 && pinch.current.span > 5)
+              zoomCamera(
+                (framing.current.zoom * span) / pinch.current.span,
+                pinch.current.center,
+                center,
+              );
+            pinch.current = { span, center };
+            return;
+          }
           const d = drag.current;
           if (!d || d.id !== event.pointerId) return;
           const x = event.clientX - d.x,
             y = event.clientY - d.y;
-          if (Math.hypot(x, y) > 5) d.moved = true;
+          if (!d.moved && Math.hypot(x, y) > 5) {
+            d.moved = true;
+          }
           if (d.moved) {
+            if (!d.stopped) {
+              stop();
+              d.stopped = true;
+              setMessage('浏览街景中，点击路面继续行走。');
+            }
+            trackingCamera.current = false;
             setBrowsing(true);
             setPan({ x: d.pan.x + x, y: d.pan.y + y });
           }
         }}
         onPointerUp={(event) => {
+          pointers.current.delete(event.pointerId);
+          if (pinch.current) {
+            pinch.current = null;
+            pointers.current.clear();
+            drag.current = null;
+            return;
+          }
           const d = drag.current;
           drag.current = null;
           if (!d || d.id !== event.pointerId) return;
@@ -899,6 +1293,45 @@ export default function FateCityArt() {
             x: (event.clientX - rect.left - camera.origin.x) / camera.scale,
             y: (event.clientY - rect.top - camera.origin.y) / camera.scale,
           };
+          // The painted doorstep itself is clickable, as well as its label.
+          // Use a screen-sized touch target rather than an invisible world radius.
+          const place = registeredPlaces[activeScene.current]
+            .filter(
+              (place) =>
+                distance(
+                  cityPilotPaint(
+                    place.point,
+                    activeMode.current,
+                    activeScene.current,
+                  ),
+                  paint,
+                ) *
+                  camera.scale <=
+                24,
+            )
+            .sort(
+              (a, b) =>
+                distance(
+                  cityPilotPaint(
+                    a.point,
+                    activeMode.current,
+                    activeScene.current,
+                  ),
+                  paint,
+                ) -
+                distance(
+                  cityPilotPaint(
+                    b.point,
+                    activeMode.current,
+                    activeScene.current,
+                  ),
+                  paint,
+                ),
+            )[0];
+          if (place) {
+            walkTo(place.point, place);
+            return;
+          }
           if (
             !cityArtRegistered(
               paint,
@@ -916,10 +1349,13 @@ export default function FateCityArt() {
         }}
         onPointerCancel={() => {
           drag.current = null;
+          pointers.current.clear();
+          pinch.current = null;
           hold.current = { x: 0, y: 0 };
         }}
-        onLostPointerCapture={() => {
-          drag.current = null;
+        onLostPointerCapture={(event) => {
+          pointers.current.delete(event.pointerId);
+          if (drag.current?.id === event.pointerId) drag.current = null;
         }}
       >
         {tab === 'map' ? (
@@ -964,27 +1400,33 @@ export default function FateCityArt() {
               </div>
             </section>
             <section>
-              <h3>各家室内 · 房间与生活用品</h3>
+              <h3>建筑主室内 · 逐处绘制</h3>
               <p>
-                门口对应实际住处；房间功能与家具碰撞沿用已有机制，分别绘制外观。
+                点击目的地，先沿街走到真实门口再进屋。每处主要房间已绘制；其他房间与居民日常继续制作。
               </p>
               <div className={styles.interiors}>
-                {INTERIOR_ART.map((home) => (
-                  <article key={home.id}>
-                    <h4>{home.name}</h4>
-                    <p>{home.signature}</p>
-                    <span>{home.materials}</span>
-                    <small>
-                      {home.rooms.map((room) => room.purpose).join(' · ')}
-                    </small>
-                    <b>原画待制作</b>
-                  </article>
-                ))}
+                {CITY_INTERIOR_IDS.map((id) => CITY_INTERIOR_SCENES[id]).map(
+                  (home) => (
+                    <article key={home.id}>
+                      <h4>{home.name}</h4>
+                      <p>{home.description}</p>
+                      <span>{home.room}</span>
+                      <small>{home.basis}</small>
+                      <button
+                        type="button"
+                        className={styles.primary}
+                        onClick={() =>
+                          walkFromMap({ type: 'place', id: home.id })
+                        }
+                      >
+                        沿路前往门口
+                      </button>
+                    </article>
+                  ),
+                )}
               </div>
               <p className={styles.note}>
-                店面室内：
-                {STORE_INTERIOR_ART.map((store) => store.name).join(' · ')}
-                ，各自制作柜台、座位或陈列区。
+                河岸公园保留室外。原作未明确的室内布局、改编居所与原创店铺均有标注。
               </p>
             </section>
           </section>
@@ -1012,6 +1454,7 @@ export default function FateCityArt() {
               scale={scale}
               size={size}
               places={places}
+              actorBounds={actorBounds}
               onPlace={(place) => walkTo(place.point, place)}
               onExit={walkConnection}
               inert={
@@ -1100,7 +1543,7 @@ export default function FateCityArt() {
                 type="button"
                 aria-label="缩小街景"
                 disabled={Boolean(outgoing)}
-                onClick={() => setZoom((old) => clamp(old / 1.2, 0.5, 8))}
+                onClick={() => zoomCamera(framing.current.zoom / 1.2)}
               >
                 <Minus size={17} />
               </button>
@@ -1109,7 +1552,7 @@ export default function FateCityArt() {
                 type="button"
                 aria-label="放大街景"
                 disabled={Boolean(outgoing)}
-                onClick={() => setZoom((old) => clamp(old * 1.2, 0.5, 8))}
+                onClick={() => zoomCamera(framing.current.zoom * 1.2)}
               >
                 <Plus size={17} />
               </button>
@@ -1117,12 +1560,8 @@ export default function FateCityArt() {
                 type="button"
                 aria-label="显示完整街景"
                 disabled={Boolean(outgoing)}
-                onClick={() => {
-                  setZoom(1);
-                  setPan({ x: 0, y: 0 });
-                  setFollowing(false);
-                  setBrowsing(false);
-                }}
+                title="显示完整街景（Home）"
+                onClick={resetCamera}
               >
                 <Focus size={17} />
               </button>
@@ -1130,11 +1569,8 @@ export default function FateCityArt() {
                 type="button"
                 aria-pressed={following}
                 disabled={Boolean(outgoing)}
-                onClick={() => {
-                  setFollowing((old) => !old);
-                  setPan({ x: 0, y: 0 });
-                  setBrowsing(false);
-                }}
+                title="自动跟随，走出画面中心后平滑移动（F）"
+                onClick={toggleFollowing}
               >
                 跟随
               </button>
@@ -1196,7 +1632,14 @@ export default function FateCityArt() {
             </div>
           </>
         )}
-        {opened && (
+        {interior && (
+          <FateCityInterior
+            key={interior.id}
+            scene={interior}
+            onExit={exitInterior}
+          />
+        )}
+        {opened && !interior && (
           <div className={styles.dialogShade}>
             <dialog
               open
@@ -1216,17 +1659,20 @@ export default function FateCityArt() {
               <span className={styles.eyebrow}>已走到门前</span>
               <h2>{opened.name}</h2>
               <p>{opened.note}</p>
-              {INTERIOR_ART.find((home) => home.id === opened.id) && (
+              {cityInteriorScene(opened.id) && (
                 <>
-                  <p>
-                    {
-                      INTERIOR_ART.find((home) => home.id === opened.id)!
-                        .signature
-                    }
-                  </p>
-                  <p className={styles.note}>
-                    本页用于美术和道路验收，室内原画与居民日常尚未接入这条新街段。
-                  </p>
+                  <p>{cityInteriorScene(opened.id)!.description}</p>
+                  <button
+                    data-enter-interior
+                    type="button"
+                    className={styles.primary}
+                    onClick={() => {
+                      stop();
+                      setInterior(cityInteriorScene(opened.id));
+                    }}
+                  >
+                    进入室内
+                  </button>
                 </>
               )}
               <button type="button" className={styles.primary} onClick={close}>
@@ -1267,12 +1713,29 @@ export default function FateCityArt() {
                 <button
                   key={exit.scene}
                   type="button"
+                  data-junction-choice={
+                    junctionChoices.some(
+                      (choice) => choice.scene === exit.scene,
+                    )
+                      ? exit.scene
+                      : undefined
+                  }
                   disabled={
                     Boolean(outgoing) || load[viewKey(scene, mode)] !== 'ready'
                   }
                   onClick={() => walkConnection(exit.scene)}
                 >
-                  <Footprints size={14} /> 前往
+                  <Footprints size={14} />
+                  {junctionChoices.some(
+                    (choice) => choice.scene === exit.scene,
+                  ) && (
+                    <kbd>
+                      {junctionChoices.findIndex(
+                        (choice) => choice.scene === exit.scene,
+                      ) + 1}
+                    </kbd>
+                  )}
+                  前往
                   {CITY_ART_SCENES[exit.scene].name}
                 </button>
               ))}
@@ -1310,7 +1773,7 @@ export default function FateCityArt() {
           </p>
           <span>
             {tab === 'street'
-              ? 'WASD 行走 · 点路面前往 · 拖动浏览 · 滚轮缩放 · V 换取景 · E 查看'
+              ? `WASD 行走 · 点入口交互 · 滚轮／双指缩放 · Q/R 换取景 · E 交互 · Esc 停止 · M 地图${junctionChoices.length ? ' · 路口 1–4 选支路' : ''}`
               : '美术预览不改变游戏进度'}
           </span>
         </div>

@@ -1,6 +1,7 @@
 import { FATE_HOMES, type HomeId } from './fate-housing';
 import { HOME_ROOMS, type RoomZone } from './fate-indoor-layout';
 import { HOME_ENTRANCES } from './fate-home-entrances';
+import { CITY_INTERIOR_SCENES } from './fate-city-interior-scenes';
 
 const THEMES: Record<
   HomeId,
@@ -75,25 +76,24 @@ export const INTERIOR_ART = (Object.keys(FATE_HOMES) as HomeId[]).map((id) => ({
     purpose: INTERIOR_ROOM_PURPOSES[zone],
   })),
   ...THEMES[id],
+  mainPainting: CITY_INTERIOR_SCENES[id].painting,
+  mainRoom: CITY_INTERIOR_SCENES[id].room,
+  mainStage: 'ready' as const,
   stage: 'to-refine' as const,
 }));
-export const STORE_INTERIOR_ART = [
-  {
-    id: 'cafe',
-    name: '新都街角咖啡店',
-    purpose: '吧台、座位、点单与会面',
-    stage: 'planned',
-  },
-  {
-    id: 'shops',
-    name: '深山商店街店面',
-    purpose: '柜台、货架与购物通路',
-    stage: 'planned',
-  },
-  {
-    id: 'miyama-florist',
-    name: '深山花店（原创）',
-    purpose: '切花、包装台、植物陈列与门前通路',
-    stage: 'planned',
-  },
+const STORE_IDS = [
+  'cafe',
+  'shops',
+  'miyama-florist',
+  'old-bookshop',
+  'miyama-bakery',
+  'old-repair',
+  'shinto-convenience',
 ] as const;
+export const STORE_INTERIOR_ART = STORE_IDS.map((id) => ({
+  id,
+  name: CITY_INTERIOR_SCENES[id].name,
+  purpose: CITY_INTERIOR_SCENES[id].description,
+  painting: CITY_INTERIOR_SCENES[id].painting,
+  stage: 'main-ready' as const,
+}));

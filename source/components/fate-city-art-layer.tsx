@@ -73,10 +73,13 @@ export default function FateCityArtLayer({
       />
       <div
         className={styles.actor}
+        hidden={departing}
         style={{ left: player.x, top: player.y }}
         aria-label={departing ? undefined : '伊莉雅的当前站位'}
         data-foot-x={player.x.toFixed(3)}
         data-foot-y={player.y.toFixed(3)}
+        data-walk-direction={view.direction}
+        data-walk-frame={view.frame}
       >
         <span
           className={styles.shadow}

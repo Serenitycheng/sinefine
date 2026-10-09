@@ -103,8 +103,8 @@
 .departing {
   pointer-events: none;
 }
-.arriving {
-  animation: sceneIn 360ms ease-in-out both;
+.arriving .painting {
+  animation: sceneIn 220ms ease-in-out both;
 }
 @keyframes sceneIn {
   from {
@@ -319,6 +319,12 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+.quickPlaces kbd {
+  padding: 1px 4px;
+  border: 1px solid #babc9e80;
+  border-radius: 3px;
+  font-size: 11px;
 }
 .footer p {
   margin: 0 0 5px;

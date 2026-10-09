@@ -131,6 +131,27 @@ export function cityPilotInputCrossing(
       }
     : null;
 }
+/** A perspective view can make two branches share the same key sector. Offer
+ * explicit numbered choices at the actual shared junction, without guessing
+ * a turn, moving the junction, or accepting a floor outside either street. */
+export function cityPilotJunctionChoices(
+  point: CityPoint,
+  scene: CityArtScene,
+) {
+  return cityArtExits(scene)
+    .filter(
+      (exit) =>
+        distance(point, exit.point) <= 42 &&
+        cityPilotWalkable(point, 1, scene) &&
+        cityPilotWalkable(point, 1, exit.scene),
+    )
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .filter(
+      (exit, index, all) =>
+        all.findIndex((other) => other.scene === exit.scene) === index,
+    )
+    .slice(0, 4);
+}
 export function cityPilotLine(
   from: CityPoint,
   to: CityPoint,
@@ -274,6 +295,34 @@ export type CityArtJourneyLeg = {
   path: CityPoint[];
   nextScene?: CityArtScene;
 };
+/** Prefer the visible straight line for a floor click. A world-space chord
+ * can bend several times across the painting's floor triangles. Only accept
+ * the projected line when every piece is collision clear and reaches the
+ * exact requested point; otherwise use the actual pavement graph. */
+export function cityPilotClickRoute(
+  from: CityPoint,
+  to: CityPoint,
+  mode: CityArtMode,
+  scene: CityArtScene,
+) {
+  if (!cityPilotWalkable(to, 1, scene) || !cityPilotWalkable(from, 1, scene))
+    return null;
+  const painted = cityArtPaintedLine(
+    from,
+    cityPilotPaint(to, mode, scene),
+    mode,
+    scene,
+  );
+  if (
+    painted.length &&
+    distance(painted.at(-1)!, to) < 1e-6 &&
+    painted.every((point, index) =>
+      cityPilotLine(index ? painted[index - 1] : from, point, scene),
+    )
+  )
+    return painted;
+  return cityPilotRoute(from, to, scene);
+}
 const portalRoutes = new Map<string, CityPoint[] | null>();
 /** Travel between real shared junctions. A new painting is entered at the same
  * world point; the atlas never invents a shortcut across the river or a lawn. */

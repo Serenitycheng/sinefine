@@ -22,7 +22,10 @@ export function cityArtScenePlaces(scene: CityArtScene) {
       name: place.name,
       point: place.entrance,
       kind: place.kind === 'home' ? ('home' as const) : ('public' as const),
-      note: '沿用游戏中的真实门口与住处。室内原画正在制作。',
+      note:
+        place.id === 'park'
+          ? '河岸公园是室外地点，可继续沿林荫路行走。'
+          : '已到真实门口，可以进入这处建筑的主要室内。',
     })),
     ...CITY_LOCAL_PLACES.filter((place) =>
       config.locals.includes(place.id),
@@ -75,11 +78,20 @@ export function cityArtGuidePosition(
 export function cityArtGuidePositions(
   screens: readonly CityPoint[],
   size: { width: number; height: number },
+  actor?: { x: number; y: number; width: number; height: number },
 ) {
   const edge = Math.min(76, size.width / 4);
   const top = cityArtGuidePosition({ x: 0, y: -10000 }, size).y;
   const bottom = cityArtGuidePosition({ x: 0, y: 10000 }, size).y;
   const occupied: CityPoint[] = [];
+  const coversActor = (p: CityPoint) =>
+    Boolean(
+      actor &&
+      p.x + 75 > actor.x &&
+      p.x - 75 < actor.x + actor.width &&
+      p.y + 17 > actor.y &&
+      p.y - 17 < actor.y + actor.height,
+    );
   return screens.map((screen) => {
     const wanted = cityArtGuidePosition(screen, size);
     const xs = [wanted.x, edge, size.width - edge];
@@ -96,10 +108,13 @@ export function cityArtGuidePositions(
     const mark =
       candidates.find(
         (p) =>
+          !coversActor(p) &&
           !occupied.some(
             (q) => Math.abs(p.x - q.x) < 150 && Math.abs(p.y - q.y) < 34,
           ),
-      ) ?? wanted;
+      ) ??
+      candidates.find((p) => !coversActor(p)) ??
+      wanted;
     occupied.push(mark);
     return {
       ...mark,

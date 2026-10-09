@@ -22,6 +22,7 @@ export default function FateCityWayfinding({
   onPlace,
   onExit,
   inert,
+  actorBounds,
 }: {
   scene: CityArtScene;
   mode: CityArtMode;
@@ -32,6 +33,7 @@ export default function FateCityWayfinding({
   onPlace: (place: CityArtPlace) => void;
   onExit: (scene: CityArtScene, point: CityPoint) => void;
   inert: boolean;
+  actorBounds?: { x: number; y: number; width: number; height: number };
 }) {
   const guides = [
     ...places.map((place) => ({
@@ -53,7 +55,7 @@ export default function FateCityWayfinding({
     const paint = cityPilotPaint(guide.point, mode, scene);
     return { x: origin.x + paint.x * scale, y: origin.y + paint.y * scale };
   });
-  const marks = cityArtGuidePositions(screens, size);
+  const marks = cityArtGuidePositions(screens, size, actorBounds);
   return (
     <div className={styles.wayfinding} inert={inert}>
       {guides.map((guide, index) => {

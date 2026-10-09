@@ -2,6 +2,8 @@
 
 当前开发从 [精简交接](docs/development-handoff.md) 开始；本地执行、视觉检查与新会话规范见 [低流量工作流](docs/low-traffic-development.md)。以下恢复说明记录的是历史快照，不代表当前开发或线上状态。
 
+18 处建筑的主室内、美术资源与进出验收见 [室内制作交接](docs/fuyuki-interiors-2026-10-09.md)。
+
 本次恢复基于 2026-09-09 仍可访问的 Vercel 部署、数据服务和原始 Git 文件。目标仓库保持私有：Serenitycheng/sinefine-recovery。
 
 ## 当前线上版本
