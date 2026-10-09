@@ -7,6 +7,13 @@
   color: #ecebdc;
   background: #192623;
 }
+.sceneLayer {
+  position: absolute;
+  inset: 0;
+}
+.destinations[hidden] {
+  display: none;
+}
 
 .header {
   min-height: 72px;
@@ -68,6 +75,69 @@
 }
 .comparison + .return {
   margin-left: 0;
+}
+.presentations {
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid #c8b98445;
+  border-radius: 7px;
+}
+.presentations button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  color: #ccd5c3;
+  background: transparent;
+  cursor: pointer;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.presentations button[aria-pressed='true'] {
+  color: #25382e;
+  background: #d6c99f;
+}
+.presentations button:focus-visible {
+  outline: 2px solid #ecddac;
+  outline-offset: 2px;
+}
+@media (max-width: 1000px) {
+  .header {
+    gap: 10px;
+    padding: 9px 12px;
+  }
+  .sampleNote,
+  .comparison {
+    display: none;
+  }
+  .identity {
+    gap: 8px;
+  }
+  .identity h1 {
+    font-size: 11px;
+  }
+  .brand {
+    font-size: 18px;
+  }
+  .presentations button {
+    padding: 7px;
+    font-size: 11px;
+  }
+}
+@media (max-width: 600px) {
+  .identity h1,
+  .return span {
+    display: none;
+  }
+  .return {
+    padding: 8px;
+  }
+  .presentations {
+    margin-left: auto;
+  }
 }
 .viewport {
   position: relative;

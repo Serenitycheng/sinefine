@@ -1,0 +1,160 @@
+.map {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  background: #a2b193;
+  color: #eae8d4;
+  touch-action: none;
+}
+.canvas {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+.canvas:active {
+  cursor: grabbing;
+}
+.heading {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  right: 18px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  pointer-events: none;
+}
+.heading > div,
+.heading button,
+.controls,
+.locations {
+  background: #1d302bec;
+  border: 1px solid #c8b98465;
+  border-radius: 10px;
+  box-shadow: 0 8px 30px #19282322;
+}
+.heading > div {
+  padding: 15px 18px;
+}
+.heading span {
+  font-size: 10px;
+  color: #c7bb88;
+  letter-spacing: 2px;
+}
+.heading h2 {
+  font-size: 19px;
+  margin: 6px 0;
+  font-weight: 500;
+}
+.heading p {
+  font-size: 11px;
+  margin: 0;
+  color: #b1c0b0;
+}
+.heading button {
+  padding: 13px 16px;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+.controls {
+  position: absolute;
+  right: 18px;
+  top: 80px;
+  display: flex;
+  align-items: center;
+  padding: 5px;
+}
+.controls button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: inherit;
+}
+.controls output {
+  width: 48px;
+  text-align: center;
+  font-size: 12px;
+}
+.locations {
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  width: 245px;
+  padding: 14px;
+}
+.locations p {
+  margin: 0 0 5px;
+  font-size: 13px;
+}
+.locations > span {
+  color: #afbfae;
+  font-size: 11px;
+}
+.locations > div {
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+.locations button {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  color: #e6e3c9;
+  text-align: left;
+  font-size: 12px;
+  border-radius: 5px;
+}
+.map button {
+  cursor: pointer;
+}
+.map button:hover {
+  background: #526747;
+}
+.map button:focus-visible {
+  outline: 2px solid #eddd9b;
+  outline-offset: 2px;
+}
+@media (max-width: 600px) {
+  .heading {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+  .heading > div {
+    padding: 10px;
+  }
+  .heading h2 {
+    font-size: 16px;
+  }
+  .heading p {
+    display: none;
+  }
+  .heading button {
+    padding: 10px;
+    font-size: 11px;
+  }
+  .locations {
+    bottom: 8px;
+    left: 8px;
+    width: 205px;
+    padding: 10px;
+  }
+  .locations > div {
+    max-height: 170px;
+    overflow: auto;
+  }
+  .controls {
+    right: 8px;
+    top: 75px;
+  }
+}

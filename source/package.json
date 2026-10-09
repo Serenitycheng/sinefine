@@ -12,7 +12,10 @@
     "start": "next start",
     "lint": "oxlint",
     "typecheck": "tsc --noEmit",
-    "format": "oxfmt"
+    "format": "oxfmt",
+    "art:inventory": "node scripts/art-workflow.mjs inventory",
+    "art:review": "node scripts/art-workflow.mjs review",
+    "test:workflow": "node --test scripts/art-workflow.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.7.0",

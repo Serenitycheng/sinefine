@@ -37,6 +37,11 @@ import {
   type PaintedView,
   type RoadMode,
 } from './fate-art-views';
+import {
+  onSlopeWorld,
+  slopeProgress,
+  SLOPE_WORLD_PAVING,
+} from './fate-art-extension';
 
 type RoadGround = {
   floors: { view: RoadFloorView; paint: SamplePoint; radius: number }[];
@@ -48,7 +53,7 @@ const registeredGroundCache = new Map<string, RoadGround>();
  * the older overview outline clipped. Both paintings must contain the feet. */
 function onRegisteredRoadGround(
   point: SamplePoint,
-  area: 'street' | 'neighborhood',
+  area: 'street' | 'neighborhood' | 'slope',
   margin = 0,
 ) {
   const key = `${area}:${point.x},${point.y}`;
@@ -82,6 +87,17 @@ function onRegisteredRoadGround(
 }
 
 function navigationArea(point: SamplePoint): SampleScene {
+  const nearSlope =
+    point.x > 890 && point.x < 1840 && point.y > -470 && point.y < 450;
+  const progress = nearSlope ? slopeProgress(point) : -1;
+  if (
+    nearSlope &&
+    onSlopeWorld(point) &&
+    progress > 0.015 &&
+    progress < 0.985 &&
+    onRegisteredRoadGround(point, 'slope')
+  )
+    return 'slope';
   const alley = sampleAlleyPoint(point);
   if (
     // The road paintings continue to source Y=938 (alley Y=296). Classify
@@ -152,6 +168,7 @@ export function visibleSampleSegmentClear(from: SamplePoint, to: SamplePoint) {
 const detours = [
   ...SAMPLE_STREET_GROUND,
   ...NEIGHBORHOOD_PAVING.map((polygon) => polygon.map(sampleNeighborhoodWorld)),
+  ...SLOPE_WORLD_PAVING,
 ]
   .flatMap((polygon) => {
     const center = polygon.reduce(
@@ -246,9 +263,26 @@ export function visibleSampleRoute(
   // otherwise a first cross-area click would synchronously inspect thousands
   // of irrelevant pairs while the character and controls appear frozen.
   const path =
-    sampleRoute(from, to, { allowed, clear }) ??
-    sampleRoute(from, to, { allowed, clear, junctions: detours });
+    sampleRoute(from, to, { allowed, clear, cost: blockRouteCost }) ??
+    sampleRoute(from, to, {
+      allowed,
+      clear,
+      cost: blockRouteCost,
+      junctions: detours,
+    });
   return path ? softenSampleRoute(from, path, clear) : null;
+}
+
+// The returning road's curved coordinate strip is longer than its painted
+// walking distance. Charging its debug coordinates would always send people
+// backwards through the alley instead of using the visibly shorter next exit.
+function blockRouteCost(a: SamplePoint, b: SamplePoint) {
+  if (navigationArea(a) === 'slope' && navigationArea(b) === 'slope')
+    return sampleDistance(
+      sampleViewPoint(a, 'slope'),
+      sampleViewPoint(b, 'slope'),
+    );
+  return sampleDistance(a, b);
 }
 
 const paintedClearCache = new Map<string, boolean>();
@@ -574,6 +608,31 @@ export function sampleNavigableScene(
   mode: RoadMode,
 ) {
   const area = navigationArea(point);
+  const progress = slopeProgress(point);
+  if (scene === 'slope') {
+    if (progress < 0.015 && onRegisteredRoadGround(point, 'neighborhood'))
+      return 'neighborhood';
+    if (progress > 0.96 && onRegisteredRoadGround(point, 'street'))
+      return 'street';
+    if (onSlopeWorld(point)) return 'slope';
+  }
+  if (area === 'slope') {
+    // Use distinct entry/exit edges inside the shared road overlap, before
+    // the outgoing painting's curb is reached. Keep the selected camera mode.
+    if (
+      scene === 'street' &&
+      progress > 0.94 &&
+      onRegisteredRoadGround(point, 'street')
+    )
+      return 'street';
+    if (
+      scene === 'neighborhood' &&
+      progress < 0.035 &&
+      onRegisteredRoadGround(point, 'neighborhood')
+    )
+      return 'neighborhood';
+    return 'slope';
+  }
   const alley = sampleAlleyPoint(point);
   // Keep separate entrance/exit edges in the shared neighborhood doorway.
   // The newly opened foreground must not become an exit through a garden;
@@ -624,12 +683,14 @@ export function sampleNavigableView(
           'alley',
           'street',
           'neighborhood',
+          'slope',
         ]
       : [
           viewForArea(navigationArea(point), mode),
           'alley',
           viewForArea('street', mode),
           viewForArea('neighborhood', mode),
+          viewForArea('slope', mode),
         ];
   for (const fallback of fallbacks)
     if (onViewPaving(sampleViewPoint(point, fallback), fallback))

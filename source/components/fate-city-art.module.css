@@ -1,0 +1,833 @@
+.shell {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #24322c;
+  color: #e9e8d8;
+  font-family: var(--font-sans), sans-serif;
+}
+.shell button,
+.shell a,
+.shell select {
+  font: inherit;
+  color: inherit;
+}
+.shell button {
+  cursor: pointer;
+}
+.shell button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+.shell button:focus-visible,
+.shell a:focus-visible,
+.shell select:focus-visible {
+  outline: 2px solid #e3d2a2;
+  outline-offset: 3px;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  min-height: 76px;
+  padding: 14px 24px;
+  background: #1e2c27;
+  border-bottom: 1px solid #d5caa42b;
+  flex-wrap: wrap;
+}
+.brand {
+  letter-spacing: 4px;
+  color: #d5c499;
+  font-family: Georgia, serif;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.brand h1 {
+  font-family: var(--font-sans), sans-serif;
+  letter-spacing: 1px;
+  font-size: 15px;
+  font-weight: 400;
+  color: #dbdec9;
+  margin: 0;
+}
+.header nav {
+  display: flex;
+  gap: 5px;
+  margin-left: auto;
+}
+.header button,
+.header a,
+.footer button {
+  background: transparent;
+  border: 1px solid #d7c69b40;
+  border-radius: 7px;
+  padding: 10px 13px;
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  text-decoration: none;
+  font-size: 12px;
+}
+.header button[aria-pressed='true'] {
+  background: #c9c39f;
+  color: #293d30;
+  border-color: transparent;
+}
+.header button:hover,
+.footer button:hover {
+  background: #d0c6a326;
+}
+.header button[aria-pressed='true']:hover {
+  background: #d6cfad;
+}
+.stage {
+  position: relative;
+  flex: 1;
+  min-height: 270px;
+  overflow: hidden;
+  background: #25372e;
+  touch-action: none;
+}
+.stage:focus-visible {
+  outline: 2px solid #cabd90;
+  outline-offset: -2px;
+}
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+.departing {
+  pointer-events: none;
+}
+.arriving {
+  animation: sceneIn 360ms ease-in-out both;
+}
+@keyframes sceneIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.painting {
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: auto;
+}
+.marker {
+  position: absolute;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  transform: translate(-50%, -135%);
+  font-size: 11px !important;
+  padding: 6px 10px;
+  background: #2b3e32e8;
+  border: 1px solid #dacda277;
+  border-radius: 6px;
+  z-index: 3;
+}
+.marker:after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border: 2px solid #6c7951;
+  background: #e8deb6;
+  border-radius: 50%;
+  position: absolute;
+  left: calc(50% - 4px);
+  bottom: -13px;
+}
+.actor {
+  position: absolute;
+  width: 0;
+  height: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.sprite {
+  display: block;
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-repeat: no-repeat;
+  background-size: 600% 400%;
+}
+.shadow {
+  position: absolute;
+  left: -13px;
+  top: -5px;
+  width: 27px;
+  height: 9px;
+  border-radius: 50%;
+  background: #36483950;
+  filter: blur(1.5px);
+}
+.sceneBadge,
+.mapTools,
+.cameraModes,
+.nearby,
+.directionPad button {
+  background: #23372eef;
+  border: 1px solid #d1c7a34f;
+  border-radius: 9px;
+  box-shadow: 0 4px 20px #20302720;
+}
+.sceneBadge {
+  position: absolute;
+  left: 230px;
+  top: 18px;
+  padding: 12px 16px;
+  display: flex;
+  gap: 12px;
+  font-size: 13px;
+  pointer-events: none;
+}
+.sceneBadge span {
+  font-size: 11px;
+  color: #c3cbb9;
+  border-left: 1px solid #d7c89f45;
+  padding-left: 12px;
+}
+.cameraModes {
+  margin: 0;
+  min-width: 0;
+  position: absolute;
+  top: 76px;
+  left: 230px;
+  display: flex;
+  gap: 3px;
+  padding: 4px;
+}
+.cameraModes button {
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+.cameraModes button[aria-pressed='true'] {
+  color: #293d30;
+  background: #d6cdad;
+}
+.cameraModes button:hover:not(:disabled) {
+  background: #d7cba322;
+}
+.cameraModes button[aria-pressed='true']:hover:not(:disabled) {
+  background: #e1d8b9;
+}
+.loadNotice {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  transform: translate(-50%, -50%);
+  background: #293d32f2;
+  border: 1px solid #d6cdad80;
+  border-radius: 9px;
+  padding: 14px 20px;
+  font-size: 13px;
+}
+.loadNotice button {
+  padding: 6px;
+  margin-left: 12px;
+  color: #293d30;
+  background: #d6cdad;
+  border: 0;
+  border-radius: 4px;
+}
+.mapTools {
+  position: absolute;
+  right: 18px;
+  top: 18px;
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  z-index: 2;
+}
+.mapTools button {
+  display: grid;
+  place-items: center;
+  background: transparent;
+  border: none;
+  padding: 9px;
+  min-width: 36px;
+  font-size: 11px;
+  border-radius: 5px;
+}
+.mapTools button:hover,
+.mapTools button[aria-pressed='true'] {
+  background: #d0c6a327;
+}
+.mapTools output {
+  width: 47px;
+  text-align: center;
+  font-size: 12px;
+}
+.nearby {
+  position: absolute;
+  bottom: 19px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 18px;
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-size: 13px;
+}
+.nearby kbd {
+  padding: 2px 6px;
+  border: 1px solid #babc9e;
+  border-radius: 4px;
+}
+.directionPad {
+  position: absolute;
+  bottom: 18px;
+  right: 18px;
+  display: grid;
+  gap: 4px;
+  grid-template-columns: repeat(3, 40px);
+}
+.directionPad button {
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  touch-action: none;
+}
+.directionPad button:first-child {
+  grid-column: 2;
+}
+.directionPad button:nth-child(2) {
+  grid-column: 1;
+}
+.footer {
+  min-height: 88px;
+  background: #1e2c27;
+  border-top: 1px solid #d5caa42b;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 12px 24px;
+}
+.quickPlaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.footer p {
+  margin: 0 0 5px;
+  font-size: 12px;
+}
+.footer span,
+.footer a {
+  font-size: 11px;
+  color: #acbaab;
+}
+.footer a {
+  margin-left: auto;
+  text-underline-offset: 4px;
+  white-space: nowrap;
+}
+.atlas {
+  position: absolute;
+  inset: 0;
+  background: #dce1c8;
+}
+.map {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+.map:active {
+  cursor: grabbing;
+}
+.mapDestination {
+  cursor: pointer;
+}
+.mapDestination:hover,
+.mapDestination:focus-visible {
+  filter: drop-shadow(0 0 6px #fff2ae);
+  outline: 2px solid #f3d88b;
+  outline-offset: 4px;
+}
+.mapDirectory {
+  margin-top: 15px;
+}
+.mapDirectory summary {
+  cursor: pointer;
+  color: #e5e2c9;
+  font-size: 12px;
+}
+.mapDirectory h3 {
+  font-size: 15px;
+  font-weight: 400;
+}
+.directory {
+  position: absolute;
+  top: 18px;
+  bottom: 38px;
+  left: 18px;
+  width: 275px;
+  height: max-content;
+  max-height: calc(100% - 60px);
+  overflow: auto;
+  padding: 21px;
+  border-radius: 12px;
+  background: #23372eef;
+  box-shadow: 0 8px 35px #233c2820;
+  border: 1px solid #e2d7b752;
+}
+.eyebrow {
+  font-size: 10px;
+  color: #d5c28e;
+  letter-spacing: 2px;
+}
+.directory h2,
+.catalog h2,
+.dialog h2 {
+  font-size: 22px;
+  font-weight: 400;
+  margin: 10px 0 16px;
+  line-height: 1.4;
+}
+.directory p {
+  color: #c7d0bd;
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.directory label {
+  display: grid;
+  gap: 7px;
+  color: #e5e2c9;
+  font-size: 11px;
+}
+.directory select {
+  width: 100%;
+  background: #344d3b;
+  border: 1px solid #c7c6a975;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+.directory .places {
+  color: #e3dec4;
+}
+.primary {
+  padding: 12px 15px;
+  border: none;
+  border-radius: 7px;
+  background: #c7bd90;
+  color: #293d30 !important;
+  font-size: 12px !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.note {
+  color: #b5c2ad;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.note svg {
+  display: inline;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+.mapHint {
+  position: absolute;
+  bottom: 12px;
+  right: 18px;
+  color: #395447;
+  background: #e5e8d4dc;
+  border-radius: 5px;
+  font-size: 11px;
+  padding: 6px 12px;
+  pointer-events: none;
+}
+.catalog {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  padding: 32px clamp(18px, 5vw, 80px);
+  background: #273a30;
+}
+.catalog > div {
+  max-width: 800px;
+}
+.catalog p {
+  font-size: 13px;
+  color: #bcccba;
+  line-height: 1.7;
+}
+.catalog h3 {
+  font-size: 19px;
+  font-weight: 400;
+  color: #e5dec0;
+  margin-top: 32px;
+}
+.cast {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+}
+.cast article,
+.interiors article {
+  border: 1px solid #c9c29b32;
+  border-radius: 9px;
+  padding: 16px;
+  background: #304539;
+}
+.cast strong {
+  font-size: 14px;
+  font-weight: 500;
+}
+.cast span,
+.cast small,
+.interiors small,
+.interiors span,
+.interiors b {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+  color: #b5c5b2;
+  margin-top: 5px;
+}
+.interiors {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
+}
+.interiors h4 {
+  font-size: 16px;
+  font-weight: 400;
+  margin: 0;
+}
+.interiors p {
+  font-size: 12px;
+}
+.interiors b {
+  font-weight: 400;
+  color: #d4c59a;
+}
+.dialogShade {
+  position: absolute;
+  inset: 0;
+  background: #19292065;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  z-index: 10;
+}
+.dialog {
+  color: inherit;
+  position: relative;
+  background: #293d32;
+  border: 1px solid #d9cea466;
+  border-radius: 13px;
+  padding: 35px;
+  width: min(480px, 100%);
+  box-shadow: 0 16px 80px #15271e4a;
+}
+.dialog p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #c9d2bf;
+}
+.close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: transparent;
+  border: 1px solid #bcccaa44;
+  padding: 6px;
+  border-radius: 6px;
+}
+@media (max-width: 850px) {
+  .header {
+    gap: 10px;
+    padding: 10px 14px;
+  }
+  .brand {
+    font-size: 18px;
+    gap: 10px;
+  }
+  .header nav {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+  .header > a {
+    margin-left: auto;
+  }
+  .footer {
+    padding: 10px 14px;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .footer > div:not(.quickPlaces) {
+    flex: 1;
+  }
+  .footer a {
+    display: none;
+  }
+}
+@media (max-width: 520px) {
+  .brand h1 {
+    font-size: 12px;
+  }
+  .header button {
+    font-size: 11px;
+    padding: 9px;
+  }
+  .sceneBadge {
+    top: 10px;
+    left: 10px;
+    padding: 9px 10px;
+    display: block;
+    font-size: 12px;
+  }
+  .sceneBadge span {
+    display: block;
+    border: none;
+    padding: 3px 0 0;
+  }
+  .cameraModes {
+    top: 81px;
+    left: 10px;
+  }
+  .cameraModes button {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .mapTools {
+    top: 10px;
+    right: 10px;
+  }
+  .mapTools button {
+    padding: 7px;
+    min-width: 28px;
+  }
+  .mapTools output {
+    width: 36px;
+  }
+  .directory {
+    top: auto;
+    bottom: 38px;
+    left: 10px;
+    width: min(270px, calc(100% - 20px));
+    padding: 15px;
+    max-height: 55%;
+  }
+  .directory h2 {
+    font-size: 18px;
+    margin: 7px 0;
+  }
+  .directory p {
+    margin: 8px 0;
+  }
+  .directory .note {
+    display: none;
+  }
+  .nearby {
+    left: 10px;
+    transform: none;
+    bottom: 14px;
+    max-width: calc(100% - 150px);
+    font-size: 11px;
+    padding: 9px;
+  }
+  .quickPlaces button {
+    font-size: 11px;
+    padding: 8px;
+  }
+  .quickPlaces,
+  .footer > div:not(.quickPlaces) {
+    flex: 1 0 100%;
+  }
+  .dialog {
+    padding: 28px 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .departing,
+  .arriving {
+    animation-duration: 1ms;
+  }
+}
+.streetChoice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.55rem;
+}
+
+.minimap {
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  width: 194px;
+  border: 1px solid #d1c7a36b;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #23372eef;
+  z-index: 5;
+}
+.minimap button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+.minimap svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1.6;
+}
+.minimap span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 7px;
+  font-size: 10px;
+}
+.minimap b {
+  color: #f3d88b;
+}
+.minimap i {
+  color: #85b3bb;
+  font-style: normal;
+  margin-left: 5px;
+}
+.minimap small {
+  margin-left: auto;
+  font-size: 9px;
+  color: #c3cbb9;
+}
+.wayfinding {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+.guide {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  max-width: 146px;
+  padding: 5px 8px;
+  font-size: 11px !important;
+  line-height: 1.3;
+  background: #2b3e32e8;
+  border: 1px solid #dacda277;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px #1b2c2930;
+}
+.guide > svg {
+  flex: none;
+}
+.threshold {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #f5e4af;
+  border-radius: 50%;
+  background: #956f61;
+  box-shadow: 0 0 0 3px #23372e70;
+}
+.exitThreshold {
+  background: #537f87;
+  border-color: #c4ece6;
+}
+.guide span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.guide small {
+  color: #d6cdad;
+  margin-right: 5px;
+  font-size: 9px;
+}
+.exitGuide {
+  background: #28434be8;
+  border-color: #9bbeb5aa;
+}
+.exitGuide small {
+  color: #b8dedb;
+}
+.sceneBadge,
+.cameraModes {
+  z-index: 5;
+}
+@media (max-width: 850px) {
+  .sceneBadge {
+    display: block;
+    right: 18px;
+    max-width: 230px;
+  }
+  .sceneBadge span {
+    display: block;
+    border: 0;
+    padding: 3px 0 0;
+  }
+  .mapTools {
+    top: auto;
+    bottom: 116px;
+  }
+}
+@media (max-width: 520px) {
+  .minimap {
+    top: 10px;
+    left: 10px;
+    width: 132px;
+  }
+  .minimap span {
+    padding: 5px;
+    gap: 3px;
+    font-size: 9px;
+  }
+  .minimap small {
+    display: none;
+  }
+  .sceneBadge {
+    left: 152px;
+    top: 10px;
+    right: 10px;
+    padding: 8px;
+    font-size: 11px;
+  }
+  .cameraModes {
+    left: 152px;
+    top: 84px;
+    right: 10px;
+    flex-wrap: wrap;
+  }
+  .cameraModes button {
+    padding: 6px;
+    font-size: 10px;
+  }
+  .mapTools {
+    top: auto;
+    bottom: 115px;
+    right: 10px;
+  }
+  .guide {
+    padding: 4px 6px;
+    max-width: 136px;
+    font-size: 10px !important;
+  }
+}

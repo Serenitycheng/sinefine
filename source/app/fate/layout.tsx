@@ -1,9 +1,9 @@
-import { FateProvider } from '@/components/fate-provider';
+import { FateRouteProvider } from '@/components/fate-route-provider';
 
 export default function FateLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <FateProvider>{children}</FateProvider>;
+  return <FateRouteProvider>{children}</FateRouteProvider>;
 }

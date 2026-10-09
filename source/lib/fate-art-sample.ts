@@ -5,6 +5,11 @@ import {
   NEIGHBORHOOD_WORLD_PAVING,
   NEIGHBORHOOD_PLACES,
 } from './fate-art-alley';
+import {
+  SLOPE_WORLD_PAVING,
+  SLOPE_JUNCTIONS,
+  SLOPE_PLACES,
+} from './fate-art-extension';
 
 /** A connected painted art study. Its coordinates never enter the game's saves. */
 export type SamplePoint = { x: number; y: number };
@@ -80,6 +85,7 @@ export const SAMPLE_GROUND: readonly (readonly SamplePoint[])[] = [
   ...SAMPLE_STREET_GROUND,
   ALLEY_WORLD_PAVING,
   ...NEIGHBORHOOD_WORLD_PAVING,
+  ...SLOPE_WORLD_PAVING,
 ];
 
 export const SAMPLE_PLACES = [
@@ -98,7 +104,8 @@ export const SAMPLE_PLACES = [
 ] as const;
 export type SamplePlace =
   | (typeof SAMPLE_PLACES)[number]
-  | (typeof NEIGHBORHOOD_PLACES)[number];
+  | (typeof NEIGHBORHOOD_PLACES)[number]
+  | (typeof SLOPE_PLACES)[number];
 
 const JUNCTIONS: readonly SamplePoint[] = [
   { x: 235, y: 690 },
@@ -116,6 +123,8 @@ const JUNCTIONS: readonly SamplePoint[] = [
   ...ALLEY_JUNCTIONS,
   ...NEIGHBORHOOD_JUNCTIONS,
   ...NEIGHBORHOOD_PLACES.map((place) => place.point),
+  ...SLOPE_JUNCTIONS,
+  ...SLOPE_PLACES.map((place) => place.point),
 ];
 
 export function sampleDistance(a: SamplePoint, b: SamplePoint) {
@@ -228,11 +237,13 @@ export function sampleRoute(
     }
     seen.add(current);
     for (let next = 0; next < nodes.length; next++) {
-      if (seen.has(next) || !clear(nodes[current], nodes[next])) continue;
+      if (seen.has(next)) continue;
       const cost =
         costs[current] +
         (constraints?.cost ?? sampleDistance)(nodes[current], nodes[next]);
-      if (cost < costs[next]) {
+      // A traced edge is expensive; once a cheaper route is known, checking
+      // that same destination through a longer edge cannot improve it.
+      if (cost < costs[next] && clear(nodes[current], nodes[next])) {
         costs[next] = cost;
         previous[next] = current;
       }

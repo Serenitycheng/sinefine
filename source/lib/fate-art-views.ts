@@ -21,6 +21,7 @@ import {
   type SampleScene,
 } from './fate-art-alley';
 import { onRoadFloor, onRoadSidewalk } from './fate-art-road-ground';
+import { SLOPE_REGISTRATION, SLOPE_TRIANGLES } from './fate-art-extension';
 
 export const ROAD_MODES = ['overview', 'along', 'eye'] as const;
 export type RoadMode = (typeof ROAD_MODES)[number];
@@ -37,6 +38,9 @@ export const PAINTED_VIEWS = [
   'neighborhood-along',
   'street-eye',
   'neighborhood-eye',
+  'slope',
+  'slope-along',
+  'slope-eye',
 ] as const;
 export type PaintedView = (typeof PAINTED_VIEWS)[number];
 export const VIEW_PAINTINGS: Record<PaintedView, string> = {
@@ -47,8 +51,12 @@ export const VIEW_PAINTINGS: Record<PaintedView, string> = {
   'neighborhood-along': '/fate/art-sample/leafy-road-along-v4.png',
   'street-eye': '/fate/art-sample/main-road-eye-v4.png',
   'neighborhood-eye': '/fate/art-sample/leafy-road-eye-v4.png',
+  slope: '/fate/block/zelkova-slope-v1.png',
+  'slope-along': '/fate/block/zelkova-along-v1.png',
+  'slope-eye': '/fate/block/zelkova-eye-v1.png',
 };
 export function viewArea(view: PaintedView): SampleScene {
+  if (view.startsWith('slope')) return 'slope';
   return view.startsWith('street')
     ? 'street'
     : view === 'alley'
@@ -59,7 +67,8 @@ export function viewForArea(area: SampleScene, mode: RoadMode): PaintedView {
   return area === 'alley' || mode === 'overview' ? area : `${area}-${mode}`;
 }
 export function isRoadView(view: PaintedView) {
-  return view.includes('-');
+  // The returning street's oblique painting also has a curved registration.
+  return view === 'slope' || view.includes('-');
 }
 
 type Pair = { source: SamplePoint; target: SamplePoint };
@@ -78,11 +87,25 @@ function registered(view: keyof typeof ROAD_CONTROL_POINTS): RegisteredView {
     triangles: ROAD_TRIANGLES[view],
   };
 }
+function registeredSlope(
+  view: keyof typeof SLOPE_REGISTRATION,
+): RegisteredView {
+  return {
+    pairs: SLOPE_REGISTRATION[view].map(([x, y, a, b]) => ({
+      source: p(x, y),
+      target: p(a, b),
+    })),
+    triangles: SLOPE_TRIANGLES,
+  };
+}
 export const ROAD_REGISTRATION = {
   'street-along': registered('street-along'),
   'street-eye': registered('street-eye'),
   'neighborhood-along': registered('neighborhood-along'),
   'neighborhood-eye': registered('neighborhood-eye'),
+  slope: registeredSlope('slope'),
+  'slope-along': registeredSlope('slope-along'),
+  'slope-eye': registeredSlope('slope-eye'),
 } as const;
 type RoadView = keyof typeof ROAD_REGISTRATION;
 
@@ -222,7 +245,8 @@ export function onViewPaving(point: SamplePoint, view: PaintedView) {
       : onSideScenePaving(ground, area) ||
         (isRoadView(view) && onNeighborhoodRoadForeground(ground));
   if (original || !isRoadView(view)) return original;
-  if (area === 'alley' || !onRoadSidewalk(ground, area)) return false;
+  if (area === 'alley' || area === 'slope' || !onRoadSidewalk(ground, area))
+    return false;
   // A facing painting shows sidewalk between the old overview's separate
   // doorway polygons. Do not turn that visible paving into an invisible wall.
   // Extend only where the other facing painting independently has pavement;
@@ -245,7 +269,7 @@ export function roadPaintedHeight(point: SamplePoint, view: PaintedView) {
   return 0;
 }
 export function viewActorScale(point: SamplePoint, view: PaintedView) {
-  if (!isRoadView(view)) return 1;
+  if (!isRoadView(view) || view === 'slope') return 1;
   const y = sampleViewPoint(point, view).y;
   return view.endsWith('eye')
     ? Math.max(0.65, Math.min(2.9, (y - 340) / 190))

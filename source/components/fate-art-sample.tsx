@@ -25,6 +25,7 @@ import {
   House,
   Box,
   Camera,
+  Map as MapIcon,
   RotateCcw,
   CornerUpLeft,
   Minus,
@@ -73,7 +74,6 @@ import { sampleAlleyLook, stepSampleSpring } from '@/lib/fate-art-camera';
 import {
   ALLEY_AHEAD,
   NEIGHBORHOOD_CENTER,
-  NEIGHBORHOOD_PLACES,
   sampleSceneIndex,
   sampleViewWalkScale,
   type SampleScene,
@@ -105,6 +105,14 @@ import {
   sampleClickTarget,
 } from '@/lib/fate-art-navigation';
 import styles from './fate-art-sample.module.css';
+import FateBlockMap from './fate-block-map';
+import {
+  BLOCK_AREAS,
+  BLOCK_PLACES,
+  blockAreaForPlace,
+  blockExits,
+} from '@/lib/fate-art-block';
+import { SLOPE_CENTER, SLOPE_PLACES } from '@/lib/fate-art-extension';
 
 type View = {
   point: SamplePoint;
@@ -132,7 +140,7 @@ const ARROWS = [
   { key: 'ArrowDown', label: '向下行走', Icon: ArrowDown },
   { key: 'ArrowRight', label: '向右行走', Icon: ArrowRight },
 ] as const;
-const AREA_PLACES = [...SAMPLE_PLACES, ...NEIGHBORHOOD_PLACES];
+const AREA_PLACES = BLOCK_PLACES;
 function directionKeys(keys: Set<string>) {
   const x =
     Number(keys.has('d') || keys.has('ArrowRight')) -
@@ -181,6 +189,8 @@ export default function FateArtSample() {
   const direction = useRef<SampleDirection>('down');
   const distance = useRef(0);
   const modal = useRef<SamplePlace | null>(null);
+  const overviewRef = useRef(false);
+  const [overview, setOverview] = useState(false);
   const [loaded, setLoaded] = useState<Partial<Record<PaintedView, boolean>>>(
     {},
   );
@@ -218,8 +228,16 @@ export default function FateArtSample() {
     PAINTED_VIEWS.every((name) => loaded[name]) && spriteReady && !failed;
   const nearest = AREA_PLACES.find(
     (p) =>
-      sampleDistance(p.point, view.point) <
-      45 / sampleViewWalkScale(sampleSceneIndex(view.scene)),
+      blockAreaForPlace(p.id).id === view.scene &&
+      (view.scene === 'slope'
+        ? sampleDistance(
+            sampleViewPoint(p.point, view.cut.shown),
+            sampleViewPoint(view.point, view.cut.shown),
+          ) /
+            viewActorScale(view.point, view.cut.shown) <
+          55
+        : sampleDistance(p.point, view.point) <
+          45 / sampleViewWalkScale(sampleSceneIndex(view.scene))),
   );
   const inAlley = view.scene === 'alley';
   const inNeighborhood = view.scene === 'neighborhood';
@@ -528,7 +546,12 @@ export default function FateArtSample() {
       let next = point.current;
       // Both the camera and steering swap while fully covered. A held key keeps
       // its world direction until released; a new key follows the new camera.
-      if (!modal.current && !oldCut.changing && walkingInput) {
+      if (
+        !overviewRef.current &&
+        !modal.current &&
+        !oldCut.changing &&
+        walkingInput
+      ) {
         if (route.current.length) {
           setTarget(null);
           setNotice('已改为手动行走。');
@@ -546,7 +569,12 @@ export default function FateArtSample() {
           look.current,
           keyView.current,
         );
-      } else if (!modal.current && !oldCut.changing && route.current.length) {
+      } else if (
+        !overviewRef.current &&
+        !modal.current &&
+        !oldCut.changing &&
+        route.current.length
+      ) {
         const destination = route.current.at(-1)!;
         const advanced = advanceVisibleSampleRoute(
           point.current,
@@ -808,7 +836,11 @@ export default function FateArtSample() {
       if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey)
         return;
       if (event.key === 'Escape') {
-        if (modal.current) closePlace();
+        if (overviewRef.current) {
+          overviewRef.current = false;
+          setOverview(false);
+          surface.current?.focus({ preventScroll: true });
+        } else if (modal.current) closePlace();
         else if (cameraPanel) setCameraPanel(false);
         else {
           stop();
@@ -839,7 +871,7 @@ export default function FateArtSample() {
         }
         return;
       }
-      if (modal.current || !ready) return;
+      if (modal.current || overviewRef.current || !ready) return;
       if (key === 'v' && !event.repeat) {
         event.preventDefault();
         changeRoadMode(
@@ -929,6 +961,7 @@ export default function FateArtSample() {
     const wheel = (event: WheelEvent) => {
       if (
         !ready ||
+        overviewRef.current ||
         modal.current ||
         cut.current.changing ||
         (event.target instanceof Element &&
@@ -960,6 +993,7 @@ export default function FateArtSample() {
   const pointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (
       !ready ||
+      overviewRef.current ||
       modal.current ||
       cut.current.changing ||
       (event.button !== 0 && event.button !== 2) ||
@@ -992,6 +1026,7 @@ export default function FateArtSample() {
       };
   };
   const pointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (overviewRef.current) return;
     if (!pointers.current.has(event.pointerId)) return;
     const at = localPoint(event);
     pointers.current.set(event.pointerId, at);
@@ -1040,6 +1075,7 @@ export default function FateArtSample() {
     event: PointerEvent<HTMLDivElement>,
     cancelled = false,
   ) => {
+    if (overviewRef.current) return;
     const current = drag.current,
       wasPinch = Boolean(pinch.current);
     pointers.current.delete(event.pointerId);
@@ -1098,24 +1134,49 @@ export default function FateArtSample() {
         transform: `translate(${-seat.hip.x * seat.scale}px, ${-seat.hip.y * seat.scale}px)`,
       }
     : undefined;
-  const visiblePlaces =
-    viewArea(shown) === 'street'
-      ? SAMPLE_PLACES
-      : viewArea(shown) === 'neighborhood'
-        ? NEIGHBORHOOD_PLACES
-        : [];
+  const visiblePlaces = BLOCK_AREAS[viewArea(shown)].places;
+  const toggleOverview = (value: boolean) => {
+    keys.current.clear();
+    keyOrigins.current.clear();
+    pendingTap.current = { x: 0, y: 0 };
+    drag.current = null;
+    pointers.current.clear();
+    pinch.current = null;
+    setCameraPanel(false);
+    overviewRef.current = value;
+    setOverview(value);
+    if (!value) surface.current?.focus({ preventScroll: true });
+  };
 
   return (
     <main className={styles.shell}>
       <header className={styles.header} inert={Boolean(place)}>
         <div className={styles.identity}>
           <span className={styles.brand}>SINE FINE</span>
-          <h1>住宅街区试点</h1>
+          <h1>融合版样板街区</h1>
         </div>
-        <p className={styles.sampleNote}>独立预览 · 不改变日常进度</p>
-        <Link href="/fate/art-sample-3d" className={styles.comparison}>
+        <p className={styles.sampleNote}>独立画风与操作样板 · 不改变日常进度</p>
+        <div className={styles.presentations} aria-label="街区呈现方式">
+          <button
+            type="button"
+            aria-pressed={overview}
+            onClick={() => toggleOverview(true)}
+          >
+            <MapIcon size={15} />
+            2D 总览
+          </button>
+          <button
+            type="button"
+            aria-pressed={!overview}
+            onClick={() => toggleOverview(false)}
+          >
+            <Footprints size={15} />
+            2.5D 街区
+          </button>
+        </div>
+        <Link href="/fate/city-art" className={styles.comparison}>
           <Box size={17} />
-          <span>3D 对照</span>
+          <span>冬木街区制作</span>
         </Link>
         <Link href="/fate/street" className={styles.return}>
           <ArrowLeft size={17} />
@@ -1142,512 +1203,554 @@ export default function FateArtSample() {
         onPointerCancel={(e) => pointerEnd(e, true)}
       >
         <div
-          className={styles.world}
-          style={{
-            width: ART_SAMPLE.width,
-            height: ART_SAMPLE.height,
-            transform: `scale(${view.camera.scale}) translate(${-view.camera.x}px, ${-view.camera.y}px)`,
-            visibility: ready ? 'visible' : 'hidden',
-          }}
-          inert={Boolean(place) || view.cut.changing}
+          className={styles.sceneLayer}
+          inert={overview}
+          aria-hidden={overview}
         >
-          {PAINTED_VIEWS.map((name) => (
+          <div
+            className={styles.world}
+            style={{
+              width: ART_SAMPLE.width,
+              height: ART_SAMPLE.height,
+              transform: `scale(${view.camera.scale}) translate(${-view.camera.x}px, ${-view.camera.y}px)`,
+              visibility: ready ? 'visible' : 'hidden',
+            }}
+            inert={Boolean(place) || view.cut.changing}
+          >
+            {PAINTED_VIEWS.map((name) => (
+              <Image
+                key={name}
+                ref={(node) => {
+                  if (node) images.current[name] = node;
+                  else delete images.current[name];
+                }}
+                className={styles.painting}
+                style={{
+                  visibility:
+                    depthStatus !== 'ready' && shown === name
+                      ? 'visible'
+                      : 'hidden',
+                }}
+                src={VIEW_PAINTINGS[name]}
+                width={ART_SAMPLE.width}
+                height={ART_SAMPLE.height}
+                unoptimized
+                loading="eager"
+                alt=""
+                draggable={false}
+                decoding="async"
+                onLoad={() => setLoaded((v) => ({ ...v, [name]: true }))}
+                onError={() => setFailed(true)}
+              />
+            ))}
             <Image
-              key={name}
-              ref={(node) => {
-                if (node) images.current[name] = node;
-                else delete images.current[name];
-              }}
-              className={styles.painting}
-              style={{
-                visibility:
-                  depthStatus !== 'ready' && shown === name
-                    ? 'visible'
-                    : 'hidden',
-              }}
-              src={VIEW_PAINTINGS[name]}
-              width={ART_SAMPLE.width}
-              height={ART_SAMPLE.height}
+              ref={spriteImage}
+              hidden
+              src={ART_SAMPLE.sprite}
+              width={1536}
+              height={1024}
               unoptimized
               loading="eager"
               alt=""
-              draggable={false}
-              decoding="async"
-              onLoad={() => setLoaded((v) => ({ ...v, [name]: true }))}
+              onLoad={() => setSpriteReady(true)}
               onError={() => setFailed(true)}
             />
-          ))}
-          <Image
-            ref={spriteImage}
-            hidden
-            src={ART_SAMPLE.sprite}
-            width={1536}
-            height={1024}
-            unoptimized
-            loading="eager"
-            alt=""
-            onLoad={() => setSpriteReady(true)}
-            onError={() => setFailed(true)}
-          />
+            <div
+              ref={depthHost}
+              className={styles.depthLayer}
+              aria-hidden="true"
+            />
+            <Image
+              hidden
+              src={BENCH_SPRITE}
+              width={BENCH_SPRITE_CELL * 2}
+              height={BENCH_SPRITE_CELL * 2}
+              unoptimized
+              loading="eager"
+              alt=""
+              onLoad={() => setBenchReady(true)}
+              onError={() => setBenchFailed(true)}
+            />
+            {markers &&
+              !view.cut.changing &&
+              visiblePlaces
+                .filter((p) => p !== nearest)
+                .map((p) => {
+                  const at = projected(p.point);
+                  return (
+                    <button
+                      type="button"
+                      className={styles.placeMarker}
+                      key={p.id}
+                      style={{ left: at.x, top: at.y }}
+                      onClick={() => inspect(p)}
+                      aria-label={`查看${p.name}`}
+                    >
+                      <span className={styles.placeDot} />
+                      <span className={styles.placeName}>{p.name}</span>
+                    </button>
+                  );
+                })}
+            {markers &&
+              !view.cut.changing &&
+              blockExits(viewArea(shown))
+                .filter((c) => c.to === 'slope' || viewArea(shown) === 'slope')
+                .map((c) => {
+                  const at = projected(c.at);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={styles.placeMarker}
+                      style={{ left: at.x, top: at.y }}
+                      onClick={() => walkTo(c.destination)}
+                      aria-label={`沿路前往${c.name}`}
+                    >
+                      <span className={styles.placeDot} />
+                      <span className={styles.placeName}>{c.name} ↗</span>
+                    </button>
+                  );
+                })}
+            {target && (
+              <span
+                className={styles.target}
+                style={{ left: projected(target).x, top: projected(target).y }}
+              />
+            )}
+            {markers && viewArea(shown) === 'street' && !view.cut.changing && (
+              <button
+                type="button"
+                className={styles.placeMarker}
+                style={{
+                  left: projected(SAMPLE_ALLEY.bend).x,
+                  top: projected(SAMPLE_ALLEY.bend).y,
+                }}
+                onClick={walkAlley}
+                aria-label="走进咖啡店旁的小巷"
+              >
+                <span className={styles.placeDot} />
+                <span className={styles.placeName}>小巷</span>
+              </button>
+            )}
+            {markers && shown === 'alley' && !view.cut.changing && (
+              <button
+                type="button"
+                className={styles.placeMarker}
+                style={{
+                  left: projected(ALLEY_AHEAD).x,
+                  top: projected(ALLEY_AHEAD).y,
+                }}
+                onClick={() => walkTo(NEIGHBORHOOD_CENTER)}
+                aria-label="穿过小巷前往林荫支路"
+              >
+                <span className={styles.placeDot} />
+                <span className={styles.placeName}>林荫支路</span>
+              </button>
+            )}
+          </div>
           <div
-            ref={depthHost}
-            className={styles.depthLayer}
+            className={styles.character}
+            style={{
+              left: screenPerson.x,
+              top: screenPerson.y,
+              transform: `scale(${view.camera.scale})`,
+            }}
+            data-x={view.point.x.toFixed(1)}
+            data-y={view.point.y.toFixed(1)}
+            data-direction={view.direction}
+            data-frame={view.frame}
+            data-grounded={grounded ? 'true' : 'false'}
+            data-posture={view.posture}
+            data-supported-by={seat ? 'bench' : 'pavement'}
+            aria-label={`伊莉雅${seat ? '坐在长椅上' : view.moving ? '正在行走' : '已停下'}`}
+          >
+            {seat && (
+              <span
+                className={`${styles.sprite} ${styles.seatedSprite}`}
+                style={seatedStyle}
+              />
+            )}
+            {!seat &&
+              grounded &&
+              (depthStatus !== 'ready' || isRoadView(shown)) && (
+                <>
+                  <span
+                    className={styles.shadow}
+                    style={{ transform: `scale(${actorScale})` }}
+                  />
+                  <span className={styles.sprite} style={spriteStyle} />
+                </>
+              )}
+          </div>
+          <div
+            className={styles.sceneTransition}
+            style={{ opacity: viewCutCover(view.cut) }}
             aria-hidden="true"
           />
-          <Image
-            hidden
-            src={BENCH_SPRITE}
-            width={BENCH_SPRITE_CELL * 2}
-            height={BENCH_SPRITE_CELL * 2}
-            unoptimized
-            loading="eager"
-            alt=""
-            onLoad={() => setBenchReady(true)}
-            onError={() => setBenchFailed(true)}
-          />
-          {markers &&
-            !view.cut.changing &&
-            visiblePlaces
-              .filter((p) => p !== nearest)
-              .map((p) => {
-                const at = projected(p.point);
-                return (
-                  <button
-                    type="button"
-                    className={styles.placeMarker}
-                    key={p.id}
-                    style={{ left: at.x, top: at.y }}
-                    onClick={() => inspect(p)}
-                    aria-label={`查看${p.name}`}
-                  >
-                    <span className={styles.placeDot} />
-                    <span className={styles.placeName}>{p.name}</span>
-                  </button>
-                );
-              })}
-          {target && (
-            <span
-              className={styles.target}
-              style={{ left: projected(target).x, top: projected(target).y }}
-            />
+          {!ready && (
+            <output className={styles.loading}>
+              {failed ? '画面未能载入，请刷新重试。' : '正在铺开这段街道…'}
+            </output>
           )}
-          {markers && viewArea(shown) === 'street' && !view.cut.changing && (
-            <button
-              type="button"
-              className={styles.placeMarker}
-              style={{
-                left: projected(SAMPLE_ALLEY.bend).x,
-                top: projected(SAMPLE_ALLEY.bend).y,
-              }}
-              onClick={walkAlley}
-              aria-label="走进咖啡店旁的小巷"
-            >
-              <span className={styles.placeDot} />
-              <span className={styles.placeName}>小巷</span>
-            </button>
-          )}
-          {markers && shown === 'alley' && !view.cut.changing && (
-            <button
-              type="button"
-              className={styles.placeMarker}
-              style={{
-                left: projected(ALLEY_AHEAD).x,
-                top: projected(ALLEY_AHEAD).y,
-              }}
-              onClick={() => walkTo(NEIGHBORHOOD_CENTER)}
-              aria-label="穿过小巷前往林荫支路"
-            >
-              <span className={styles.placeDot} />
-              <span className={styles.placeName}>林荫支路</span>
-            </button>
-          )}
-        </div>
-        <div
-          className={styles.character}
-          style={{
-            left: screenPerson.x,
-            top: screenPerson.y,
-            transform: `scale(${view.camera.scale})`,
-          }}
-          data-x={view.point.x.toFixed(1)}
-          data-y={view.point.y.toFixed(1)}
-          data-direction={view.direction}
-          data-frame={view.frame}
-          data-grounded={grounded ? 'true' : 'false'}
-          data-posture={view.posture}
-          data-supported-by={seat ? 'bench' : 'pavement'}
-          aria-label={`伊莉雅${seat ? '坐在长椅上' : view.moving ? '正在行走' : '已停下'}`}
-        >
-          {seat && (
-            <span
-              className={`${styles.sprite} ${styles.seatedSprite}`}
-              style={seatedStyle}
-            />
-          )}
-          {!seat &&
-            grounded &&
-            (depthStatus !== 'ready' || isRoadView(shown)) && (
-              <>
-                <span
-                  className={styles.shadow}
-                  style={{ transform: `scale(${actorScale})` }}
-                />
-                <span className={styles.sprite} style={spriteStyle} />
-              </>
-            )}
-        </div>
-        <div
-          className={styles.sceneTransition}
-          style={{ opacity: viewCutCover(view.cut) }}
-          aria-hidden="true"
-        />
-        {!ready && (
-          <output className={styles.loading}>
-            {failed ? '画面未能载入，请刷新重试。' : '正在铺开这段街道…'}
-          </output>
-        )}
-        <fieldset
-          className={styles.roadModes}
-          aria-label="街道取景"
-          data-camera-ui
-          inert={Boolean(place)}
-        >
-          {ROAD_MODES.map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              disabled={!ready}
-              aria-pressed={
-                inAlley
-                  ? roadMode === mode
-                  : shown === viewForArea(view.scene, mode)
-              }
-              onClick={() => changeRoadMode(mode)}
-            >
-              {ROAD_MODE_LABELS[mode]}
-            </button>
-          ))}
-          {inAlley && <span>小巷自动取景 · 出巷后恢复</span>}
-        </fieldset>
-        <div className={styles.sceneTitle}>
-          <span className={styles.sunDot} />
-          <span>
-            {inNeighborhood ? '林荫支路' : inAlley ? '咖啡店小巷' : '住宅街'}
-          </span>
-          <span className={styles.season}>初夏的午后</span>
-        </div>
-        <div
-          className={styles.cameraTools}
-          aria-label="画面缩放与定位"
-          inert={Boolean(place)}
-          data-camera-ui
-        >
-          <button
-            type="button"
-            aria-label="缩小画面"
-            onClick={() => changeZoom(zoomRef.current / 1.2)}
-            disabled={!ready}
-          >
-            <Minus size={18} />
-          </button>
-          <span className={styles.zoom}>{Math.round(zoom * 100)}%</span>
-          <button
-            type="button"
-            aria-label="放大画面"
-            onClick={() => changeZoom(zoomRef.current * 1.2)}
-            disabled={!ready}
-          >
-            <Plus size={18} />
-          </button>
-          <button
-            type="button"
-            aria-label="查看完整画面"
-            title="完整画面"
-            onClick={showWhole}
-            disabled={!ready}
-          >
-            <Expand size={18} />
-          </button>
-          <button
-            type="button"
-            aria-label="定位人物，保留缩放"
-            title="定位人物"
-            onClick={focusPerson}
-            disabled={!ready}
-          >
-            <Focus size={18} />
-          </button>
-          <button
-            type="button"
-            aria-label="调整观察角度"
-            title="观察角度"
-            aria-expanded={cameraPanel}
-            aria-controls="sample-camera-panel"
-            onClick={() => setCameraPanel((value) => !value)}
-            disabled={!ready}
-          >
-            <Camera size={18} />
-          </button>
-          <button
-            type="button"
-            aria-label={markers ? '隐藏地点标记' : '显示地点标记'}
-            title="地点标记"
-            aria-pressed={markers}
-            onClick={() => setMarkers((v) => !v)}
-            disabled={!ready}
-          >
-            {markers ? <Eye size={18} /> : <EyeOff size={18} />}
-          </button>
-        </div>
-        {cameraPanel && (
-          <section
-            id="sample-camera-panel"
-            className={styles.cameraPanel}
+          <fieldset
+            className={styles.roadModes}
+            aria-label="街道取景"
             data-camera-ui
             inert={Boolean(place)}
-            aria-label="观察角度"
           >
-            <div className={styles.cameraPanelTitle}>
-              <span>沿街看看</span>
+            {ROAD_MODES.map((mode) => (
               <button
+                key={mode}
                 type="button"
-                aria-label="关闭观察角度"
-                onClick={() => setCameraPanel(false)}
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <button
-              className={styles.followTurns}
-              type="button"
-              disabled={depthStatus !== 'ready'}
-              aria-pressed={followTurns}
-              onClick={() => {
-                const enabled = !turnFollow.current;
-                turnFollow.current = enabled;
-                setFollowTurns(enabled);
-                if (!enabled) {
-                  desiredLook.current = { ...look.current };
-                  setLookSetting(desiredLook.current);
+                disabled={!ready}
+                aria-pressed={
+                  inAlley
+                    ? roadMode === mode
+                    : shown === viewForArea(view.scene, mode)
                 }
-              }}
-            >
-              <CornerUpLeft size={15} />
-              {followTurns ? '转弯随行：开启' : '转弯随行：关闭'}
-            </button>
-            <div className={styles.lookPresets}>
-              <button
-                type="button"
-                disabled={depthStatus !== 'ready'}
-                onClick={() => changeLook({ yaw: -14, tilt: 0 })}
+                onClick={() => changeRoadMode(mode)}
               >
-                <ArrowLeft size={15} />
-                左看
+                {ROAD_MODE_LABELS[mode]}
               </button>
-              <button
-                type="button"
-                disabled={depthStatus !== 'ready'}
-                onClick={() => changeLook({ ...NEUTRAL_LOOK })}
-              >
-                <RotateCcw size={14} />
-                回正
-              </button>
-              <button
-                type="button"
-                disabled={depthStatus !== 'ready'}
-                onClick={() => changeLook({ yaw: 14, tilt: 0 })}
-              >
-                右看
-                <ArrowRight size={15} />
-              </button>
-            </div>
-            <label>
-              左右转向{' '}
-              <output>
-                {(followTurns ? view.look.yaw : lookSetting.yaw).toFixed(0)}°
-              </output>
-              <input
-                aria-label="左右转向角度"
-                type="range"
-                min={-SAMPLE_LOOK.yaw}
-                max={SAMPLE_LOOK.yaw}
-                step="0.5"
-                value={followTurns ? view.look.yaw : lookSetting.yaw}
-                disabled={depthStatus !== 'ready'}
-                onChange={(event) =>
-                  changeLook({
-                    ...(turnFollow.current
-                      ? look.current
-                      : desiredLook.current),
-                    yaw: Number(event.target.value),
-                  })
-                }
-              />
-            </label>
-            <label>
-              上下观察{' '}
-              <output>
-                {(followTurns ? view.look.tilt : lookSetting.tilt) > 0
-                  ? '+'
-                  : ''}
-                {(followTurns ? view.look.tilt : lookSetting.tilt).toFixed(0)}°
-              </output>
-              <input
-                aria-label="上下观察角度"
-                type="range"
-                min={-SAMPLE_LOOK.tilt}
-                max={SAMPLE_LOOK.tilt}
-                step="0.5"
-                value={followTurns ? view.look.tilt : lookSetting.tilt}
-                disabled={depthStatus !== 'ready'}
-                onChange={(event) =>
-                  changeLook({
-                    ...(turnFollow.current
-                      ? look.current
-                      : desiredLook.current),
-                    tilt: Number(event.target.value),
-                  })
-                }
-              />
-            </label>
-            <button
-              className={styles.turnMode}
-              type="button"
-              disabled={depthStatus !== 'ready'}
-              aria-pressed={turnDrag}
-              onClick={() => setTurnDrag((value) => !value)}
-            >
-              {turnDrag ? '拖动：转动镜头' : '拖动：浏览街道'}
-            </button>
-            <p>
-              {depthStatus === 'unavailable'
-                ? '当前设备使用原画视角，仍可行走、拖动与缩放。'
-                : depthStatus === 'loading'
-                  ? '正在准备观察角度…'
-                  : 'V 切换取景 · 右键拖动观察 · Q / R 左右转向 · C 回正。平视和沿路都可继续行走。'}
-            </p>
-          </section>
-        )}
-        <div className={styles.personStatus}>
-          <Footprints size={17} />
-          <span>伊莉雅</span>
-          <span className={styles.personAction}>
-            {view.posture === 'sitting'
-              ? '坐在树下休息'
-              : view.posture === 'approaching'
-                ? '走向树下长椅'
-                : view.moving
-                  ? inAlley
-                    ? '沿石板路慢走'
-                    : '沿街慢走'
-                  : '停在树影里'}
-          </span>
-        </div>
-        {nearest && !place && (
-          <button
-            type="button"
-            className={styles.nearby}
-            disabled={nearest.id === 'bench' && !benchReady}
-            onClick={() =>
-              nearest.id === 'bench' ? sitOnBench() : inspect(nearest)
-            }
+            ))}
+            {inAlley && <span>小巷自动取景 · 出巷后恢复</span>}
+          </fieldset>
+          <div className={styles.sceneTitle}>
+            <span className={styles.sunDot} />
+            <span>{BLOCK_AREAS[view.scene].name}</span>
+            <span className={styles.season}>初夏的午后</span>
+          </div>
+          <div
+            className={styles.cameraTools}
+            aria-label="画面缩放与定位"
+            inert={Boolean(place)}
+            data-camera-ui
           >
-            {nearest.id === 'home' || nearest.id === 'lane-home' ? (
-              <House size={18} />
-            ) : nearest.id === 'bench' ? (
-              <Armchair size={18} />
-            ) : (
-              <Coffee size={18} />
-            )}
-            <span>
-              {nearest.id === 'bench'
-                ? view.posture === 'sitting'
-                  ? '起身继续走'
-                  : '坐在长椅上'
-                : `看看${nearest.name}`}
+            <button
+              type="button"
+              aria-label="缩小画面"
+              onClick={() => changeZoom(zoomRef.current / 1.2)}
+              disabled={!ready}
+            >
+              <Minus size={18} />
+            </button>
+            <span className={styles.zoom}>{Math.round(zoom * 100)}%</span>
+            <button
+              type="button"
+              aria-label="放大画面"
+              onClick={() => changeZoom(zoomRef.current * 1.2)}
+              disabled={!ready}
+            >
+              <Plus size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label="查看完整画面"
+              title="完整画面"
+              onClick={showWhole}
+              disabled={!ready}
+            >
+              <Expand size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label="定位人物，保留缩放"
+              title="定位人物"
+              onClick={focusPerson}
+              disabled={!ready}
+            >
+              <Focus size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label="调整观察角度"
+              title="观察角度"
+              aria-expanded={cameraPanel}
+              aria-controls="sample-camera-panel"
+              onClick={() => setCameraPanel((value) => !value)}
+              disabled={!ready}
+            >
+              <Camera size={18} />
+            </button>
+            <button
+              type="button"
+              aria-label={markers ? '隐藏地点标记' : '显示地点标记'}
+              title="地点标记"
+              aria-pressed={markers}
+              onClick={() => setMarkers((v) => !v)}
+              disabled={!ready}
+            >
+              {markers ? <Eye size={18} /> : <EyeOff size={18} />}
+            </button>
+          </div>
+          {cameraPanel && (
+            <section
+              id="sample-camera-panel"
+              className={styles.cameraPanel}
+              data-camera-ui
+              inert={Boolean(place)}
+              aria-label="观察角度"
+            >
+              <div className={styles.cameraPanelTitle}>
+                <span>沿街看看</span>
+                <button
+                  type="button"
+                  aria-label="关闭观察角度"
+                  onClick={() => setCameraPanel(false)}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+              <button
+                className={styles.followTurns}
+                type="button"
+                disabled={depthStatus !== 'ready'}
+                aria-pressed={followTurns}
+                onClick={() => {
+                  const enabled = !turnFollow.current;
+                  turnFollow.current = enabled;
+                  setFollowTurns(enabled);
+                  if (!enabled) {
+                    desiredLook.current = { ...look.current };
+                    setLookSetting(desiredLook.current);
+                  }
+                }}
+              >
+                <CornerUpLeft size={15} />
+                {followTurns ? '转弯随行：开启' : '转弯随行：关闭'}
+              </button>
+              <div className={styles.lookPresets}>
+                <button
+                  type="button"
+                  disabled={depthStatus !== 'ready'}
+                  onClick={() => changeLook({ yaw: -14, tilt: 0 })}
+                >
+                  <ArrowLeft size={15} />
+                  左看
+                </button>
+                <button
+                  type="button"
+                  disabled={depthStatus !== 'ready'}
+                  onClick={() => changeLook({ ...NEUTRAL_LOOK })}
+                >
+                  <RotateCcw size={14} />
+                  回正
+                </button>
+                <button
+                  type="button"
+                  disabled={depthStatus !== 'ready'}
+                  onClick={() => changeLook({ yaw: 14, tilt: 0 })}
+                >
+                  右看
+                  <ArrowRight size={15} />
+                </button>
+              </div>
+              <label>
+                左右转向{' '}
+                <output>
+                  {(followTurns ? view.look.yaw : lookSetting.yaw).toFixed(0)}°
+                </output>
+                <input
+                  aria-label="左右转向角度"
+                  type="range"
+                  min={-SAMPLE_LOOK.yaw}
+                  max={SAMPLE_LOOK.yaw}
+                  step="0.5"
+                  value={followTurns ? view.look.yaw : lookSetting.yaw}
+                  disabled={depthStatus !== 'ready'}
+                  onChange={(event) =>
+                    changeLook({
+                      ...(turnFollow.current
+                        ? look.current
+                        : desiredLook.current),
+                      yaw: Number(event.target.value),
+                    })
+                  }
+                />
+              </label>
+              <label>
+                上下观察{' '}
+                <output>
+                  {(followTurns ? view.look.tilt : lookSetting.tilt) > 0
+                    ? '+'
+                    : ''}
+                  {(followTurns ? view.look.tilt : lookSetting.tilt).toFixed(0)}
+                  °
+                </output>
+                <input
+                  aria-label="上下观察角度"
+                  type="range"
+                  min={-SAMPLE_LOOK.tilt}
+                  max={SAMPLE_LOOK.tilt}
+                  step="0.5"
+                  value={followTurns ? view.look.tilt : lookSetting.tilt}
+                  disabled={depthStatus !== 'ready'}
+                  onChange={(event) =>
+                    changeLook({
+                      ...(turnFollow.current
+                        ? look.current
+                        : desiredLook.current),
+                      tilt: Number(event.target.value),
+                    })
+                  }
+                />
+              </label>
+              <button
+                className={styles.turnMode}
+                type="button"
+                disabled={depthStatus !== 'ready'}
+                aria-pressed={turnDrag}
+                onClick={() => setTurnDrag((value) => !value)}
+              >
+                {turnDrag ? '拖动：转动镜头' : '拖动：浏览街道'}
+              </button>
+              <p>
+                {depthStatus === 'unavailable'
+                  ? '当前设备使用原画视角，仍可行走、拖动与缩放。'
+                  : depthStatus === 'loading'
+                    ? '正在准备观察角度…'
+                    : 'V 切换取景 · 右键拖动观察 · Q / R 左右转向 · C 回正。平视和沿路都可继续行走。'}
+              </p>
+            </section>
+          )}
+          <div className={styles.personStatus}>
+            <Footprints size={17} />
+            <span>伊莉雅</span>
+            <span className={styles.personAction}>
+              {view.posture === 'sitting'
+                ? '坐在树下休息'
+                : view.posture === 'approaching'
+                  ? '走向树下长椅'
+                  : view.moving
+                    ? inAlley
+                      ? '沿石板路慢走'
+                      : '沿街慢走'
+                    : '停在树影里'}
             </span>
-            <kbd>E</kbd>
-          </button>
-        )}
-        <div className={styles.directionPad} aria-label="触控行走">
-          {ARROWS.map(({ key, label, Icon }) => (
+          </div>
+          {nearest && !place && (
             <button
-              key={key}
               type="button"
-              aria-label={label}
-              disabled={!ready || Boolean(place)}
-              onPointerDown={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                event.currentTarget.setPointerCapture(event.pointerId);
-                focusPerson();
-                pressWalkKey(key);
-              }}
-              onPointerUp={() => releaseWalkKey(key)}
-              onPointerCancel={() => {
-                keys.current.delete(key);
-                keyOrigins.current.delete(key);
-              }}
-              onLostPointerCapture={() => releaseWalkKey(key)}
+              className={styles.nearby}
+              disabled={nearest.id === 'bench' && !benchReady}
+              onClick={() =>
+                nearest.id === 'bench' ? sitOnBench() : inspect(nearest)
+              }
             >
-              <Icon size={19} />
+              {nearest.id === 'home' ||
+              nearest.id === 'lane-home' ||
+              nearest.id === 'slope-home' ? (
+                <House size={18} />
+              ) : nearest.id === 'bench' ? (
+                <Armchair size={18} />
+              ) : (
+                <Coffee size={18} />
+              )}
+              <span>
+                {nearest.id === 'bench'
+                  ? view.posture === 'sitting'
+                    ? '起身继续走'
+                    : '坐在长椅上'
+                  : `看看${nearest.name}`}
+              </span>
+              <kbd>E</kbd>
             </button>
-          ))}
+          )}
+          <div className={styles.directionPad} aria-label="触控行走">
+            {ARROWS.map(({ key, label, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                aria-label={label}
+                disabled={!ready || Boolean(place)}
+                onPointerDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                  focusPerson();
+                  pressWalkKey(key);
+                }}
+                onPointerUp={() => releaseWalkKey(key)}
+                onPointerCancel={() => {
+                  keys.current.delete(key);
+                  keyOrigins.current.delete(key);
+                }}
+                onLostPointerCapture={() => releaseWalkKey(key)}
+              >
+                <Icon size={19} />
+              </button>
+            ))}
+          </div>
+          {place && (
+            <dialog
+              open
+              className={styles.placeCard}
+              aria-modal="true"
+              aria-labelledby="art-place-title"
+            >
+              <button
+                type="button"
+                ref={closeButton}
+                className={styles.close}
+                aria-label="关闭地点预览"
+                onClick={closePlace}
+              >
+                <X size={20} />
+              </button>
+              <span className={styles.cardEyebrow}>
+                {place.id === 'bench' ? '树影下的一角' : '门前一角'}
+              </span>
+              <h2 id="art-place-title">{place.name}</h2>
+              <p>{place.description}</p>
+              <p className={styles.indoorNote}>
+                {place.id === 'bench'
+                  ? '走到椅边就能坐下。坐着可以换取景，按 E 或方向键起身。'
+                  : '本次试点展示街道与门前，室内另行打磨。'}
+              </p>
+              <button
+                className={styles.goButton}
+                type="button"
+                disabled={place.id === 'bench' && !benchReady}
+                onClick={() => {
+                  const p = place;
+                  const arrived = sampleDistance(p.point, point.current) < 4;
+                  closePlace();
+                  if (p.id === 'bench') sitOnBench();
+                  else if (!arrived) walkTo(p.point, p);
+                }}
+              >
+                <Footprints size={17} />
+                {place.id === 'bench'
+                  ? view.posture === 'sitting'
+                    ? '起身继续走'
+                    : atSampleBench(view.point)
+                      ? '坐下休息'
+                      : '走过去坐下'
+                  : sampleDistance(place.point, view.point) < 4
+                    ? '再沿街走走'
+                    : '走到门前'}
+              </button>
+            </dialog>
+          )}
         </div>
-        {place && (
-          <dialog
-            open
-            className={styles.placeCard}
-            aria-modal="true"
-            aria-labelledby="art-place-title"
-          >
-            <button
-              type="button"
-              ref={closeButton}
-              className={styles.close}
-              aria-label="关闭地点预览"
-              onClick={closePlace}
-            >
-              <X size={20} />
-            </button>
-            <span className={styles.cardEyebrow}>
-              {place.id === 'bench' ? '树影下的一角' : '门前一角'}
-            </span>
-            <h2 id="art-place-title">{place.name}</h2>
-            <p>{place.description}</p>
-            <p className={styles.indoorNote}>
-              {place.id === 'bench'
-                ? '走到椅边就能坐下。坐着可以换取景，按 E 或方向键起身。'
-                : '本次试点展示街道与门前，室内另行打磨。'}
-            </p>
-            <button
-              className={styles.goButton}
-              type="button"
-              disabled={place.id === 'bench' && !benchReady}
-              onClick={() => {
-                const p = place;
-                const arrived = sampleDistance(p.point, point.current) < 4;
-                closePlace();
-                if (p.id === 'bench') sitOnBench();
-                else if (!arrived) walkTo(p.point, p);
-              }}
-            >
-              <Footprints size={17} />
-              {place.id === 'bench'
-                ? view.posture === 'sitting'
-                  ? '起身继续走'
-                  : atSampleBench(view.point)
-                    ? '坐下休息'
-                    : '走过去坐下'
-                : sampleDistance(place.point, view.point) < 4
-                  ? '再沿街走走'
-                  : '走到门前'}
-            </button>
-          </dialog>
+        {overview && (
+          <FateBlockMap
+            point={view.point}
+            area={view.scene}
+            onReturn={() => toggleOverview(false)}
+            onWalk={(p, destination) => {
+              toggleOverview(false);
+              walkTo(p, destination);
+            }}
+          />
         )}
       </div>
-      <footer className={styles.footer} inert={Boolean(place)}>
-        <div className={styles.destinations} aria-label="小样地点">
+      <footer className={styles.footer} inert={Boolean(place) || overview}>
+        <div
+          className={styles.destinations}
+          aria-label="街区地点与相邻道路"
+          hidden={overview}
+        >
           <button
             type="button"
             disabled={!ready}
@@ -1688,6 +1791,41 @@ export default function FateArtSample() {
               树下长椅
             </button>
           )}
+          {view.scene === 'slope' ? (
+            SLOPE_PLACES.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                disabled={!ready}
+                onClick={() => walkTo(p.point, p)}
+              >
+                {p.id === 'bakery' ? <Coffee size={16} /> : <House size={16} />}
+                {p.name}
+              </button>
+            ))
+          ) : view.scene === 'alley' ? (
+            <button
+              type="button"
+              disabled={!ready}
+              onClick={() => walkTo(SLOPE_CENTER)}
+            >
+              <Footprints size={16} />
+              榉树坡道
+            </button>
+          ) : null}
+          {blockExits(view.scene)
+            .filter((c) => c.to === 'slope' || view.scene === 'slope')
+            .map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                disabled={!ready}
+                onClick={() => walkTo(c.destination)}
+              >
+                <CornerUpLeft size={16} />
+                前往{c.name}
+              </button>
+            ))}
           <button
             type="button"
             disabled={!ready}
@@ -1701,9 +1839,15 @@ export default function FateArtSample() {
           </button>
         </div>
         <div className={styles.message}>
-          <output aria-live="polite">{notice}</output>
+          <output aria-live="polite">
+            {overview
+              ? '总览中可拖动、缩放或选择地点。返回街区后继续原来的路线。'
+              : notice}
+          </output>
           <p className={styles.instructions}>
-            WASD 行走 · V 换取景 · 拖动浏览 · 右键转向 · E 查看
+            {overview
+              ? 'Esc 返回街区 · 地点目录沿路前往 · 浏览地图不会移动人物'
+              : 'WASD 行走 · V 换取景 · 拖动浏览 · 右键转向 · E 查看'}
           </p>
         </div>
       </footer>

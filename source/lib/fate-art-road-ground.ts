@@ -1,9 +1,11 @@
 import type { SamplePoint } from './fate-art-sample';
+import { SLOPE_FLOORS } from './fate-art-extension';
 
 // Independently traced from the four road paintings. Registration describes
 // where a world point is drawn; it cannot establish that the painted pixel is
 // pavement. These outlines keep feet clear of actual walls, pots and bicycles.
 export const ROAD_FLOORS = {
+  ...SLOPE_FLOORS,
   'street-eye': [
     [0, 705],
     [145, 664],

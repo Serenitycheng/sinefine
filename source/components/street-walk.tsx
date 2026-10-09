@@ -1311,12 +1311,12 @@ export default function StreetWalk({
         </div>
         <div className={styles.headerActions}>
           <Link
-            href="/fate/art-sample"
+            href="/fate/city-art"
             className={styles.aiButton}
-            aria-label="查看街道美术小样"
+            aria-label="查看按冬木地图制作的街区预览"
           >
             <Palette size={16} />
-            <span>美术小样</span>
+            <span>街区预览</span>
           </Link>
           <button
             type="button"

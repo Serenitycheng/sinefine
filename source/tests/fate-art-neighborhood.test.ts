@@ -41,7 +41,9 @@ import {
 } from '../lib/fate-art-depth';
 
 void test('the pilot uses one world for the street, alley and residential lane', () => {
-  for (const scene of SAMPLE_SCENES)
+  // These three affine views allow extrapolation of any point. The curved
+  // returning street is tested on its own registered corridor in block tests.
+  for (const scene of SAMPLE_SCENES.filter((s) => s !== 'slope'))
     for (const world of [
       ART_SAMPLE.start,
       ALLEY_AHEAD,
@@ -194,7 +196,7 @@ void test('camera changes at both pilot corners stay covered and screen-relative
       );
       assert.equal(sampleSceneTransition(spring.value).cover, 0);
     }
-  for (const scene of SAMPLE_SCENES)
+  for (const scene of SAMPLE_SCENES.filter((s) => s !== 'slope'))
     for (const look of [
       { yaw: 0, tilt: 0 },
       { yaw: 10, tilt: -3 },

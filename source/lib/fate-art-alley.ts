@@ -1,7 +1,13 @@
 import type { SamplePoint } from './fate-art-sample';
+import { slopePoint, slopeWorld, onSlopePaving } from './fate-art-extension';
 
 /** Authored views of one connected neighborhood. Positions stay in one world. */
-export const SAMPLE_SCENES = ['street', 'alley', 'neighborhood'] as const;
+export const SAMPLE_SCENES = [
+  'street',
+  'alley',
+  'neighborhood',
+  'slope',
+] as const;
 export type SampleScene = (typeof SAMPLE_SCENES)[number];
 export const ALLEY_PAINTING = '/fate/art-sample/cafe-alley-facing-v4.png';
 export const NEIGHBORHOOD_PAINTING = '/fate/art-sample/leafy-lane-v4.png';
@@ -230,6 +236,7 @@ export const NEIGHBORHOOD_JUNCTIONS = [
 ].map(sampleNeighborhoodWorld);
 
 export function sampleScenePoint(point: SamplePoint, scene: SampleScene) {
+  if (scene === 'slope') return slopePoint(point);
   return scene === 'street'
     ? point
     : scene === 'alley'
@@ -238,6 +245,7 @@ export function sampleScenePoint(point: SamplePoint, scene: SampleScene) {
 }
 
 export function sampleSceneWorld(point: SamplePoint, scene: SampleScene) {
+  if (scene === 'slope') return slopeWorld(point);
   return scene === 'street'
     ? point
     : scene === 'alley'
@@ -246,6 +254,7 @@ export function sampleSceneWorld(point: SamplePoint, scene: SampleScene) {
 }
 
 export function onSideScenePaving(point: SamplePoint, scene: SampleScene) {
+  if (scene === 'slope') return onSlopePaving(point);
   return scene === 'alley' ? onAlleyPaving(point) : onNeighborhoodPaving(point);
 }
 

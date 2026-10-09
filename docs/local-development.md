@@ -1,10 +1,14 @@
 # SINE FINE 本地开发
 
-工作仓库：`D:\projects\sinefine-recovery`。应用目录：`source/`。
+当前工作仓库：`D:\projects\sinefine`。应用目录：`source/`。
+
+新一轮先读 [精简交接](development-handoff.md) 与根 `AGENTS.md`，按 [低流量工作流](low-traffic-development.md) 执行。大型新阶段使用新普通会话，不复制旧长聊天和截图历史。
 
 ## 安装与启动
 
 使用 Node.js **24.x**（完整安装包含 npm），在仓库根目录运行：
+
+已有依赖时跳过安装；先检查当前预览服务与端口，能复用就不另开同用途服务。安装本身需要联网，日常渲染／测试不需要重装依赖。
 
 ```powershell
 .\sinefine.ps1 install

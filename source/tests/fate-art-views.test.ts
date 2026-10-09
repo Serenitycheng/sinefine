@@ -40,6 +40,12 @@ import {
   advanceViewRoute,
 } from '../lib/fate-art-views';
 import { onRoadFloor } from '../lib/fate-art-road-ground';
+import { BLOCK_AREAS } from '../lib/fate-art-block';
+import {
+  onSlopePaving,
+  SLOPE_CENTER,
+  SLOPE_PLACES,
+} from '../lib/fate-art-extension';
 
 const cross = (
   a: { x: number; y: number },
@@ -74,11 +80,20 @@ void test('road projection is invertible throughout every walkable polygon, incl
       );
     }
     const main = viewArea(view) === 'street';
-    const points = (main ? SAMPLE_STREET_GROUND : NEIGHBORHOOD_PAVING).flat();
+    const slope = viewArea(view) === 'slope';
+    // A curved street has its own independently traced floor and registration.
+    // Its boundary is covered separately by the block navigation regression.
+    const points = slope
+      ? SLOPE_PLACES.map((p) => ({ ...sampleViewPoint(p.point, 'slope') }))
+      : (main ? SAMPLE_STREET_GROUND : NEIGHBORHOOD_PAVING).flat();
     for (let x = 100; x < 1672; x += 19)
       for (let y = 170; y < 940; y += 19) {
         if (
-          main ? onSampleStreetGround({ x, y }) : onNeighborhoodPaving({ x, y })
+          slope
+            ? onSlopePaving({ x, y }) && onViewPaving({ x, y }, 'slope')
+            : main
+              ? onSampleStreetGround({ x, y })
+              : onNeighborhoodPaving({ x, y })
         )
           points.push({ x, y });
       }
@@ -95,7 +110,9 @@ void test('road projection is invertible throughout every walkable polygon, incl
       );
       assert.equal(
         onViewPaving(paint, view),
-        onRoadFloor(paint, view),
+        slope
+          ? onRoadFloor(paint, view) && onViewPaving(local, 'slope')
+          : onRoadFloor(paint, view),
         `${view}: registration alone must not declare walls walkable`,
       );
     }
@@ -107,21 +124,34 @@ void test('walls remain rejected after projection; authored doorway anchors and 
     ROAD_REGISTRATION,
   ) as (keyof typeof ROAD_REGISTRATION)[]) {
     const main = viewArea(view) === 'street';
+    const slope = viewArea(view) === 'slope';
     for (const p of [
-      main ? { x: 540, y: 420 } : { x: 600, y: 200 },
-      main ? { x: 1300, y: 200 } : { x: 1270, y: 520 },
+      main
+        ? { x: 540, y: 420 }
+        : slope
+          ? { x: 450, y: 420 }
+          : { x: 600, y: 200 },
+      main
+        ? { x: 1300, y: 200 }
+        : slope
+          ? { x: 1560, y: 420 }
+          : { x: 1270, y: 520 },
     ]) {
       const world = sampleSceneWorld(p, viewArea(view));
       assert.equal(onViewPaving(sampleViewPoint(world, view), view), false);
     }
-    for (const place of main ? SAMPLE_PLACES : NEIGHBORHOOD_PLACES) {
+    for (const place of slope
+      ? SLOPE_PLACES
+      : main
+        ? SAMPLE_PLACES
+        : NEIGHBORHOOD_PLACES) {
       const restored = sampleViewWorld(
         sampleViewPoint(place.point, view),
         view,
       );
       assert.ok(sampleDistance(place.point, restored) < 1e-7);
       const route = sampleRoute(
-        main ? ART_SAMPLE.start : NEIGHBORHOOD_CENTER,
+        slope ? SLOPE_CENTER : main ? ART_SAMPLE.start : NEIGHBORHOOD_CENTER,
         restored,
       );
       assert.ok(route, `${view}: route to ${place.id}`);
@@ -135,9 +165,11 @@ void test('screen-relative controls use the local perspective and preserve direc
     const point =
       viewArea(view) === 'street'
         ? ART_SAMPLE.start
-        : viewArea(view) === 'neighborhood'
-          ? NEIGHBORHOOD_CENTER
-          : { x: 1070, y: 340 };
+        : viewArea(view) === 'slope'
+          ? SLOPE_CENTER
+          : viewArea(view) === 'neighborhood'
+            ? NEIGHBORHOOD_CENTER
+            : { x: 1070, y: 340 };
     for (const look of [
       { yaw: -SAMPLE_LOOK.yaw, tilt: -SAMPLE_LOOK.tilt },
       { yaw: SAMPLE_LOOK.yaw, tilt: SAMPLE_LOOK.tilt },
@@ -192,8 +224,7 @@ void test('screen-relative controls use the local perspective and preserve direc
 
 void test('perspective walking slows apparent motion with distance and leaves the original views unchanged', () => {
   for (const view of PAINTED_VIEWS) {
-    const point =
-      viewArea(view) === 'street' ? ART_SAMPLE.start : NEIGHBORHOOD_CENTER;
+    const point = BLOCK_AREAS[viewArea(view)].center;
     const scale = viewActorScale(point, view);
     assert.ok(scale >= 0.38 && scale <= 2.9);
     for (const input of [
@@ -217,11 +248,8 @@ void test('walking past perspective seams and doorways never jumps and reaches e
   for (const view of Object.keys(
     ROAD_REGISTRATION,
   ) as (keyof typeof ROAD_REGISTRATION)[]) {
-    const main = viewArea(view) === 'street';
-    const points = [
-      main ? ART_SAMPLE.start : NEIGHBORHOOD_CENTER,
-      ...(main ? SAMPLE_PLACES : NEIGHBORHOOD_PLACES).map((p) => p.point),
-    ];
+    const area = BLOCK_AREAS[viewArea(view)];
+    const points = [area.center, ...area.places.map((p) => p.point)];
     for (let from = 0; from < points.length; from++) {
       for (let to = 0; to < points.length; to++) {
         if (from === to) continue;
