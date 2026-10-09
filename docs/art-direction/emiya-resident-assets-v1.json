@@ -1,0 +1,52 @@
+{
+  "date": "2026-10-09",
+  "basis": "Saber 日常服饰适配；延续柔和融合画风，无背景重绘；未放大原生尺寸。",
+  "calibration": "source/lib/fate-saber-sprite-data.json",
+  "assets": [
+    {
+      "id": "saber-walk-soft-v1",
+      "path": "source/public/fate/character-art/saber-walk-soft-v1.png",
+      "role": "四方向六帧居家行走",
+      "version": "v1",
+      "status": "selected",
+      "bytes": 1906158,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "4930d7cbacb4065e57991bff977f04098089c6a98519582bf5d94513c934cc14",
+      "alpha": true,
+      "nativePreserved": true,
+      "generator": "built-in image_gen",
+      "prompt": "docs/art-direction/emiya-resident-prompts-v1.json#walk"
+    },
+    {
+      "id": "saber-life-soft-v1",
+      "path": "source/public/fate/character-art/saber-life-soft-v1.png",
+      "role": "六种生活姿势各两帧",
+      "version": "v1",
+      "status": "candidate-not-selected-two-cropped-feet",
+      "bytes": 864990,
+      "width": 2172,
+      "height": 724,
+      "sha256": "0fb2ce785bd93868b0eae7224cd0f0544a05c993b0d68020b72357c546f1ae10",
+      "alpha": true,
+      "nativePreserved": true,
+      "generator": "built-in image_gen",
+      "prompt": "docs/art-direction/emiya-resident-prompts-v1.json#life"
+    },
+    {
+      "id": "saber-life-soft-v2",
+      "path": "source/public/fate/character-art/saber-life-soft-v2.png",
+      "role": "六种生活姿势各两帧",
+      "version": "v2",
+      "status": "selected",
+      "bytes": 868271,
+      "width": 2172,
+      "height": 724,
+      "sha256": "2fa93898a470dcfb9567265341fd0db806e0bacc25cbcdd463d23cf9fef0cc9a",
+      "alpha": true,
+      "nativePreserved": true,
+      "generator": "built-in image_gen",
+      "prompt": "docs/art-direction/emiya-resident-prompts-v1.json#lifeCorrection"
+    }
+  ]
+}

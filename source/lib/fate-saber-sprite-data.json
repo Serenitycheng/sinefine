@@ -1,0 +1,541 @@
+{
+  "walking": {
+    "path": "/fate/character-art/saber-walk-soft-v1.png",
+    "width": 1536,
+    "height": 1024,
+    "frames": {
+      "down": [
+        {
+          "x": 99,
+          "y": 12,
+          "width": 90,
+          "height": 243,
+          "anchorX": 45,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 84,
+            "height": 237
+          }
+        },
+        {
+          "x": 338,
+          "y": 13,
+          "width": 96,
+          "height": 242,
+          "anchorX": 48,
+          "anchorY": 238,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 90,
+            "height": 236
+          }
+        },
+        {
+          "x": 583,
+          "y": 13,
+          "width": 102,
+          "height": 242,
+          "anchorX": 50,
+          "anchorY": 238,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 96,
+            "height": 236
+          }
+        },
+        {
+          "x": 841,
+          "y": 13,
+          "width": 100,
+          "height": 242,
+          "anchorX": 48,
+          "anchorY": 238,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 94,
+            "height": 236
+          }
+        },
+        {
+          "x": 1094,
+          "y": 13,
+          "width": 102,
+          "height": 242,
+          "anchorX": 54,
+          "anchorY": 238,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 96,
+            "height": 236
+          }
+        },
+        {
+          "x": 1351,
+          "y": 13,
+          "width": 96,
+          "height": 242,
+          "anchorX": 49,
+          "anchorY": 238,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 90,
+            "height": 236
+          }
+        }
+      ],
+      "left": [
+        {
+          "x": 98,
+          "y": 265,
+          "width": 82,
+          "height": 244,
+          "anchorX": 37,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 76,
+            "height": 238
+          }
+        },
+        {
+          "x": 311,
+          "y": 265,
+          "width": 144,
+          "height": 244,
+          "anchorX": 69,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 138,
+            "height": 238
+          }
+        },
+        {
+          "x": 561,
+          "y": 265,
+          "width": 139,
+          "height": 244,
+          "anchorX": 67,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 133,
+            "height": 238
+          }
+        },
+        {
+          "x": 817,
+          "y": 265,
+          "width": 142,
+          "height": 244,
+          "anchorX": 67,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 136,
+            "height": 238
+          }
+        },
+        {
+          "x": 1075,
+          "y": 265,
+          "width": 139,
+          "height": 244,
+          "anchorX": 66,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 133,
+            "height": 238
+          }
+        },
+        {
+          "x": 1336,
+          "y": 265,
+          "width": 131,
+          "height": 244,
+          "anchorX": 61,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 125,
+            "height": 238
+          }
+        }
+      ],
+      "right": [
+        {
+          "x": 99,
+          "y": 519,
+          "width": 89,
+          "height": 245,
+          "anchorX": 49,
+          "anchorY": 241,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 83,
+            "height": 239
+          }
+        },
+        {
+          "x": 322,
+          "y": 519,
+          "width": 136,
+          "height": 244,
+          "anchorX": 71,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 130,
+            "height": 238
+          }
+        },
+        {
+          "x": 572,
+          "y": 519,
+          "width": 137,
+          "height": 243,
+          "anchorX": 69,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 131,
+            "height": 237
+          }
+        },
+        {
+          "x": 828,
+          "y": 515,
+          "width": 136,
+          "height": 248,
+          "anchorX": 68,
+          "anchorY": 244,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 130,
+            "height": 242
+          }
+        },
+        {
+          "x": 1084,
+          "y": 519,
+          "width": 141,
+          "height": 243,
+          "anchorX": 73,
+          "anchorY": 239,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 135,
+            "height": 237
+          }
+        },
+        {
+          "x": 1345,
+          "y": 519,
+          "width": 130,
+          "height": 244,
+          "anchorX": 68,
+          "anchorY": 240,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 124,
+            "height": 238
+          }
+        }
+      ],
+      "up": [
+        {
+          "x": 97,
+          "y": 770,
+          "width": 93,
+          "height": 239,
+          "anchorX": 46,
+          "anchorY": 235,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 87,
+            "height": 233
+          }
+        },
+        {
+          "x": 346,
+          "y": 770,
+          "width": 96,
+          "height": 239,
+          "anchorX": 46,
+          "anchorY": 235,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 90,
+            "height": 233
+          }
+        },
+        {
+          "x": 588,
+          "y": 768,
+          "width": 103,
+          "height": 241,
+          "anchorX": 54,
+          "anchorY": 237,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 97,
+            "height": 235
+          }
+        },
+        {
+          "x": 836,
+          "y": 770,
+          "width": 108,
+          "height": 239,
+          "anchorX": 59,
+          "anchorY": 235,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 102,
+            "height": 233
+          }
+        },
+        {
+          "x": 1102,
+          "y": 770,
+          "width": 102,
+          "height": 239,
+          "anchorX": 49,
+          "anchorY": 235,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 96,
+            "height": 233
+          }
+        },
+        {
+          "x": 1348,
+          "y": 769,
+          "width": 100,
+          "height": 240,
+          "anchorX": 51,
+          "anchorY": 236,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 94,
+            "height": 234
+          }
+        }
+      ]
+    }
+  },
+  "actions": {
+    "path": "/fate/character-art/saber-life-soft-v2.png",
+    "width": 2172,
+    "height": 724,
+    "scale": 0.8714918759231906,
+    "frames": {
+      "sit": [
+        {
+          "x": 74,
+          "y": 83,
+          "width": 179,
+          "height": 266,
+          "anchorX": 88,
+          "anchorY": 262,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 173,
+            "height": 260
+          }
+        },
+        {
+          "x": 74,
+          "y": 447,
+          "width": 179,
+          "height": 260,
+          "anchorX": 87,
+          "anchorY": 256,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 173,
+            "height": 254
+          }
+        }
+      ],
+      "read": [
+        {
+          "x": 424,
+          "y": 86,
+          "width": 215,
+          "height": 262,
+          "anchorX": 107,
+          "anchorY": 258,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 209,
+            "height": 256
+          }
+        },
+        {
+          "x": 424,
+          "y": 446,
+          "width": 215,
+          "height": 260,
+          "anchorX": 107,
+          "anchorY": 256,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 209,
+            "height": 254
+          }
+        }
+      ],
+      "cook": [
+        {
+          "x": 791,
+          "y": 15,
+          "width": 174,
+          "height": 351,
+          "anchorX": 102,
+          "anchorY": 347,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 168,
+            "height": 345
+          }
+        },
+        {
+          "x": 810,
+          "y": 375,
+          "width": 156,
+          "height": 338,
+          "anchorX": 85,
+          "anchorY": 334,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 150,
+            "height": 332
+          }
+        }
+      ],
+      "eat": [
+        {
+          "x": 1156,
+          "y": 84,
+          "width": 192,
+          "height": 268,
+          "anchorX": 108,
+          "anchorY": 264,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 186,
+            "height": 262
+          }
+        },
+        {
+          "x": 1157,
+          "y": 446,
+          "width": 192,
+          "height": 263,
+          "anchorX": 107,
+          "anchorY": 259,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 186,
+            "height": 257
+          }
+        }
+      ],
+      "sleep": [
+        {
+          "x": 1472,
+          "y": 183,
+          "width": 369,
+          "height": 165,
+          "anchorX": 117,
+          "anchorY": 161,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 363,
+            "height": 159
+          }
+        },
+        {
+          "x": 1473,
+          "y": 544,
+          "width": 368,
+          "height": 161,
+          "anchorX": 120,
+          "anchorY": 157,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 362,
+            "height": 155
+          }
+        }
+      ],
+      "bench": [
+        {
+          "x": 1941,
+          "y": 25,
+          "width": 131,
+          "height": 350,
+          "anchorX": 67,
+          "anchorY": 209,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 125,
+            "height": 344
+          }
+        },
+        {
+          "x": 1943,
+          "y": 387,
+          "width": 131,
+          "height": 329,
+          "anchorX": 67,
+          "anchorY": 196,
+          "bounds": {
+            "x": 3,
+            "y": 3,
+            "width": 125,
+            "height": 323
+          }
+        }
+      ]
+    }
+  }
+}

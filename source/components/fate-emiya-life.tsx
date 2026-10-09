@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { fatePerson } from '@/lib/fate-cast';
 import { lifeTime } from '@/lib/fate-life';
+import type { PartnerId } from '@/lib/fate-cast';
+import { activeMeal, homeMealSummary } from '@/lib/fate-meals';
+import { EMIYA_ROOMS } from '@/lib/fate-emiya-house';
+import { EMIYA_TOPICS } from '@/lib/fate-emiya-household';
 import {
   EMIYA_LIFE_KEY,
   EmiyaLifeSession,
@@ -15,7 +19,21 @@ import styles from './fate-emiya-house.module.css';
 export default function FateEmiyaLifePlaytest() {
   const [session, setSession] = useState<EmiyaLifeSession | null>(null);
   const [open, setOpen] = useState(true);
+  const [selected, setSelected] = useState<PartnerId | null>(null);
+  const [householdOpen, setHouseholdOpen] = useState(false);
+  const selectResident = useCallback((id: PartnerId) => {
+    setSelected(id);
+    setHouseholdOpen(true);
+  }, []);
+  const [residentRequest, setResidentRequest] = useState<{
+    id: PartnerId;
+    serial: number;
+  } | null>(null);
   const [notice, setNotice] = useState('正在打开试玩记录…');
+  const [actionRequest, setActionRequest] = useState<{
+    id: string;
+    serial: number;
+  } | null>(null);
   useEffect(() => {
     let cancelled = false;
     queueMicrotask(() => {
@@ -84,6 +102,33 @@ export default function FateEmiyaLifePlaytest() {
   return (
     <FateEmiyaHouse
       life={session}
+      onResidentSelect={selectResident}
+      residentRequest={residentRequest}
+      actionRequest={actionRequest}
+      lifeInteractions={
+        <EmiyaHouseholdPanel
+          session={session}
+          selected={selected}
+          expanded={householdOpen}
+          onExpandedChange={setHouseholdOpen}
+          onApproach={(id) => {
+            setSelected(id);
+            setHouseholdOpen(false);
+            setResidentRequest((previous) => ({
+              id,
+              serial: (previous?.serial ?? 0) + 1,
+            }));
+          }}
+          onTask={(id) => {
+            setHouseholdOpen(false);
+            setActionRequest((previous) => ({
+              id,
+              serial: (previous?.serial ?? 0) + 1,
+            }));
+          }}
+          onSave={persist}
+        />
+      }
       onExit={() => {
         persist();
         setOpen(false);
@@ -92,6 +137,224 @@ export default function FateEmiyaLifePlaytest() {
         <EmiyaLifeControls session={session} notice={notice} onSave={persist} />
       }
     />
+  );
+}
+
+function EmiyaHouseholdPanel({
+  session,
+  selected,
+  onApproach,
+  onSave,
+  onTask,
+  expanded,
+  onExpandedChange,
+}: {
+  session: EmiyaLifeSession;
+  selected: PartnerId | null;
+  onApproach: (id: PartnerId) => void;
+  onSave: () => void;
+  onTask: (id: string) => void;
+  expanded: boolean;
+  onExpandedChange: (value: boolean) => void;
+}) {
+  const [, refresh] = useState(0);
+  const [message, setMessage] = useState('');
+  useEffect(() => {
+    const timer = window.setInterval(() => refresh((value) => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const bodies = session.house.all();
+  const meal = session.life.meals.find(
+    (meal) => meal.home === 'emiya' && activeMeal(session.life, meal.id),
+  );
+  const chosen = bodies.find((body) => body.id === selected);
+  const invitation = session.household.invitations.findLast(
+    (i) => i.person === selected,
+  );
+  const help = session.household.help;
+  const reminder = session.household.notices.findLast(
+    (n) => session.life.minutes - n.minute <= 30,
+  );
+  const previous = session.life.events.findLast(
+    (event) =>
+      event.interaction?.speaker === 'shirou' &&
+      event.interaction.target === selected,
+  );
+  return (
+    <details
+      className={styles.household}
+      open={expanded}
+      onToggle={(event) => onExpandedChange(event.currentTarget.open)}
+    >
+      <summary>
+        屋内居民 ·{' '}
+        {bodies.length
+          ? bodies.map((body) => fatePerson(body.id)?.name).join('、')
+          : '暂时没人'}
+      </summary>
+      <div className={styles.householdBody}>
+        <p>
+          {meal
+            ? homeMealSummary(session.life, meal)
+            : session.hasFood()
+              ? '餐桌上留着家常饭。'
+              : '桌上还没有备好的饭。'}
+        </p>
+        <p>
+          {session.household.table.dirty
+            ? '餐桌还有碗筷，等大家吃完后再收拾。'
+            : session.household.table.set
+              ? '碗筷已摆好，家人的位置也留好了。'
+              : '餐桌是干净的。'}
+        </p>
+        {reminder && (
+          <output
+            className={styles.householdNotice}
+            data-life-notice={reminder.key}
+          >
+            {fatePerson(reminder.person)?.name}：{reminder.text}
+          </output>
+        )}
+        <div>
+          {bodies.map((body) => (
+            <button
+              type="button"
+              key={body.id}
+              onClick={() => onApproach(body.id)}
+            >
+              {fatePerson(body.id)?.name} · {EMIYA_ROOMS[body.room].name}
+              {body.phase === 'walking'
+                ? '（走动中）'
+                : body.phase === 'leaving'
+                  ? '（出门中）'
+                  : ''}
+            </button>
+          ))}
+        </div>
+        {selected && (
+          <p>
+            {chosen
+              ? `${fatePerson(selected)?.name}：${session.life.people[selected].activity?.reason ?? '稍歇一会儿。'}`
+              : '这位居民已经出门。'}
+          </p>
+        )}
+        {invitation && (
+          <p data-life-invitation={invitation.status}>
+            {invitation.status === 'walking'
+              ? `家人正在沿路过来${!session.running ? '；时间已暂停，继续时间后才会行走' : ''}。`
+              : invitation.status === 'seated'
+                ? '家人已实际到餐桌，等你一起吃。'
+                : invitation.reply}
+          </p>
+        )}
+        {selected && (
+          <button
+            type="button"
+            onClick={() => {
+              const result = session.talk(selected);
+              setMessage(result.message);
+              refresh((value) => value + 1);
+              if (result.ok) onSave();
+            }}
+          >
+            聊几句
+          </button>
+        )}
+        {selected && (
+          <details className={styles.householdOptions}>
+            <summary>聊天、邀约与小帮忙</summary>
+            <div className={styles.householdButtons}>
+              {EMIYA_TOPICS.map((topic) => (
+                <button
+                  key={topic.id}
+                  type="button"
+                  onClick={() => {
+                    const result = session.talk(selected, topic.id);
+                    setMessage(result.message);
+                    refresh((v) => v + 1);
+                    if (result.ok) onSave();
+                  }}
+                >
+                  {topic.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  const result = session.inviteToMeal(selected);
+                  setMessage(result.message);
+                  refresh((v) => v + 1);
+                  onSave();
+                }}
+              >
+                叫家人吃饭
+              </button>
+              {invitation?.status === 'walking' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const result = session.cancelInvitation(selected);
+                    setMessage(result.message);
+                    refresh((v) => v + 1);
+                    onSave();
+                  }}
+                >
+                  这次先不等
+                </button>
+              )}
+              {(['set-table', 'clear-table'] as const).map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => {
+                    const result = session.requestHelp(id, selected);
+                    setMessage(result.message);
+                    refresh((v) => v + 1);
+                    if (result.ok) {
+                      onTask(id);
+                      onSave();
+                    }
+                  }}
+                >
+                  {id === 'set-table' ? '请帮忙摆碗筷' : '一起收拾餐桌'}
+                </button>
+              ))}
+            </div>
+          </details>
+        )}
+        {help && (
+          <p data-life-cooperation={help.activity}>
+            和{fatePerson(help.person)?.name}
+            {help.activity === 'set-table' ? '摆碗筷' : '收拾餐桌'}：
+            {session.life.people[help.person].activity?.kind === 'eat'
+              ? '等家人吃完，再一起动手。'
+              : '等你到桌旁就位。'}{' '}
+            <button
+              type="button"
+              onClick={() => {
+                session.cancelHelp();
+                onTask('stop');
+                setMessage('这次共同家务先放下，没有完成收益。');
+                refresh((v) => v + 1);
+                onSave();
+              }}
+            >
+              放下这件事
+            </button>
+          </p>
+        )}
+        <output aria-live="polite">{message}</output>
+        {previous?.interaction && (
+          <div className={styles.householdConversation}>
+            <p>士郎：{previous.interaction.message}</p>
+            <p>
+              {fatePerson(previous.interaction.target)?.name}：
+              {previous.interaction.reply}
+            </p>
+          </div>
+        )}
+      </div>
+    </details>
   );
 }
 

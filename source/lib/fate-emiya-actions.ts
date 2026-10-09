@@ -1,8 +1,10 @@
 import spriteData from './fate-emiya-sprite-data.json';
 import shirouLife from './fate-shirou-life-data.json';
+import saberData from './fate-saber-sprite-data.json';
+import { SHIROU_SIDE_GAIT } from './fate-emiya-walk';
+import { EMIYA_LIFE_ACTIVITIES } from './fate-emiya-household';
 import {
   EMIYA_ROOMS,
-  EMIYA_ACTIVITIES,
   type EmiyaActivity,
   type EmiyaLocation,
   type EmiyaRoomId,
@@ -22,6 +24,8 @@ export type SpriteFrame = {
 export const EMIYA_LIFE_SPRITES = spriteData.actions;
 export const SHIROU_WALK_SPRITES = spriteData.walking;
 export const SHIROU_LIFE_SPRITES = shirouLife;
+export const SABER_WALK_SPRITES = saberData.walking;
+export const SABER_LIFE_SPRITES = saberData.actions;
 export const EMIYA_MATERIAL_ATLAS =
   '/fate/interior-art/emiya-materials-soft-v1.png';
 export const EMIYA_REQUIRED_ART = [
@@ -30,11 +34,14 @@ export const EMIYA_REQUIRED_ART = [
     EMIYA_MATERIAL_ATLAS,
     EMIYA_LIFE_SPRITES.path,
     SHIROU_WALK_SPRITES.path,
+    SHIROU_SIDE_GAIT.path,
   ]),
 ];
 export const SHIROU_REQUIRED_ART = [
   ...EMIYA_REQUIRED_ART.filter((url) => url !== EMIYA_LIFE_SPRITES.path),
   SHIROU_LIFE_SPRITES.path,
+  SABER_WALK_SPRITES.path,
+  SABER_LIFE_SPRITES.path,
 ];
 
 /** Activity presentation has its own contact on the furniture. The safe floor
@@ -53,7 +60,7 @@ export function emiyaActivityPose(
           ? 'read'
           : activity.id === 'sit'
             ? 'sit'
-            : activity.id === 'cook'
+            : activity.kind === 'cook'
               ? 'cook'
               : activity.id === 'eat'
                 ? 'eat'
@@ -94,7 +101,8 @@ export function emiyaActorContact(
   active: { id: string; seconds: number } | null,
 ) {
   const activity =
-    active && EMIYA_ACTIVITIES.find((activity) => activity.id === active.id);
+    active &&
+    EMIYA_LIFE_ACTIVITIES.find((activity) => activity.id === active.id);
   const pose = activity ? emiyaActivityPose(activity, active!.seconds) : null;
   return {
     point: pose?.point ?? location.point,

@@ -1,0 +1,93 @@
+{
+  "path": "/fate/character-art/shirou-walk-side-soft-v2.png",
+  "width": 1536,
+  "height": 1024,
+  "scale": 0.6455696202531646,
+  "cycleDistance": 341,
+  "frames": [
+    {
+      "x": 118,
+      "y": 13,
+      "width": 308,
+      "height": 492,
+      "anchorX": 150,
+      "anchorY": 487,
+      "bounds": {
+        "x": 3,
+        "y": 3,
+        "width": 302,
+        "height": 486
+      }
+    },
+    {
+      "x": 682,
+      "y": 12,
+      "width": 190,
+      "height": 495,
+      "anchorX": 76,
+      "anchorY": 490,
+      "bounds": {
+        "x": 3,
+        "y": 3,
+        "width": 184,
+        "height": 489
+      }
+    },
+    {
+      "x": 1193,
+      "y": 12,
+      "width": 152,
+      "height": 495,
+      "anchorX": 73,
+      "anchorY": 490,
+      "bounds": {
+        "x": 3,
+        "y": 3,
+        "width": 146,
+        "height": 489
+      }
+    },
+    {
+      "x": 111,
+      "y": 522,
+      "width": 322,
+      "height": 477,
+      "anchorX": 158,
+      "anchorY": 472,
+      "bounds": {
+        "x": 3,
+        "y": 3,
+        "width": 316,
+        "height": 471
+      }
+    },
+    {
+      "x": 682,
+      "y": 522,
+      "width": 189,
+      "height": 480,
+      "anchorX": 76,
+      "anchorY": 475,
+      "bounds": {
+        "x": 3,
+        "y": 3,
+        "width": 183,
+        "height": 474
+      }
+    },
+    {
+      "x": 1193,
+      "y": 522,
+      "width": 164,
+      "height": 480,
+      "anchorX": 74,
+      "anchorY": 475,
+      "bounds": {
+        "x": 3,
+        "y": 3,
+        "width": 158,
+        "height": 474
+      }
+    }
+  ]
+}

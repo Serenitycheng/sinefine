@@ -1,0 +1,30 @@
+{
+  "date": "2026-10-09",
+  "tool": "built-in image_gen",
+  "version": "shirou-side-gait-v2",
+  "reference": "source/public/fate/character-art/shirou-walk-soft-v1.png",
+  "referenceCrop": [70, 256, 150, 256],
+  "selected": {
+    "path": "source/public/fate/character-art/shirou-walk-side-soft-v2.png",
+    "purpose": "Six left-profile contact/support/passing phases. Right profile uses runtime mirroring. Original idle, front and back sprites remain in use.",
+    "width": 1536,
+    "height": 1024,
+    "bytes": 1494991,
+    "sha256": "f33cdff98598c3359527cc1cc45b44e217e8203d6fd295653f51ed60eb4dd168",
+    "format": "native RGBA PNG, transparent, no resizing or pixel alteration",
+    "calibration": "source/lib/fate-shirou-gait-data.json",
+    "phaseOrder": ["right-contact", "right-support", "left-passing", "left-contact", "left-support", "right-passing"],
+    "cycleDistance": 341,
+    "prompt": "Create a clean transparent RGBA GAME WALK CYCLE of the exact same soft anime Shirou in the reference. CHANGE POSE ONLY: same red-brown short hair, white/navy raglan shirt, dark navy trousers, indoor slippers, lean teenage natural proportions, gentle soft matte shading. Exactly SIX separate complete figures on a genuinely TRANSPARENT canvas, organized 3 columns by 2 rows, landscape approximately 1536x1024. ALL SIX face strictly LEFT, same scale, aligned hip center and foot-ground baseline. NO BACKGROUND COLOR, no dark green backdrop from the reference, no gradients, checkerboard, shadows, floor, text, diagram arrows or grid. Each sprite fully within its cell with generous transparent separation. The animation order is top row left to right then bottom row left to right: 1 RIGHT FOOT CONTACT: right foot long forward toward LEFT, left foot back to RIGHT, arms oppose legs. 2 RIGHT FOOT SUPPORT/DOWN: front right foot flat on ground beneath/just ahead of hips, left knee bends and back heel lifts, feet MUCH CLOSER than pose 1. 3 LEFT LEG PASSING: RIGHT leg almost straight under hips supports body, LEFT bent knee raised and crossing forward; one lifted slipper, feet near together; this is a clear NARROW silhouette, not split legs. 4 LEFT FOOT CONTACT: LEFT foot forward toward LEFT, RIGHT foot back to RIGHT; switch arm counter-swing from pose 1. 5 LEFT FOOT SUPPORT/DOWN: left foot planted near hips, right trailing knee bends with raised heel; clearly narrower than pose 4. 6 RIGHT LEG PASSING: LEFT leg under hips supports body, RIGHT bent knee raised passing forward, one lifted slipper, a NARROW silhouette, opposite pose 3. Poses 1 and 4 are wide contact silhouettes; poses 2 and 5 have feet closing; poses 3 and 6 are distinct passing poses with feet below hips. Do NOT repeat six wide split-leg poses. Body advances by gait, no running, moonwalking, jumping, or exaggerated knee lift. Small opposing arm swing, head stays same scale. Complete hair, fingertips and slippers. The crucial success criterion is visibly DIFFERENT foot separation across wide, down, passing phases, and the forward supporting anatomical leg swaps in second half."
+  },
+  "rejected": {
+    "path": "source/.verification/shirou-walk-20261009/rejected-whole-sheet.png",
+    "reason": "Whole-sheet candidate retained repeated wide side poses and did not produce the requested eight columns. Not registered or used in the game.",
+    "promptSummary": "Repair four directional rows, preserve identity and softness, request rest plus six alternating contact/support/passing phases and another rest. Only one retry was made, using a cropped standing reference and a single side-view cycle."
+  },
+  "notes": [
+    "Original art files remain unchanged. Right mirroring is a local CSS rendering operation, not an edited PNG.",
+    "Front/back frames are locally reordered; the original standing sprite remains separate from the side walking cycle.",
+    "Six discrete frames are a sprite animation, not a skeleton or inverse-kinematics foot solver. User feedback on the final feel remains useful."
+  ]
+}

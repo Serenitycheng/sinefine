@@ -11,6 +11,11 @@ import {
   type ReactNode,
 } from 'react';
 import type { EmiyaLifeSession } from '@/lib/fate-emiya-life';
+import type { EmiyaResidentBody } from '@/lib/fate-emiya-residents';
+import type { PartnerId } from '@/lib/fate-cast';
+import { EMIYA_LIFE_ACTIVITIES } from '@/lib/fate-emiya-household';
+import { emiyaWalkAdvance, shirouWalkSprite } from '@/lib/fate-emiya-walk';
+import FateEmiyaResident from './fate-emiya-resident';
 import {
   ArrowDown,
   ArrowLeft,
@@ -29,7 +34,6 @@ import { ILLYA_ART_SPRITE } from '@/lib/fate-character-art';
 import {
   EMIYA_REQUIRED_ART,
   EMIYA_LIFE_SPRITES,
-  SHIROU_WALK_SPRITES,
   SHIROU_LIFE_SPRITES,
   SHIROU_REQUIRED_ART,
   emiyaActivityPose,
@@ -48,7 +52,10 @@ import {
   interiorProject,
   interiorUnproject,
 } from '@/lib/fate-city-interior-scenes';
-import { interiorMove } from '@/lib/fate-city-interior-navigation';
+import {
+  interiorMove,
+  interiorClearSegment,
+} from '@/lib/fate-city-interior-navigation';
 import {
   EMIYA_ACTIVITIES,
   EMIYA_ENTRY,
@@ -89,6 +96,7 @@ type Goal =
   | { kind: 'exit' }
   | { kind: 'activity'; id: string }
   | { kind: 'walk' }
+  | { kind: 'resident'; id: PartnerId }
   | { kind: 'inspect'; piece: string };
 type Engine = {
   player: Entity;
@@ -100,6 +108,7 @@ type Engine = {
   activity: { id: string; seconds: number } | null;
   goal: Goal | null;
   meal: boolean;
+  inhabitants: EmiyaResidentBody[];
   closedWindows: Set<EmiyaRoomId>;
   doors: Set<string>;
   returnDoor: string | null;
@@ -139,7 +148,8 @@ const createEngine = (life?: EmiyaLifeSession): Engine => ({
   resting: 0,
   activity: null,
   goal: null,
-  meal: life?.meal ?? false,
+  meal: life?.hasFood() ?? false,
+  inhabitants: life?.house.all() ?? [],
   closedWindows: new Set(),
   doors: new Set(),
   returnDoor: null,
@@ -166,6 +176,10 @@ const snapshot = (e: Engine) => ({
   routine: e.routine,
   resting: e.resting,
   meal: e.meal,
+  inhabitants: e.inhabitants.map((body) => ({
+    ...body,
+    point: { ...body.point },
+  })),
   activity: e.activity ? { ...e.activity } : null,
   closedWindows: new Set(e.closedWindows),
   doors: new Set(e.doors),
@@ -176,11 +190,20 @@ export default function FateEmiyaHouse({
   onExit,
   life,
   lifeControls,
+  lifeInteractions,
+  onResidentSelect,
+  residentRequest,
+  actionRequest,
 }: {
   onExit: () => void;
   life?: EmiyaLifeSession;
   lifeControls?: ReactNode;
+  lifeInteractions?: ReactNode;
+  onResidentSelect?: (id: PartnerId) => void;
+  residentRequest?: { id: PartnerId; serial: number } | null;
+  actionRequest?: { id: string; serial: number } | null;
 }) {
+  const activities = life ? EMIYA_LIFE_ACTIVITIES : EMIYA_ACTIVITIES;
   const engine = useRef<Engine | null>(null);
   const [view, setView] = useState(() => snapshot(createEngine(life)));
   useLayoutEffect(() => {
@@ -247,7 +270,8 @@ export default function FateEmiyaHouse({
   );
   const framing = useRef({ origin, size, scale, zoom });
   const publish = () => setView(snapshot(engine.current!));
-  const stop = (feedback = false) => {
+  const stop = (feedback = false, keepHelp = false) => {
+    if (!keepHelp) life?.cancelHelp();
     keys.current.clear();
     held.current = { x: 0, y: 0 };
     const e = engine.current!;
@@ -255,20 +279,23 @@ export default function FateEmiyaHouse({
     e.goal = null;
     e.activity = null;
     e.player.frame = 0;
+    e.player.walked = 0;
+    publish();
     if (feedback) {
-      publish();
       setMessage('已停下；活动也已取消。');
     }
   };
   const walkTo = (target: EmiyaLocation, goal: Goal = { kind: 'walk' }) => {
     if (load !== 'ready') return;
-    stop();
+    stop(
+      false,
+      goal.kind === 'activity' && life?.household.help?.activity === goal.id,
+    );
     const e = engine.current!,
-      route = emiyaHouseRoute(
-        e.player,
-        target,
-        e.residentVisible && !e.residentOn ? e.resident : undefined,
-      );
+      route = emiyaHouseRoute(e.player, target, [
+        ...e.inhabitants,
+        ...(e.residentVisible && !e.residentOn ? [e.resident] : []),
+      ]);
     if (!route) {
       setMessage('这处是家具或墙边，请选择空出的通路。');
       publish();
@@ -281,6 +308,12 @@ export default function FateEmiyaHouse({
     publish();
   };
   const activity = (a: EmiyaActivity) => {
+    life?.beginActivity(a.id);
+    const plan = life?.activityPlan(a);
+    if (plan && !plan.ok && !('waiting' in plan && plan.waiting)) {
+      setMessage(plan.message);
+      return;
+    }
     if (a.id === 'eat' && !engine.current!.meal) {
       setMessage('先在灶台做好家常饭，再到小餐桌用餐。');
       return;
@@ -288,9 +321,18 @@ export default function FateEmiyaHouse({
     walkTo({ room: a.room, point: a.point }, { kind: 'activity', id: a.id });
   };
   const choosePiece = (id: string) => {
-    const a = EMIYA_ACTIVITIES.find(
-      (a) => a.room === room.id && a.piece === id,
-    );
+    const a =
+      life && id === 'kitchen-table'
+        ? activities.find(
+            (a) =>
+              a.id ===
+              (life.household.table.dirty
+                ? 'clear-table'
+                : life.hasFood() && !life.household.table.set
+                  ? 'set-table'
+                  : 'eat'),
+          )
+        : activities.find((a) => a.room === room.id && a.piece === id);
     if (a) {
       activity(a);
       return;
@@ -301,6 +343,40 @@ export default function FateEmiyaHouse({
   };
   const goDoor = (door: EmiyaDoor) =>
     walkTo({ room: door.to, point: door.arrival });
+  const chooseResident = (id: PartnerId) => {
+    const body = engine.current!.inhabitants.find((body) => body.id === id);
+    if (!body) return;
+    onResidentSelect?.(id);
+    const e = engine.current!;
+    if (body.room === e.player.room && gap(body.point, e.player.point) <= 85) {
+      stop();
+      publish();
+      return;
+    }
+    const candidates = [
+      [-80, 0],
+      [80, 0],
+      [-60, 55],
+      [60, 55],
+      [0, 60],
+      [0, -60],
+    ].map(([x, y]) => ({
+      room: body.room,
+      point: { x: body.point.x + x, y: body.point.y + y },
+    }));
+    // Side-by-side contact keeps both bodies visible; a safe vertical fallback
+    // remains available for narrow passages.
+    const target = candidates.find(
+      (location) =>
+        interiorClearSegment(
+          location.point,
+          body.point,
+          EMIYA_ROOMS[body.room].scene,
+        ) && emiyaHouseRoute(e.player, location, e.inhabitants),
+    );
+    if (target) walkTo(target, { kind: 'resident', id });
+    else setMessage('人物附近暂时没有空出的接近点，稍等一下或沿路绕行。');
+  };
   const interact = () => {
     const e = engine.current!,
       player = e.player;
@@ -312,6 +388,18 @@ export default function FateEmiyaHouse({
       exit.current();
       return;
     }
+    const nearby = e.inhabitants
+      .filter(
+        (body) =>
+          body.room === player.room && gap(player.point, body.point) < 85,
+      )
+      .sort(
+        (a, b) => gap(player.point, a.point) - gap(player.point, b.point),
+      )[0];
+    if (nearby) {
+      chooseResident(nearby.id);
+      return;
+    }
     const nearDoor = emiyaRoomDoors(player.room)
       .filter((d) => gap(player.point, d.at) < 68)
       .sort((a, b) => gap(player.point, a.at) - gap(player.point, b.at))[0];
@@ -319,11 +407,11 @@ export default function FateEmiyaHouse({
       goDoor(nearDoor);
       return;
     }
-    const a = EMIYA_ACTIVITIES.filter(
-      (a) => a.room === player.room && (a.id !== 'eat' || e.meal),
-    ).sort(
-      (a, b) => gap(player.point, a.point) - gap(player.point, b.point),
-    )[0];
+    const a = activities
+      .filter((a) => a.room === player.room && (a.id !== 'eat' || e.meal))
+      .sort(
+        (a, b) => gap(player.point, a.point) - gap(player.point, b.point),
+      )[0];
     if (a && gap(player.point, a.point) < 70) activity(a);
     else if (
       e.residentVisible &&
@@ -359,12 +447,40 @@ export default function FateEmiyaHouse({
     camera.current = next;
     setPan(next);
   };
-  const commands = useRef({ stop, interact, walkTo, publish, zoomCamera });
+  const commands = useRef({
+    stop,
+    interact,
+    walkTo,
+    publish,
+    zoomCamera,
+    chooseResident,
+    activity,
+  });
   useLayoutEffect(() => {
-    commands.current = { stop, interact, walkTo, publish, zoomCamera };
+    commands.current = {
+      stop,
+      interact,
+      walkTo,
+      publish,
+      zoomCamera,
+      chooseResident,
+      activity,
+    };
     exit.current = onExit;
     framing.current = { origin, size, scale, zoom };
   });
+  useEffect(() => {
+    if (residentRequest && load === 'ready')
+      commands.current.chooseResident(residentRequest.id);
+  }, [residentRequest, load]);
+  useEffect(() => {
+    if (!actionRequest || load !== 'ready') return;
+    if (actionRequest.id === 'stop') commands.current.stop(true);
+    else {
+      const a = activities.find((a) => a.id === actionRequest.id);
+      if (a) commands.current.activity(a);
+    }
+  }, [actionRequest, load, activities]);
   useEffect(() => {
     const element = surface.current;
     if (!element) return;
@@ -546,20 +662,26 @@ export default function FateEmiyaHouse({
         const delta = emiyaScreenDirection(player.point, input, player.room);
         const currentScene = EMIYA_ROOMS[player.room].scene;
         const collisionScene =
-          e.residentVisible && player.room === e.resident.room
+          (e.residentVisible && player.room === e.resident.room) ||
+          e.inhabitants.some((body) => body.room === player.room)
             ? {
                 ...currentScene,
                 furniture: [
                   ...currentScene.furniture,
-                  {
-                    id: 'resident',
-                    footprint: {
-                      x: e.resident.point.x - 15,
-                      y: e.resident.point.y - 15,
-                      width: 30,
-                      height: 30,
-                    },
-                  },
+                  ...[
+                    ...(e.residentVisible ? [e.resident] : []),
+                    ...e.inhabitants,
+                  ]
+                    .filter((body) => body.room === player.room)
+                    .map((body, index) => ({
+                      id: `resident-${index}`,
+                      footprint: {
+                        x: body.point.x - 15,
+                        y: body.point.y - 15,
+                        width: 30,
+                        height: 30,
+                      },
+                    })),
                 ],
               }
             : currentScene;
@@ -579,21 +701,20 @@ export default function FateEmiyaHouse({
         );
         if (
           door &&
-          (!e.residentVisible ||
-            door.to !== e.resident.room ||
-            gap(door.arrival, e.resident.point) >= 30)
+          [...e.inhabitants, ...(e.residentVisible ? [e.resident] : [])].every(
+            (body) =>
+              door.to !== body.room || gap(door.arrival, body.point) >= 30,
+          )
         ) {
           player.room = door.to;
           player.point = { ...door.arrival };
           cross(door);
         }
       } else if (player.legs.length) {
-        const advanced = emiyaAdvanceRoute(
-          player,
-          player.legs,
-          185 * dt,
-          e.residentVisible ? e.resident : undefined,
-        );
+        const advanced = emiyaAdvanceRoute(player, player.legs, 185 * dt, [
+          ...e.inhabitants,
+          ...(e.residentVisible ? [e.resident] : []),
+        ]);
         player.room = advanced.location.room;
         player.point = advanced.location.point;
         player.legs = advanced.legs;
@@ -619,9 +740,14 @@ export default function FateEmiyaHouse({
             : input;
         if (delta.x || delta.y)
           player.direction = cityWalkFacing(delta, player.direction);
-        player.walked += travelled;
+        if (!life) player.walked += travelled;
       }
-      player.frame = moving ? 1 + (Math.floor(player.walked / 22) % 5) : 0;
+      if (life)
+        Object.assign(
+          player,
+          emiyaWalkAdvance(player.walked, previous, travelled),
+        );
+      else player.frame = moving ? 1 + (Math.floor(player.walked / 22) % 5) : 0;
       if (!player.legs.length && e.goal) {
         const goal = e.goal;
         e.goal = null;
@@ -631,17 +757,24 @@ export default function FateEmiyaHouse({
           gap(player.point, EMIYA_ENTRY.point) < 2
         ) {
           commands.current.stop();
-          life?.move(player, e.meal);
+          life?.move(player, life.meal);
           exit.current();
           return;
         }
         if (goal.kind === 'activity') {
-          const a = EMIYA_ACTIVITIES.find((a) => a.id === goal.id)!;
+          const a = activities.find((a) => a.id === goal.id)!;
           if (player.room === a.room && gap(player.point, a.point) < 2) {
-            e.activity = { id: a.id, seconds: 0 };
-            setMessage(a.progress);
+            const plan = life?.activityPlan(a);
+            if (!plan || plan.ok) {
+              e.activity = { id: a.id, seconds: 0 };
+              setMessage(a.progress);
+            } else {
+              if ('waiting' in plan && plan.waiting) e.goal = goal;
+              setMessage(plan.message);
+            }
           }
-        } else if (goal.kind === 'inspect')
+        } else if (goal.kind === 'resident') onResidentSelect?.(goal.id);
+        else if (goal.kind === 'inspect')
           setMessage(
             `${EMIYA_ROOMS[player.room].pieces.find((p) => p.id === goal.piece)?.label}：${EMIYA_ROOMS[player.room].description}`,
           );
@@ -651,7 +784,7 @@ export default function FateEmiyaHouse({
           );
       }
       if (e.activity) {
-        const a = EMIYA_ACTIVITIES.find((a) => a.id === e.activity!.id)!;
+        const a = activities.find((a) => a.id === e.activity!.id)!;
         e.activity.seconds += dt;
         if (e.activity.seconds >= a.seconds) {
           const result = life?.complete(a, player, e.meal);
@@ -663,11 +796,14 @@ export default function FateEmiyaHouse({
           setMessage(result?.message ?? a.complete);
         }
       }
-      life?.tick(
+      const lifeChanged = life?.tick(
         activeWindow.current && !document.hidden ? dt : 0,
         player,
         e.meal,
       );
+      e.inhabitants = life?.house.all() ?? [];
+      const foodChanged = !!life && e.meal !== life.hasFood();
+      if (life) e.meal = life.hasFood();
       if (e.residentOn && activeWindow.current && !document.hidden) {
         const resident = e.resident,
           old: EmiyaLocation = {
@@ -699,14 +835,14 @@ export default function FateEmiyaHouse({
               resident.direction,
             );
           }
-          resident.walked += advanced.travelled;
-          resident.frame =
-            advanced.travelled > 0.001
-              ? 1 + (Math.floor(resident.walked / 18) % 5)
-              : 0;
+          Object.assign(
+            resident,
+            emiyaWalkAdvance(resident.walked, old, advanced.travelled),
+          );
           if (!resident.legs.length) e.resting = 0;
         } else {
           resident.frame = 0;
+          resident.walked = 0;
           e.resting += dt;
           if (e.resting >= EMIYA_RESIDENT_ROUTINE[e.routine].seconds) {
             e.routine = (e.routine + 1) % EMIYA_RESIDENT_ROUTINE.length;
@@ -732,6 +868,8 @@ export default function FateEmiyaHouse({
       if (gap(current, next) > 0.01) setPan(next);
       const changed =
         moving ||
+        lifeChanged ||
+        foodChanged ||
         (e.residentOn && activeWindow.current) ||
         wasActive ||
         !!e.activity ||
@@ -749,6 +887,22 @@ export default function FateEmiyaHouse({
       }
       if (blocked) {
         blockedSeconds += dt;
+        if (
+          life &&
+          blockedSeconds >= 0.5 &&
+          blockedSeconds - dt < 0.5 &&
+          player.legs.length
+        ) {
+          const last = player.legs.at(-1)!;
+          const destination = last.points.at(-1);
+          if (destination)
+            player.legs =
+              emiyaHouseRoute(
+                player,
+                { room: last.room, point: destination },
+                e.inhabitants,
+              ) ?? player.legs;
+        }
         if (blockedSeconds >= 0.8 && blockedSeconds - dt < 0.8)
           setMessage('前面有人，稍等一下或用方向键绕行。');
       } else blockedSeconds = 0;
@@ -756,22 +910,23 @@ export default function FateEmiyaHouse({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [load, life]);
+  }, [load, life, onResidentSelect, activities]);
 
-  const playerFrame = life
-    ? SHIROU_WALK_SPRITES.frames[view.player.direction][view.player.frame]
+  const playerWalk = life
+    ? shirouWalkSprite(view.player.direction, view.player.frame)
     : null;
+  const playerFrame = playerWalk?.frame ?? null;
   const anchor = playerFrame
     ? {
-        x: playerFrame.anchorX,
+        x: playerWalk!.anchorX,
         y: playerFrame.anchorY,
-        scale: 306 / playerFrame.bounds.height,
+        scale: playerWalk!.scale,
       }
     : ART_SPRITE_FRAMES[view.player.direction][view.player.frame];
   const playerSheet = life ? SHIROU_LIFE_SPRITES : EMIYA_LIFE_SPRITES;
   const bodyScale = interiorDepth(view.player.point, floor) * anchor.scale;
   const currentActivity = view.activity
-    ? EMIYA_ACTIVITIES.find((a) => a.id === view.activity!.id)!
+    ? activities.find((a) => a.id === view.activity!.id)!
     : null;
   const pose = currentActivity
     ? emiyaActivityPose(
@@ -787,15 +942,17 @@ export default function FateEmiyaHouse({
   const poseElevation = pose
     ? pose.elevation * interiorDepth(pose.point, floor) * 0.85
     : 0;
-  const residentFrame =
-    SHIROU_WALK_SPRITES.frames[view.resident.direction][view.resident.frame];
+  const residentWalk = shirouWalkSprite(
+    view.resident.direction,
+    view.resident.frame,
+  );
+  const residentFrame = residentWalk.frame;
   const canExit =
     view.player.room === EMIYA_ENTRY.room &&
     gap(view.player.point, EMIYA_ENTRY.point) < 48;
   const residentFoot = interiorProject(view.resident.point, floor);
   const residentScale =
-    interiorDepth(view.resident.point, floor) *
-    (306 / residentFrame.bounds.height);
+    interiorDepth(view.resident.point, floor) * residentWalk.scale;
   const chooseRoom = (id: EmiyaRoomId) =>
     walkTo({ room: id, point: { x: 500, y: 560 } });
   const zoomTo = (value: number) => {
@@ -826,20 +983,47 @@ export default function FateEmiyaHouse({
           width: (playerFrame?.width ?? 256) * bodyScale * scale + 16,
           height: (playerFrame?.height ?? 256) * bodyScale * scale + 16,
         };
-    if (
-      x + width / 2 > body.x &&
-      x - width / 2 < body.x + body.width &&
-      y > body.y &&
-      y - 28 < body.y + body.height
-    ) {
-      if (body.y > 33) y = body.y - 5;
-      else if (body.y + body.height + 36 < size.height)
-        y = body.y + body.height + 36;
-      else
-        x =
-          body.x > width + 8
-            ? body.x - width / 2 - 5
-            : body.x + body.width + width / 2 + 5;
+    const bodies = [
+      body,
+      ...view.inhabitants
+        .filter((resident) => resident.room === room.id)
+        .map((resident) => {
+          const at = interiorProject(resident.point, floor),
+            depth = interiorDepth(resident.point, floor) * scale;
+          return {
+            x: origin.x + at.x * scale - 160 * depth - 8,
+            y: origin.y + at.y * scale - 350 * depth - 8,
+            width: 320 * depth + 16,
+            height: 350 * depth + 16,
+          };
+        }),
+    ];
+    const clear = (at: CityPoint) =>
+      bodies.every(
+        (b) =>
+          at.x + width / 2 <= b.x ||
+          at.x - width / 2 >= b.x + b.width ||
+          at.y <= b.y ||
+          at.y - 28 >= b.y + b.height,
+      );
+    if (!clear({ x, y })) {
+      const options = bodies.flatMap((b) => [
+        { x, y: b.y - 5 },
+        { x, y: b.y + b.height + 33 },
+        { x: b.x - width / 2 - 5, y },
+        { x: b.x + b.width + width / 2 + 5, y },
+      ]);
+      const candidate = options
+        .filter(
+          (at) =>
+            at.x >= width / 2 + 5 &&
+            at.x <= size.width - width / 2 - 5 &&
+            at.y >= 30 &&
+            at.y <= size.height - 5 &&
+            clear(at),
+        )
+        .sort((a, b) => gap(a, { x, y }) - gap(b, { x, y }))[0];
+      if (candidate) ({ x, y } = candidate);
     }
     return { left: x, top: y };
   };
@@ -881,6 +1065,22 @@ export default function FateEmiyaHouse({
         tabIndex={0}
         aria-label="卫宫宅室内行走：点击地面、方向键或 WASD，E 交互，Escape 停止"
         data-interior-load={load}
+        data-life-table={
+          life ? JSON.stringify(life.household.table) : undefined
+        }
+        data-life-invitations={
+          life
+            ? JSON.stringify(
+                life.household.invitations.map(({ person, status, key }) => ({
+                  person,
+                  status,
+                  key,
+                })),
+              )
+            : undefined
+        }
+        data-life-help={life?.household.help?.activity ?? ''}
+        data-life-failed-task={life?.household.failed ?? ''}
         data-interior-x={view.player.point.x.toFixed(3)}
         data-interior-y={view.player.point.y.toFixed(3)}
         data-interior-zoom={zoom}
@@ -892,6 +1092,18 @@ export default function FateEmiyaHouse({
         data-resident-room={view.residentVisible ? view.resident.room : ''}
         data-resident-x={view.resident.point.x.toFixed(3)}
         data-resident-y={view.resident.point.y.toFixed(3)}
+        data-life-residents={JSON.stringify(
+          view.inhabitants.map(
+            ({ id, room, point, phase, kind, direction }) => ({
+              id,
+              room,
+              point,
+              phase,
+              kind,
+              direction,
+            }),
+          ),
+        )}
         data-resident-phase={
           view.residentVisible && !view.residentOn
             ? 'paused'
@@ -1111,6 +1323,7 @@ export default function FateEmiyaHouse({
                 data-player-id={life ? 'shirou' : 'illya'}
                 data-house-player
                 data-player-direction={view.player.direction}
+                data-player-frame={view.player.frame}
                 data-player-pose={pose?.pose ?? 'walk'}
                 data-player-pose-phase={pose?.phase ?? ''}
                 data-pose-x={pose?.point.x ?? ''}
@@ -1141,14 +1354,14 @@ export default function FateEmiyaHouse({
                     style={{
                       width: (playerFrame?.width ?? 256) * bodyScale,
                       height: (playerFrame?.height ?? 256) * bodyScale,
-                      backgroundImage: `url(${life ? SHIROU_WALK_SPRITES.path : ILLYA_ART_SPRITE})`,
+                      backgroundImage: `url(${playerWalk ? playerWalk.sheet.path : ILLYA_ART_SPRITE})`,
                       backgroundSize: playerFrame
-                        ? `${SHIROU_WALK_SPRITES.width * bodyScale}px ${SHIROU_WALK_SPRITES.height * bodyScale}px`
+                        ? `${playerWalk!.sheet.width * bodyScale}px ${playerWalk!.sheet.height * bodyScale}px`
                         : undefined,
                       backgroundPosition: playerFrame
                         ? `${-playerFrame.x * bodyScale}px ${-playerFrame.y * bodyScale}px`
                         : `${(view.player.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.player.direction) / 3) * 100}%`,
-                      transform: `translate(${-anchor.x * bodyScale}px,${-anchor.y * bodyScale}px)`,
+                      transform: `translate(${-anchor.x * bodyScale}px,${-anchor.y * bodyScale}px)${playerWalk?.mirror ? ' scaleX(-1)' : ''}`,
                     }}
                   />
                 )}
@@ -1175,14 +1388,23 @@ export default function FateEmiyaHouse({
                     style={{
                       width: residentFrame.width * residentScale,
                       height: residentFrame.height * residentScale,
-                      transform: `translate(${-residentFrame.anchorX * residentScale}px,${-residentFrame.anchorY * residentScale}px)`,
-                      backgroundImage: `url(${SHIROU_WALK_SPRITES.path})`,
-                      backgroundSize: `${SHIROU_WALK_SPRITES.width * residentScale}px ${SHIROU_WALK_SPRITES.height * residentScale}px`,
+                      transform: `translate(${-residentWalk.anchorX * residentScale}px,${-residentFrame.anchorY * residentScale}px)${residentWalk.mirror ? ' scaleX(-1)' : ''}`,
+                      backgroundImage: `url(${residentWalk.sheet.path})`,
+                      backgroundSize: `${residentWalk.sheet.width * residentScale}px ${residentWalk.sheet.height * residentScale}px`,
                       backgroundPosition: `${-residentFrame.x * residentScale}px ${-residentFrame.y * residentScale}px`,
                     }}
                   />
                 </div>
               )}
+              {view.inhabitants
+                .filter((body) => body.room === room.id)
+                .map((body) => (
+                  <FateEmiyaResident
+                    key={body.id}
+                    body={body}
+                    onChoose={chooseResident}
+                  />
+                ))}
             </>
           )}
         </div>
@@ -1222,6 +1444,7 @@ export default function FateEmiyaHouse({
             room={room.id}
             point={view.player.point}
             resident={view.residentVisible ? view.resident : null}
+            residents={view.inhabitants}
             onChoose={chooseRoom}
           />
         )}
@@ -1298,7 +1521,7 @@ export default function FateEmiyaHouse({
       </div>
       <footer className={base.footer}>
         <div className={`${base.spots} ${styles.activities}`}>
-          {EMIYA_ACTIVITIES.map((a) => (
+          {activities.map((a) => (
             <button
               key={a.id}
               type="button"
@@ -1329,6 +1552,7 @@ export default function FateEmiyaHouse({
           </button>
         </div>
         <div className={styles.options}>
+          {lifeInteractions}
           {!life && (
             <Link href="/fate/emiya-life" target="_blank" rel="noreferrer">
               试玩士郎生活

@@ -535,11 +535,13 @@ export function EmiyaHouseMap({
   room,
   point,
   resident,
+  residents = [],
   onChoose,
 }: {
   room: EmiyaRoomId;
   point: CityPoint;
   resident: { room: EmiyaRoomId; point: CityPoint } | null;
+  residents?: readonly { room: EmiyaRoomId; point: CityPoint }[];
   onChoose: (id: EmiyaRoomId) => void;
 }) {
   const position = (id: EmiyaRoomId, p: CityPoint) => ({
@@ -573,6 +575,18 @@ export function EmiyaHouseMap({
           />
         ))}
         {npc && <circle cx={npc.x} cy={npc.y} r="2.5" fill="#b7cfd1" />}
+        {residents.map((resident, index) => {
+          const location = position(resident.room, resident.point);
+          return (
+            <circle
+              key={index}
+              cx={location.x}
+              cy={location.y}
+              r="2.5"
+              fill="#b7cfd1"
+            />
+          );
+        })}
         <circle
           cx={p.x}
           cy={p.y}

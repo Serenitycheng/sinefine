@@ -12,6 +12,7 @@ import {
 import {
   interiorRoute,
   interiorWalkable,
+  interiorClearSegment,
 } from './fate-city-interior-navigation';
 
 export const EMIYA_ROOM_IDS = [
@@ -65,6 +66,9 @@ export type EmiyaActivity = {
   complete: string;
 };
 export type EmiyaLocation = { room: EmiyaRoomId; point: CityPoint };
+export type EmiyaOccupancy = EmiyaLocation | readonly EmiyaLocation[];
+const peopleIn = (occupied?: EmiyaOccupancy): readonly EmiyaLocation[] =>
+  !occupied ? [] : 'room' in occupied ? [occupied] : occupied;
 export type EmiyaLeg = {
   room: EmiyaRoomId;
   points: CityPoint[];
@@ -448,8 +452,13 @@ export const EMIYA_ACTIVITIES: readonly EmiyaActivity[] = [
 export function emiyaHouseRoute(
   from: EmiyaLocation,
   to: EmiyaLocation,
-  occupied?: EmiyaLocation,
+  occupied?: EmiyaOccupancy,
 ): EmiyaLeg[] | null {
+  const people = peopleIn(occupied);
+  const pointsIn = (room: EmiyaRoomId) =>
+    people
+      .filter((person) => person.room === room)
+      .map((person) => person.point);
   if (
     !EMIYA_ROOMS[from.room] ||
     !EMIYA_ROOMS[to.room] ||
@@ -471,19 +480,24 @@ export function emiyaHouseRoute(
     for (const door of emiyaRoomDoors(current.room)) {
       if (visited.has(door.to)) continue;
       if (
-        occupied?.room === door.to &&
-        Math.hypot(
-          door.arrival.x - occupied.point.x,
-          door.arrival.y - occupied.point.y,
-        ) < 30
+        people.some(
+          (person) =>
+            person.room === door.to &&
+            Math.hypot(
+              door.arrival.x - person.point.x,
+              door.arrival.y - person.point.y,
+            ) < 30,
+        )
       )
         continue;
       const at = current.doors.at(-1)?.arrival ?? from.point;
       if (
-        occupied?.room === current.room &&
-        !interiorRoute(at, door.at, EMIYA_ROOMS[current.room].scene, [
-          occupied.point,
-        ])
+        !interiorRoute(
+          at,
+          door.at,
+          EMIYA_ROOMS[current.room].scene,
+          pointsIn(current.room),
+        )
       )
         continue;
       visited.add(door.to);
@@ -498,7 +512,7 @@ export function emiyaHouseRoute(
       location.point,
       door.at,
       EMIYA_ROOMS[location.room].scene,
-      occupied?.room === location.room ? [occupied.point] : [],
+      pointsIn(location.room),
     );
     if (!points) return null;
     result.push({ room: location.room, points, door });
@@ -508,7 +522,7 @@ export function emiyaHouseRoute(
     location.point,
     to.point,
     EMIYA_ROOMS[to.room].scene,
-    occupied?.room === to.room ? [occupied.point] : [],
+    pointsIn(to.room),
   );
   if (!points) return null;
   result.push({ room: to.room, points });
@@ -537,8 +551,9 @@ export function emiyaAdvanceRoute(
   from: EmiyaLocation,
   itinerary: readonly EmiyaLeg[],
   distance: number,
-  occupied?: EmiyaLocation,
+  occupied?: EmiyaOccupancy,
 ) {
+  const people = peopleIn(occupied);
   let location: EmiyaLocation = { room: from.room, point: { ...from.point } };
   const legs = itinerary.map((leg) => ({ ...leg, points: [...leg.points] }));
   const crossed: EmiyaDoor[] = [];
@@ -552,11 +567,14 @@ export function emiyaAdvanceRoute(
       if (leg.door) {
         const arriving = { room: leg.door.to, point: { ...leg.door.arrival } };
         if (
-          occupied?.room === arriving.room &&
-          Math.hypot(
-            arriving.point.x - occupied.point.x,
-            arriving.point.y - occupied.point.y,
-          ) < 30
+          people.some(
+            (person) =>
+              person.room === arriving.room &&
+              Math.hypot(
+                arriving.point.x - person.point.x,
+                arriving.point.y - person.point.y,
+              ) < 30,
+          )
         ) {
           blocked = true;
           break;
@@ -584,11 +602,14 @@ export function emiyaAdvanceRoute(
             y: p.y + ((next.y - p.y) * step) / gap,
           };
     if (
-      occupied?.room === location.room &&
-      Math.hypot(
-        candidate.x - occupied.point.x,
-        candidate.y - occupied.point.y,
-      ) < 30
+      !interiorClearSegment(
+        p,
+        candidate,
+        EMIYA_ROOMS[location.room].scene,
+        people
+          .filter((person) => person.room === location.room)
+          .map((person) => person.point),
+      )
     ) {
       blocked = true;
       break;

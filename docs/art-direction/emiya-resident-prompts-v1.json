@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-09",
+  "generator": "built-in image_gen",
+  "basis": "延续已确认柔和融合画风；复用本地 Saber 身份图与士郎柔和行走素材。居家服饰为日常适配，未声称原作专属服装复刻。",
+  "walk": {
+    "references": [
+      "source/public/fate/portraits/saber.png",
+      "source/public/fate/character-art/shirou-walk-soft-v1.png"
+    ],
+    "output": "source/public/fate/character-art/saber-walk-soft-v1.png",
+    "transparentBackground": true,
+    "prompt": "Create a transparent RGBA game sprite atlas for Saber / Artoria in the Emiya household. Image 1 is ONLY her identity reference: retain blonde swept bangs, braided bun with navy ribbon, blue-green eyes, youthful adult female proportions and composed expression. Image 2 is the approved Shirou game sprite style/proportion reference. Match his restrained softly painted anime finish, matte material, gentle edges, readable midtones; no harsh black outline, glare or chibi proportions.\nDomestic adaptation outfit: modest white blouse with a small navy neck ribbon, simple mid-calf navy blue skirt, dark soft house shoes. NO armor, sword, magical effects, background, furniture, floor, labels, checkerboard or cast shadows.\nEXACT atlas: SIX columns by FOUR rows; rows top to bottom FACE FRONT / FACE LEFT / FACE RIGHT / FACE BACK. First column is a relaxed stationary complete standing figure; other five columns show a smooth natural walking cycle with planted-foot weight shifts, restrained arm swing and coherent skirt sway, same identity and body scale. All 24 are isolated complete figures with generous transparent padding including all hair, fingers, skirt and shoes, never cross cell boundaries or touch outer canvas edge. Landscape 3:2 atlas like reference 2. Preserve true transparency."
+  },
+  "life": {
+    "references": [
+      "source/public/fate/character-art/saber-walk-soft-v1.png"
+    ],
+    "output": "source/public/fate/character-art/saber-life-soft-v1.png",
+    "transparentBackground": true,
+    "status": "candidate-not-selected-two-lower-feet-touched-edge",
+    "prompt": "Create the matching transparent RGBA domestic LIFE ACTION atlas for Saber / Artoria, using image 1 as the exact character identity, clothing, proportions and soft painted game finish. Keep blonde bangs, braided bun and navy ribbon, blue-green eyes, white blouse with small navy neck bow, navy mid-calf skirt and dark house shoes. Match this walking sprite completely; matte calm painterly anime, restrained highlights, no hard black outline or chibi body.\nSIX columns, TWO rows of subtle animation phases, twelve COMPLETE isolated poses. Columns left-to-right: (1) sitting/kneeling at a low family table, relaxed hands; (2) seated reading an open book, second phase turns a page; (3) standing facing left gently preparing a home meal with small ladle and bowl, second phase slight stir; (4) seated holding rice bowl and chopsticks, second phase lifts chopsticks; (5) quietly side-lying with head on LEFT, knees lightly bent, eyes closed, second phase small breath; (6) sitting upright on a bench, thighs horizontal, lower legs hanging, hands on lap, second phase slight head turn.\nNo drawn furniture, chair, bench, table, bed, stove, floor, shadows, background, checkerboard, labels, armor, weapons or magic. Exact same anatomical scale across phases and poses. Generous transparent padding on every side including all hair and feet, especially side-lying and seated figures; NEVER cross a cell or touch outer canvas edges. Wide 3:1 atlas. Retain true alpha transparency."
+  },
+  "lifeCorrection": {
+    "references": [
+      "source/public/fate/character-art/saber-life-soft-v1.png"
+    ],
+    "output": "source/public/fate/character-art/saber-life-soft-v2.png",
+    "transparentBackground": true,
+    "status": "selected-all-twelve-frames-complete",
+    "prompt": "Make ONE precise transparent sprite-sheet repair to this existing Saber domestic action atlas. Keep the exact same 6-column / 2-row composition, character identity, clothing, calm matte soft painted finish and native wide aspect ratio. TEN poses are already good: leave all their pixels/compositions unchanged as far as possible. Only the SECOND ROW, THIRD COLUMN cooking figure and SECOND ROW, SIXTH COLUMN bench-sitting figure touch the bottom canvas edge and their shoe soles are cut. Reconstruct their complete dark house shoes/soles and lift those two complete figures upward within their own cells just enough to leave at least 14 transparent pixels below every shoe, with clear blank separation from the first-row figure. Preserve their anatomical scale, pose, hair, blouse, skirt and action; do not shrink the body or put furniture underneath. All twelve characters must be complete and isolated, no touching neighboring cells or outer canvas. Preserve the existing true RGBA transparency, no backdrop, floor, shadow, checkerboard, grid or text."
+  }
+}
