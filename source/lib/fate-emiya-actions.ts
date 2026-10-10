@@ -1,7 +1,7 @@
 import spriteData from './fate-emiya-sprite-data.json';
 import shirouLife from './fate-shirou-life-data.json';
 import saberData from './fate-saber-sprite-data.json';
-import { SHIROU_SIDE_GAIT } from './fate-emiya-walk';
+import { SHIROU_SIDE_GAIT, EMIYA_VISITOR_SPRITES } from './fate-emiya-walk';
 import { EMIYA_LIFE_ACTIVITIES } from './fate-emiya-household';
 import {
   EMIYA_ROOMS,
@@ -42,6 +42,7 @@ export const SHIROU_REQUIRED_ART = [
   SHIROU_LIFE_SPRITES.path,
   SABER_WALK_SPRITES.path,
   SABER_LIFE_SPRITES.path,
+  ...Object.values(EMIYA_VISITOR_SPRITES).map((sheet) => sheet.path),
 ];
 
 /** Activity presentation has its own contact on the furniture. The safe floor

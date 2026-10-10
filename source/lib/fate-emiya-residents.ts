@@ -6,6 +6,11 @@ import { interiorWalkable } from './fate-city-interior-navigation';
 import { interiorProject } from './fate-city-interior-scenes';
 import { cityWalkFacing } from './fate-city-art-controls';
 import {
+  emiyaWalkAdvance,
+  SABER_GAIT,
+  EMIYA_VISITOR_SPRITES,
+} from './fate-emiya-walk';
+import {
   EMIYA_ENTRY,
   EMIYA_ROOMS,
   emiyaHouseRoute,
@@ -63,11 +68,20 @@ export function emiyaResidentDestination(
   const room = interiorZone(
     activity && kind ? { ...activity, kind } : activity,
   );
+  if (room === 'table' && kind === 'eat') {
+    const seats = {
+      saber: { x: 808, y: 550 },
+      sakura: { x: 945, y: 455 },
+      taiga: { x: 815, y: 335 },
+    };
+    if (id === 'saber' || id === 'sakura' || id === 'taiga')
+      return { room, point: { ...seats[id] } };
+  }
   const base = {
     lounge: { x: 190, y: 545 },
     table: kind === 'cook' ? { x: 290, y: 290 } : { x: 850, y: 550 },
     study: { x: 570, y: 355 },
-    rest: { x: 430, y: 420 },
+    rest: { x: 490, y: 385 },
   }[room];
   const slot = STREET_PARTNERS.indexOf(id) % 3;
   const preferred = {
@@ -283,6 +297,8 @@ export class EmiyaResidents {
         body.cooldown = 0.8;
       }
       const before = { room: body.room, point: { ...body.point } };
+      const previousFrame = body.frame;
+      const previousBodyPhase = body.phase;
       const advanced = emiyaAdvanceRoute(body, body.legs, 145 * dt, occupied);
       body.room = advanced.location.room;
       body.point = advanced.location.point;
@@ -317,16 +333,33 @@ export class EmiyaResidents {
             body.direction,
           );
         }
-        body.walked += advanced.travelled;
+        if (body.id !== 'saber' && body.id !== 'sakura' && body.id !== 'taiga')
+          body.walked += advanced.travelled;
         changed = true;
       }
-      body.frame =
-        advanced.travelled > 0 ? 1 + (Math.floor(body.walked / 22) % 5) : 0;
+      if (body.id === 'saber')
+        Object.assign(
+          body,
+          emiyaWalkAdvance(body.walked, before, advanced.travelled, SABER_GAIT),
+        );
+      else if (body.id === 'sakura' || body.id === 'taiga')
+        Object.assign(
+          body,
+          emiyaWalkAdvance(body.walked, before, advanced.travelled, {
+            frames: 6,
+            cycleDistance: EMIYA_VISITOR_SPRITES[body.id].cycleDistance,
+          }),
+        );
+      else
+        body.frame =
+          advanced.travelled > 0 ? 1 + (Math.floor(body.walked / 22) % 5) : 0;
       body.phase = leaving
         ? 'leaving'
         : body.legs.length || distance(body, body.target) > 1
           ? 'walking'
           : 'doing';
+      if (body.frame !== previousFrame || body.phase !== previousBodyPhase)
+        changed = true;
       const previousPhase = Math.floor(body.seconds / 0.85);
       body.seconds = body.phase === 'doing' ? body.seconds + dt : 0;
       if (Math.floor(body.seconds / 0.85) !== previousPhase) changed = true;

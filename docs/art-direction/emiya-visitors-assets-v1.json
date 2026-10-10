@@ -1,0 +1,62 @@
+{
+  "date": "2026-10-10",
+  "method": "built-in image_gen; original RGBA unchanged; alpha-based registration only",
+  "assets": [
+    {
+      "id": "sakura",
+      "path": "/fate/character-art/sakura-visit-soft-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1961957,
+      "sha256": "df7c55ad9c1e71eb8e930f014d0e3ba0ab6e105e69eb31c3d9f13c9c560ae1ca",
+      "alpha": {
+        "zero": 886078,
+        "max": 254
+      },
+      "rowCuts": [
+        0,
+        373,
+        685,
+        1024
+      ],
+      "uniqueFrames": 18,
+      "actions": [
+        "stand",
+        "walk",
+        "sit",
+        "eat"
+      ],
+      "scope": "Emiya actual visitors only; no new attendance or identity",
+      "reference": "https://emiya-gohan.com/character/?chara=sakura",
+      "limitations": "Front/back gait reuses three native frames; right walking mirrors the left. Other life poses remain to refine."
+    },
+    {
+      "id": "taiga",
+      "path": "/fate/character-art/taiga-visit-soft-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1829873,
+      "sha256": "7cb68347f17cb7e545d47cd978c8ec21c17378e45dc8b5564ffdec2e0ae61a78",
+      "alpha": {
+        "zero": 1058108,
+        "max": 254
+      },
+      "rowCuts": [
+        0,
+        346,
+        664,
+        1024
+      ],
+      "uniqueFrames": 18,
+      "actions": [
+        "stand",
+        "walk",
+        "sit",
+        "eat"
+      ],
+      "scope": "Emiya actual visitors only; no new attendance or identity",
+      "reference": "https://emiya-gohan.com/character/?chara=taiga",
+      "limitations": "Front/back gait reuses three native frames; right walking mirrors the left. Other life poses remain to refine."
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "date": "2026-10-10",
+  "method": "built-in image_gen.imagegen",
+  "toolCalls": 2,
+  "retries": 0,
+  "transparent_background": true,
+  "promptAssembly": "sharedPrompt + newline + asset.subject; no other prompt text",
+  "sharedPrompt": "Use case: stylized-concept. Asset: actual transparent 2.5D game character sprite atlas for Sinefine. New sprite sheet, not a UI mockup. Landscape 1536x1024, exactly 6 equal columns by 3 equal rows (18 invisible cells). One complete figure per cell, at least 12px transparent margins. Same adult anime proportions and subdued painterly softness as the small Saber style reference; never chibi, harsh outlines, bright highlights, blurred forms, dramatic shadows, weapons, cell labels or borders. Stable head/body size throughout, soft cream light and muted cool shadows. Full head, hair, hands, garment and feet inside each cell. Truly transparent background, no cast shadows, no floors, no objects except a small bowl in the eating pose.\nCell sequence MUST be:\nrow1: standing front, standing back, standing left profile, standing right profile, seated seiza front hands resting, seated seiza front eating rice from a small bowl.\nrow2: six left-profile walking phases: left foot forward CONTACT, weight SUPPORT, legs close PASSING, right foot forward CONTACT, weight SUPPORT, legs close PASSING. Visible alternating footsteps and changing support, not six identical stretched legs. Small natural arm swing.\nrow3: front walking left-contact, front passing with feet close, front walking right-contact, back walking left-contact, back passing with feet close, back walking right-contact.\nAll standing and walking figures have identical full body proportions. Seiza figures are shorter because knees are folded, not rescaled.\nReference 1 is style/proportion only. Reference 2 is character identity only; reproduce the described everyday clothing, not the reference's background or chibi proportions.",
+  "styleReference": {
+    "original": "source/public/fate/character-art/saber-walk-soft-v1.png",
+    "crop": { "left": 99, "top": 12, "width": 90, "height": 243 },
+    "toolInput": "D:/projects/sinefine/source/.verification/art-review/316c7c91bac8491496ed8d5f30f110f6.jpg",
+    "role": "Subdued painting, adult proportions; never a new character identity"
+  },
+  "assets": [
+    {
+      "id": "sakura",
+      "subject": "Character: Sakura Matou from Fate, gentle violet eyes, long muted violet hair, red ribbon on the left side. Project's already registered everyday school outfit: cream white long sleeve blouse, muted brown fitted school waistcoat, burgundy bow, charcoal pleated knee-length skirt, dark knee socks and subdued brown flat loafers. No bag. Same identity, hairstyle and attire in every cell. The face is calm and reserved.",
+      "identityReference": "source/public/fate/portraits/sakura-daily.png",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/.verification/art-review/316c7c91bac8491496ed8d5f30f110f6.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/8037fb8b22dc4fc7a61876dd3bb263e1.jpg"
+      ],
+      "canonicalReference": "https://emiya-gohan.com/character/?chara=sakura",
+      "settingBoundary": "Fate identity and Emiya visitor association; outfit is the existing project variant, not an exact canonical costume reconstruction",
+      "nativeOutput": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-9004de1a-da75-4ae4-9498-e30839f33284.png",
+      "savedOutput": "source/public/fate/character-art/sakura-visit-soft-v1.png",
+      "postprocess": "None. Original native RGBA bytes copied unchanged; only crop/anchor/scale metadata registered."
+    },
+    {
+      "id": "taiga",
+      "subject": "Character: Taiga Fujimura from Fate, adult Japanese woman, short warm chestnut bob, brown eyes, friendly confident expression. Project's registered everyday outfit: muted teal green open cardigan over an ivory blouse, deep slate blue calf-length skirt, charcoal tights and low brown loafers. Adult proportions matching Saber, not the chibi identity reference. Same identity, hairstyle and attire in every cell.",
+      "identityReference": "source/public/fate/street/taiga-idle.png",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/.verification/art-review/316c7c91bac8491496ed8d5f30f110f6.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/15f7719d612516449dbcc362cf7688cb.jpg"
+      ],
+      "canonicalReference": "https://emiya-gohan.com/character/?chara=taiga",
+      "settingBoundary": "Fate identity and Emiya visitor association; outfit follows the existing project everyday variant",
+      "nativeOutput": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-1ce74bd0-760f-4a54-ab21-7a7949fc383b.png",
+      "savedOutput": "source/public/fate/character-art/taiga-visit-soft-v1.png",
+      "postprocess": "None. Original native RGBA bytes copied unchanged; standing left uses mirroring to correct generated orientation."
+    }
+  ],
+  "nativeResolution": { "width": 1536, "height": 1024 },
+  "registration": "source/lib/fate-emiya-visitor-data.json",
+  "assetHashes": "docs/art-direction/emiya-visitors-assets-v1.json",
+  "limitations": "18 unique figures each. Right gait mirrors left. Front/back gait reuses three native phases; not 24 unique walking drawings. Only native sit/eat life poses are connected. Existing identities, homes, original artwork and attendance rules remain unchanged."
+}

@@ -38,6 +38,7 @@ import {
   CITY_PILOT_WALK_SPEED,
 } from '../lib/fate-city-art-navigation';
 import { CHARACTER_ART } from '../lib/fate-character-art';
+import { existsSync } from 'node:fs';
 import { INTERIOR_ART } from '../lib/fate-interior-art';
 
 void test('all art districts use existing city roads once, and all original place IDs are retained', () => {
@@ -156,11 +157,24 @@ void test('character and indoor production covers all identities while retaining
     CHARACTER_ART.map((actor) => actor.id),
     STREET_CAST.map((actor) => actor.id),
   );
-  assert.equal(
-    CHARACTER_ART.filter((actor) => actor.stage === 'study-ready').length,
-    1,
-    'legacy sprites do not count as finished models',
-  );
+  const ready = CHARACTER_ART.filter((actor) => actor.stage === 'study-ready');
+  assert.deepEqual(ready.map((actor) => actor.id).sort(), [
+    'illya',
+    'saber',
+    'sakura',
+    'shirou',
+    'taiga',
+  ]);
+  for (const actor of CHARACTER_ART) {
+    if (actor.stage === 'study-ready') {
+      assert.ok(actor.model && existsSync(`public${actor.model}`));
+      assert.notEqual(actor.frames, 'legacy');
+      assert.notEqual(actor.scope, 'legacy');
+    } else {
+      assert.equal(actor.model, null);
+      assert.equal(actor.scope, 'legacy');
+    }
+  }
   assert.deepEqual(
     INTERIOR_ART.map((home) => home.id).sort(),
     Object.keys(FATE_HOMES).sort(),

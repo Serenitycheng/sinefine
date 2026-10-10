@@ -4,13 +4,8 @@ import {
   interiorDepth,
   interiorProject,
 } from '@/lib/fate-city-interior-scenes';
-import { EMIYA_ROOMS, EMIYA_ACTIVITIES } from '@/lib/fate-emiya-house';
-import {
-  SABER_WALK_SPRITES,
-  SABER_LIFE_SPRITES,
-  emiyaActivityPose,
-  type EmiyaPose,
-} from '@/lib/fate-emiya-actions';
+import { EMIYA_ROOMS } from '@/lib/fate-emiya-house';
+import { emiyaResidentPresentation } from '@/lib/fate-emiya-presentation';
 import type { EmiyaResidentBody } from '@/lib/fate-emiya-residents';
 import base from './fate-city-interior.module.css';
 import styles from './fate-emiya-house.module.css';
@@ -31,52 +26,20 @@ export default function FateEmiyaResident({
   const size = height * depth;
   const moving = body.phase !== 'doing' && body.frame > 0;
   const name = fatePerson(body.id)?.name ?? body.id;
-  const pose: EmiyaPose | null =
-    body.id === 'saber' && body.phase === 'doing'
-      ? body.kind === 'sleep'
-        ? 'sleep'
-        : body.kind === 'read' || body.kind === 'study'
-          ? 'read'
-          : body.kind === 'cook'
-            ? 'cook'
-            : body.kind === 'eat'
-              ? 'eat'
-              : body.kind === 'rest' || body.kind === 'visit'
-                ? 'sit'
-                : null
-      : null;
-  const walkFrame =
-    body.id === 'saber'
-      ? SABER_WALK_SPRITES.frames[body.direction][body.frame]
-      : null;
-  const lifeFrame = pose
-    ? SABER_LIFE_SPRITES.frames[pose][
-        Math.floor(body.seconds / 0.85) % SABER_LIFE_SPRITES.frames[pose].length
-      ]
-    : null;
-  const contact =
-    pose === 'sleep'
-      ? emiyaActivityPose(
-          EMIYA_ACTIVITIES.find((activity) => activity.id === 'rest')!,
-          body.seconds,
-          'shirou',
-        )
-      : null;
+  const presentation = emiyaResidentPresentation(body);
+  const contact = presentation?.contact;
   const actualFoot = contact ? interiorProject(contact.point, floor) : foot;
-  const scale = lifeFrame
-    ? depth * SABER_LIFE_SPRITES.scale
-    : walkFrame
-      ? (height * depth) / walkFrame.bounds.height
-      : 1;
-  const frame = lifeFrame ?? walkFrame;
-  const sheet = lifeFrame ? SABER_LIFE_SPRITES : SABER_WALK_SPRITES;
+  const contactDepth = contact ? interiorDepth(contact.point, floor) : depth;
+  const scale = presentation ? contactDepth * presentation.scale : 1;
+  const frame = presentation?.frame;
+  const sheet = presentation?.sheet;
   const frameStyle = frame
     ? {
         width: frame.width * scale,
         height: frame.height * scale,
-        transform: `translate(${-frame.anchorX * scale}px,${-frame.anchorY * scale}px)`,
-        backgroundImage: `url(${sheet.path})`,
-        backgroundSize: `${sheet.width * scale}px ${sheet.height * scale}px`,
+        transform: `translate(${-(presentation?.mirror ? frame.width - frame.anchorX : frame.anchorX) * scale}px,${-frame.anchorY * scale}px)${presentation?.mirror ? ' scaleX(-1)' : ''}`,
+        backgroundImage: `url(${sheet!.path})`,
+        backgroundSize: `${sheet!.width * scale}px ${sheet!.height * scale}px`,
         backgroundPosition: `${-frame.x * scale}px ${-frame.y * scale}px`,
       }
     : {};
@@ -85,7 +48,7 @@ export default function FateEmiyaResident({
       className={base.actor}
       style={{
         left: actualFoot.x,
-        top: actualFoot.y - (contact?.elevation ?? 0) * depth * 0.85,
+        top: actualFoot.y - (contact?.elevation ?? 0) * contactDepth * 0.85,
         zIndex: contact?.z ?? Math.round(body.point.y) + 10,
       }}
       data-life-body={body.id}
@@ -94,10 +57,29 @@ export default function FateEmiyaResident({
       data-life-y={body.point.y.toFixed(3)}
       data-life-phase={body.phase}
       data-life-kind={body.kind}
-      data-life-pose={pose ?? 'walk'}
-      data-life-art={body.id === 'saber' ? 'soft-v1' : 'existing'}
+      data-life-pose={contact?.pose ?? 'walk'}
+      data-life-art={
+        body.id === 'saber'
+          ? contact
+            ? 'life-soft-v3'
+            : 'soft-v1'
+          : presentation
+            ? 'visit-soft-v1'
+            : 'existing'
+      }
+      data-life-frame={body.frame}
+      data-life-scale={scale}
+      data-life-contact-x={contact?.point.x ?? body.point.x}
+      data-life-contact-y={contact?.point.y ?? body.point.y}
+      data-life-elevation={contact?.elevation ?? 0}
     >
-      <span className={base.shadow} style={{ transform: `scale(${depth})` }} />
+      <span
+        className={base.shadow}
+        style={{
+          transform: `scale(${depth})`,
+          opacity: contact?.elevation ? 0 : 1,
+        }}
+      />
       <button
         type="button"
         className={styles.bodyTarget}
@@ -118,7 +100,9 @@ export default function FateEmiyaResident({
       />
       <span
         className={styles.residentName}
-        style={{ top: -(frame ? frame.bounds.height * scale : size) - 15 }}
+        style={{
+          top: (frame ? (frame.bounds.y - frame.anchorY) * scale : -size) - 22,
+        }}
       >
         {name}
       </span>

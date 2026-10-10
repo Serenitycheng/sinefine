@@ -7,9 +7,18 @@ export type CharacterArt = {
   name: string;
   reference: string | null;
   stage: 'study-ready' | 'to-refine';
-  frames: 'four-direction-six-frame' | 'legacy';
+  model: string | null;
+  scope: 'city-sample' | 'emiya-sample' | 'legacy';
+  frames: 'four-direction-six-frame' | 'four-direction-reused-frame' | 'legacy';
   height: number;
   variants: readonly string[];
+};
+const modelAssets: Partial<Record<ActorId, string>> = {
+  illya: '/fate/art-sample/illya-walk-v1.png',
+  shirou: '/fate/character-art/shirou-walk-side-soft-v2.png',
+  saber: '/fate/character-art/saber-walk-soft-v1.png',
+  sakura: '/fate/character-art/sakura-visit-soft-v1.png',
+  taiga: '/fate/character-art/taiga-visit-soft-v1.png',
 };
 /** Cover every selectable identity; old chibi sheets are a fallback, never
  * counted as finished 2.5D character models. Existing identity IDs stay intact. */
@@ -20,8 +29,19 @@ export const CHARACTER_ART: readonly CharacterArt[] = STREET_CAST.map(
     reference:
       FATE_CAST.find((person) => person.id === actor.id)?.portraits[0]?.file ??
       null,
-    stage: actor.id === 'illya' ? 'study-ready' : 'to-refine',
-    frames: actor.id === 'illya' ? 'four-direction-six-frame' : 'legacy',
+    stage: modelAssets[actor.id] ? 'study-ready' : 'to-refine',
+    model: modelAssets[actor.id] ?? null,
+    scope:
+      actor.id === 'illya'
+        ? 'city-sample'
+        : modelAssets[actor.id]
+          ? 'emiya-sample'
+          : 'legacy',
+    frames: ['illya', 'shirou', 'saber'].includes(actor.id)
+      ? 'four-direction-six-frame'
+      : ['sakura', 'taiga'].includes(actor.id)
+        ? 'four-direction-reused-frame'
+        : 'legacy',
     height: actor.id === 'illya' ? 132 : actor.id === 'iskandar' ? 193 : 165,
     variants:
       actor.id === 'waver'

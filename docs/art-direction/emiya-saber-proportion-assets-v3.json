@@ -1,0 +1,68 @@
+{
+  "date": "2026-10-10",
+  "method": "built-in image_gen; original native RGBA copied unchanged",
+  "path": "source/public/fate/character-art/saber-life-proportion-soft-v3.png",
+  "nativeSource": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-d58425af-d845-4f00-ae55-e30c761cc5ee.png",
+  "width": 1536,
+  "height": 1024,
+  "bytes": 1622576,
+  "sha256": "eabc9c019167147232fd9d20918dca300f86029250c0a2cad13510298b3d6a9c",
+  "alpha": {
+    "zero": 1235386,
+    "max": 254
+  },
+  "rows": [
+    0,
+    256,
+    544,
+    769,
+    1024
+  ],
+  "columns": [
+    [
+      0,
+      512,
+      1024,
+      1536
+    ],
+    [
+      0,
+      512,
+      1024,
+      1536
+    ],
+    [
+      0,
+      512,
+      1000,
+      1536
+    ],
+    [
+      0,
+      553,
+      1024,
+      1536
+    ]
+  ],
+  "uniqueFrames": 12,
+  "poses": [
+    "sit",
+    "read",
+    "cook",
+    "eat",
+    "sleep",
+    "bench"
+  ],
+  "scales": {
+    "sit": 0.7866666666666667,
+    "read": 0.7866666666666667,
+    "cook": 1.0350877192982457,
+    "eat": 0.7866666666666667,
+    "sleep": 0.6781609195402298,
+    "bench": 1.0143859649122808
+  },
+  "calibration": "source/lib/fate-saber-sprite-data.json",
+  "prompt": "docs/art-direction/emiya-saber-proportion-prompts-v3.json",
+  "basis": "Approved adult standing model retained. Native atlas enlarges folded poses; fixed scale per two-frame pose pair keeps head size consistent. No background, stand/walk artwork or saved position changed.",
+  "limitations": "Sprite pose atlas; not a skeleton or per-foot IK. Hand motion and sleep breathing are two-frame changes."
+}

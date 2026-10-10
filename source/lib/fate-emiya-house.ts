@@ -151,7 +151,7 @@ const definitions: Omit<EmiyaRoom, 'scene'>[] = [
     pieces: [
       piece('kitchen-counter', '水槽与灶台', 'counter', 35, 145, 205, 325, 100),
       piece('pantry', '碗碟柜', 'shelf', 740, 70, 140, 165, 210),
-      piece('kitchen-table', '小餐桌', 'table', 740, 385, 150, 130, 76),
+      piece('kitchen-table', '小餐桌', 'table', 740, 385, 150, 130, 42),
     ],
   },
   {
@@ -163,7 +163,7 @@ const definitions: Omit<EmiyaRoom, 'scene'>[] = [
     description: '书、笔记和修理小物靠墙收纳；低书桌面向障子窗，中央可以绕行。',
     pieces: [
       piece('bookshelf', '书柜', 'shelf', 45, 115, 150, 315, 195),
-      piece('writing-desk', '书桌', 'table', 590, 145, 280, 165, 65),
+      piece('writing-desk', '书桌', 'table', 590, 145, 280, 165, 42),
     ],
   },
   {

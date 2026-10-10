@@ -4,7 +4,6 @@ import {
   EMIYA_ROOMS,
   EMIYA_ROOM_IDS,
   emiyaRoomDoors,
-  emiyaDoorSilhouette,
   type EmiyaDoor,
   type EmiyaFurniture,
   type EmiyaRoomId,
@@ -127,6 +126,10 @@ export const FateEmiyaFurniture = memo(function FateEmiyaFurniture({
   const { x, y, width: w, height: d } = piece.footprint;
   const base = quad(room, x, y, w, d),
     top = quad(room, x, y, w, d, piece.height);
+  const legged = piece.kind === 'table' || piece.kind === 'bench';
+  const lowerFace = legged
+    ? quad(room, x, y, w, d, Math.max(0, piece.height - 8))
+    : base;
   const id = `${room}-${piece.id}`,
     center = modelPoint(room, { x: x + w / 2, y: y + d / 2 }, piece.height);
   const style = { zIndex: Math.round(y + d) + 10 };
@@ -233,7 +236,7 @@ export const FateEmiyaFurniture = memo(function FateEmiyaFurniture({
         ry="23"
         fill={`url(#${id}-shadow)`}
       />
-      {piece.kind === 'table' || piece.kind === 'bench' ? (
+      {legged &&
         base.map((p, i) => (
           <path
             key={i}
@@ -242,18 +245,16 @@ export const FateEmiyaFurniture = memo(function FateEmiyaFurniture({
             strokeWidth="8"
             strokeLinecap="round"
           />
-        ))
-      ) : (
-        <polygon
-          points={polygon([top[3], top[2], base[2], base[3]])}
-          fill={`url(#${id}-front)`}
-          stroke="#8f978c"
-          strokeOpacity="0.25"
-          strokeWidth="1.5"
-        />
-      )}
+        ))}
       <polygon
-        points={polygon([top[1], top[2], base[2], base[1]])}
+        points={polygon([top[3], top[2], lowerFace[2], lowerFace[3]])}
+        fill={`url(#${id}-front)`}
+        stroke="#8f978c"
+        strokeOpacity="0.25"
+        strokeWidth="1.5"
+      />
+      <polygon
+        points={polygon([top[1], top[2], lowerFace[2], lowerFace[1]])}
         fill={`url(#${id}-side)`}
       />
       {piece.kind !== 'table' && piece.kind !== 'bench' && (
@@ -462,36 +463,18 @@ export const FateEmiyaDoorFrame = memo(function FateEmiyaDoorFrame({
   door: EmiyaDoor;
   open: boolean;
 }) {
-  // The front wall is off-camera. Draw its floor threshold rather than a
-  // floating upright door panel in front of the player.
-  if (door.at.y > 580 || room === 'forecourt')
-    return (
-      <svg
-        viewBox="0 0 1600 900"
-        className={styles.doorFrame}
-        aria-hidden="true"
-        data-door-id={door.id}
-        data-door-open={open}
-      >
-        <polygon
-          points={polygon(emiyaDoorSilhouette(door))}
-          fill="#b8b4a0"
-          fillOpacity="0.48"
-          stroke="#9ba795"
-          strokeOpacity="0.4"
-          strokeWidth="2"
-        />
-      </svg>
-    );
+  // The approved painting already supplies the walls and paper doors.
+  // Mark the navigable threshold on the floor instead of covering it with
+  // a generic upright panel that is not registered to the painted wall.
   const side = door.at.x < 80 || door.at.x > 920;
-  const a = { x: door.at.x - (side ? 0 : 85), y: door.at.y - (side ? 70 : 0) };
-  const b = { x: door.at.x + (side ? 0 : 85), y: door.at.y + (side ? 70 : 0) };
-  const points = [
-    modelPoint(room, a, 310),
-    modelPoint(room, b, 310),
-    modelPoint(room, b),
-    modelPoint(room, a),
-  ];
+  const threshold = quad(
+    room,
+    door.at.x - (side ? 12 : 85),
+    door.at.y - (side ? 70 : 12),
+    side ? 24 : 170,
+    side ? 140 : 24,
+    2,
+  );
   return (
     <svg
       viewBox="0 0 1600 900"
@@ -501,32 +484,14 @@ export const FateEmiyaDoorFrame = memo(function FateEmiyaDoorFrame({
       data-door-open={open}
     >
       <polygon
-        points={polygon(points)}
-        fill={open ? '#81968d' : '#d4d7c8'}
-        fillOpacity={open ? 0.22 : 0.72}
+        points={polygon(threshold)}
+        fill={open ? '#a7b2a0' : '#b8b4a0'}
+        fillOpacity={open ? 0.38 : 0.46}
         stroke="#a49e88"
-        strokeWidth="4"
-        strokeOpacity="0.5"
-      />
-      <polygon
-        points={polygon(
-          points.map((p, i) => ({
-            x: p.x + (open ? (side ? -12 : 48) : 0),
-            y: p.y + (open && side ? -28 : 0) + (i < 2 ? 3 : -3),
-          })),
-        )}
-        fill="#dadccb"
-        stroke="#a5a895"
         strokeWidth="1.5"
-        opacity={open ? 0.12 : 0.64}
+        strokeOpacity="0.32"
+        strokeLinejoin="round"
       />
-      {!open && (
-        <path
-          d={`M${(points[0].x + points[1].x) / 2} ${(points[0].y + points[1].y) / 2}L${(points[2].x + points[3].x) / 2} ${(points[2].y + points[3].y) / 2}`}
-          stroke="#a58d66"
-          strokeWidth="3"
-        />
-      )}
     </svg>
   );
 });

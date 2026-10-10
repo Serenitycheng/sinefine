@@ -301,7 +301,7 @@ void test('Saber keeps complete transparent walking and living frames inside the
   ]);
   assert.equal(
     SABER_LIFE_SPRITES.path,
-    '/fate/character-art/saber-life-soft-v2.png',
+    '/fate/character-art/saber-life-proportion-soft-v3.png',
   );
   for (const sheet of [SABER_WALK_SPRITES, SABER_LIFE_SPRITES]) {
     const png = readFileSync(resolve('public', sheet.path.slice(1)));

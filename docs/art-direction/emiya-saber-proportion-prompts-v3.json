@@ -1,0 +1,22 @@
+{
+  "version": 3,
+  "date": "2026-10-10",
+  "method": "built-in image_gen.imagegen",
+  "toolCalls": 1,
+  "retries": 0,
+  "reason": "Necessary visual QA found a head/body size jump between the existing adult standing model and old seated life poses. Preserve originals, replace only these unqualified life poses.",
+  "prompt": "Use case: stylized-concept. Asset: a transparent 2.5D game sprite atlas, no UI. Draw Saber / Artoria from Fate in the SAME adult proportions, face size, silhouette, everyday outfit and soft painting as the attached existing standing sprite. Blonde braided bun with blue ribbon, green eyes, ivory blouse and blue neck bow, long muted navy skirt, simple brown loafers. Preserve identity. This sheet replaces disproportionately large-headed seated poses, so head size must be identical in every pose and match the attached standing figure: adult anime head/body proportions, never chibi. Subdued diffuse cream light, cool gray shadows, soft selective edges, no bright white highlights or thick outlines. Actual alpha transparency; no floor, shadows, furniture, backgrounds, grid lines, labels or text.\nLandscape 1536x1024. EXACTLY THREE columns by FOUR rows, 12 invisible 512x256 cells, one complete figure inside each cell with clear transparent margins. Any hypothetical fully standing body has height about 235px and head about 30px in ALL cells; seated figures are shorter through folded legs, not enlarged. Keep the same underlying body and head size in both frames of each action. Never enlarge figures to fill the cell. Show full head, hands, garment and feet without clipping. Sleeping body is horizontal and its full length equals the hypothetical standing height.\nCell order: row1 column1 seated seiza calm, column2 same seiza slight hand motion, column3 seated seiza reading a small book. Row2 column1 same reading with small changed hand pose, column2 standing cooking with gentle hand motion (no counter or kitchen), column3 same standing cooking slight changed hand motion. Row3 column1 seated seiza eating rice with a small bowl, column2 same eating with slight changed bowl/hand pose, column3 lying asleep on her side with legs in frame and left-facing head (no bed, blanket or pillow). Row4 column1 same sleep small breathing change, column2 seated on an invisible bench with hands on lap and feet hanging naturally, column3 same bench sitting slightly changed hands. Bench sitting must have a clearly identifiable hip support point; no bench is drawn.\nReference is the approved standing model for both identity and proportions. Preserve this figure, outfit, colors and softness in the new action drawings. Poses must remain distinct and readable at game scale.",
+  "transparent_background": true,
+  "referenced_image_paths": [
+    "D:/projects/sinefine/source/.verification/art-review/316c7c91bac8491496ed8d5f30f110f6.jpg"
+  ],
+  "sourceReference": "source/public/fate/character-art/saber-walk-soft-v1.png",
+  "referenceCrop": {
+    "left": 99,
+    "top": 12,
+    "width": 90,
+    "height": 243
+  },
+  "savedOutput": "source/public/fate/character-art/saber-life-proportion-soft-v3.png",
+  "scope": "Six existing basic life poses, two figures each. No new mechanisms, identities or standing/walk asset regeneration."
+}

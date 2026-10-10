@@ -12,6 +12,11 @@ import {
 } from 'react';
 import type { EmiyaLifeSession } from '@/lib/fate-emiya-life';
 import type { EmiyaResidentBody } from '@/lib/fate-emiya-residents';
+import {
+  emiyaCameraBody,
+  emiyaCameraZoom,
+  emiyaClampCamera,
+} from '@/lib/fate-emiya-camera';
 import type { PartnerId } from '@/lib/fate-cast';
 import { EMIYA_LIFE_ACTIVITIES } from '@/lib/fate-emiya-household';
 import { emiyaWalkAdvance, shirouWalkSprite } from '@/lib/fate-emiya-walk';
@@ -257,16 +262,15 @@ export default function FateEmiyaHouse({
     size.height / INTERIOR_PAINT.height,
   );
   const scale = fit * zoom;
-  const clampCamera = (p: CityPoint) => ({
-    x:
-      scale * 1600 <= size.width
-        ? (size.width - scale * 1600) / 2
-        : Math.max(size.width - scale * 1600, Math.min(0, p.x)),
-    y:
-      scale * 900 <= size.height
-        ? (size.height - scale * 900) / 2
-        : Math.max(size.height - scale * 900, Math.min(0, p.y)),
-  });
+  const cameraBody = emiyaCameraBody(
+    view.player,
+    view.activity,
+    life ? 'shirou' : 'illya',
+    view.player.direction,
+    view.player.frame,
+  );
+  const clampCamera = (p: CityPoint) =>
+    emiyaClampCamera(p, scale, size, cameraBody);
   const origin = clampCamera(
     pan ?? {
       x: size.width / 2 - foot.x * scale,
@@ -431,7 +435,7 @@ export default function FateEmiyaHouse({
   const zoomCamera = (value: number, at?: CityPoint, nextAt?: CityPoint) => {
     const frame = framing.current,
       e = engine.current!;
-    const nextZoom = Math.max(1, Math.min(2.5, value)),
+    const nextZoom = emiyaCameraZoom(value, frame.size),
       nextScale = (frame.scale * nextZoom) / frame.zoom;
     const contact = emiyaActorContact(e.player, e.activity);
     const activeFloor = EMIYA_ROOMS[e.player.room].scene.floor;
@@ -441,12 +445,23 @@ export default function FateEmiyaHouse({
       x: frame.origin.x + p.x * frame.scale,
       y: frame.origin.y + p.y * frame.scale,
     };
-    const next = cityCameraZoomAnchor(
-      frame.origin,
-      frame.scale,
+    const next = emiyaClampCamera(
+      cityCameraZoomAnchor(
+        frame.origin,
+        frame.scale,
+        nextScale,
+        anchor,
+        nextAt ?? anchor,
+      ),
       nextScale,
-      anchor,
-      nextAt ?? anchor,
+      frame.size,
+      emiyaCameraBody(
+        e.player,
+        e.activity,
+        life ? 'shirou' : 'illya',
+        e.player.direction,
+        e.player.frame,
+      ),
     );
     setZoom(nextZoom);
     camera.current = next;
@@ -506,13 +521,16 @@ export default function FateEmiyaHouse({
     const element = surface.current;
     if (!element) return;
     const observer = new ResizeObserver(([entry]) => {
-      setSize({
+      const nextSize = {
         width: entry.contentRect.width,
         height: entry.contentRect.height,
-      });
+      };
+      setSize(nextSize);
+      const mobileStart =
+        !initialFraming.current && nextSize.width > 0 && nextSize.width < 600;
+      setZoom((value) => emiyaCameraZoom(mobileStart ? 2 : value, nextSize));
       if (!initialFraming.current && entry.contentRect.width > 0) {
         initialFraming.current = true;
-        if (entry.contentRect.width < 600) setZoom(2);
       }
     });
     observer.observe(element);
@@ -893,8 +911,22 @@ export default function FateEmiyaHouse({
       const p = interiorProject(contact.point, activeFloor);
       p.y -=
         contact.elevation * interiorDepth(contact.point, activeFloor) * 0.85;
-      const current = camera.current ?? frame.origin;
-      const next = cityCameraFollow(current, p, frame.scale, frame.size, dt);
+      const current =
+        previous.room !== player.room
+          ? (camera.current ?? frame.origin)
+          : frame.origin;
+      const next = emiyaClampCamera(
+        cityCameraFollow(current, p, frame.scale, frame.size, dt),
+        frame.scale,
+        frame.size,
+        emiyaCameraBody(
+          player,
+          e.activity,
+          life ? 'shirou' : 'illya',
+          player.direction,
+          player.frame,
+        ),
+      );
       camera.current = next;
       if (gap(current, next) > 0.01) setPan(next);
       const changed =
