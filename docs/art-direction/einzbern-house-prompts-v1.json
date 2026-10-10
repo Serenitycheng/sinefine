@@ -1,0 +1,206 @@
+{
+  "date": "2026-10-10",
+  "tool": "Built-in imagegen",
+  "basis": "Existing project adaptation of a Fuyuki family new home, not canonical castle architecture",
+  "reuse": [
+    "/fate/interior-art/einzbern-main-soft-v1.png",
+    "/fate/art-sample/illya-walk-v1.png",
+    "/fate/character-art/illya-life-v2.png"
+  ],
+  "references": [
+    {
+      "role": "main",
+      "path": "D:/projects/sinefine/source/.verification/art-review/302e4001fb762f67d3811ff66292a48b.jpg"
+    },
+    {
+      "role": "kiritsugu",
+      "path": "D:/projects/sinefine/source/.verification/art-review/124f4f711482e54c39ac39e7c36aabea.jpg"
+    },
+    {
+      "role": "irisviel",
+      "path": "D:/projects/sinefine/source/.verification/art-review/1e0a16afe463b56b7542a1793d53350a.jpg"
+    },
+    {
+      "role": "illya poses",
+      "path": "D:/projects/sinefine/source/.verification/art-review/5bc52d7b94714ded88b2a288f743fc22.jpg"
+    },
+    {
+      "role": "Approved gentle blended style",
+      "path": "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+    }
+  ],
+  "prompts": [
+    {
+      "id": "hall",
+      "path": "source/public/fate/interior-art/einzbern-hall-soft-v1.png",
+      "role": "Six-area entry corridor and actual room thresholds",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/302e4001fb762f67d3811ff66292a48b.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": false,
+      "prompt": "Create one 16:9 landscape full-room background painting for Sinefine's fixed-camera 2.5D game, no UI and no people. This is Kiritsugu, Irisviel and Illya's modest family new home in Fuyuki: PROJECT ADAPTATION, not the German Einzbern castle nor Emiya's traditional Japanese house. Reference 1 is the existing approved family lounge: preserve pale plaster, mellow oak, cream textiles, small European mementos and a garden with gardenias. Reference 2 establishes the user's approved soft blended anime background style: selective soft edges, restrained warm highlights, cool grey ambient fill, matte material transitions and simple foliage masses. Keep navigation thresholds crisp enough to see; no global blur, no haze filter, no crispy black outlines, no high-contrast orange sunshine, no glossy render. Slightly elevated fixed front three-quarter camera, grounded modest proportions, straight stable perspective, horizon around 35 percent. Full canvas is one room, broad readable oak floor across the foreground and centre; all furniture supported on the floor, nothing huge clipping foreground. No readable writing, labels, watermark or floor arrows. Keep open walking space from centre bottom to every doorway. Paint the entrance hall, a wide cosy single-floor family corridor with five separate clear door openings leading to different rooms. Left near opening to lounge at about x18%, floor threshold y66%; left rear opening to kitchen at x32%, threshold y46%; centre back open study doorway x53%, threshold y43%; right rear bedroom door x73%, threshold y47%; right near daughter's room door x89%, threshold y64%. Modest cream doors and warm wood frames, not tall grand castle arches. Near bottom centre is the entrance from street, out of camera behind viewer; keep x50% bottom clear for exit. A low closed shoe cabinet only at far lower left side, a compact umbrella/coat stand far lower right, a pair of adult shoes and small purple boots tucked alongside cabinet, not obstructing paths; small vase of gardenias, one family photograph, simple runner in corridor without busy pattern. Doorways and floor boundaries clearly visible. Room feels lived-in, gentle and calm."
+    },
+    {
+      "id": "kitchen",
+      "path": "source/public/fate/interior-art/einzbern-kitchen-soft-v1.png",
+      "role": "Kitchen and breakfast area",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/302e4001fb762f67d3811ff66292a48b.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": false,
+      "prompt": "Create one 16:9 landscape full-room background painting for Sinefine's fixed-camera 2.5D game, no UI and no people. This is Kiritsugu, Irisviel and Illya's modest family new home in Fuyuki: PROJECT ADAPTATION, not the German Einzbern castle nor Emiya's traditional Japanese house. Reference 1 is the existing approved family lounge: preserve pale plaster, mellow oak, cream textiles, small European mementos and a garden with gardenias. Reference 2 establishes the user's approved soft blended anime background style: selective soft edges, restrained warm highlights, cool grey ambient fill, matte material transitions and simple foliage masses. Keep navigation thresholds crisp enough to see; no global blur, no haze filter, no crispy black outlines, no high-contrast orange sunshine, no glossy render. Slightly elevated fixed front three-quarter camera, grounded modest proportions, straight stable perspective, horizon around 35 percent. Full canvas is one room, broad readable oak floor across the foreground and centre; all furniture supported on the floor, nothing huge clipping foreground. No readable writing, labels, watermark or floor arrows. Keep open walking space from centre bottom to every doorway. Paint the separate family kitchen with a small breakfast table. Cream cupboards and oak worktop with sink and kettle run along the back-left and left wall, a modest stove safely on the back wall. Small three-seat oak breakfast table and simple pale-blue padded wooden chairs on the right side at x70–88%, y49–72%, oriented to allow one clearly visible near chair seat at x71%, y61%; no oversized banquet table. Window back-centre with gardenias and layered garden shade, folded cloth and three plain cups on table, a small family recipe notebook near counter without readable writing. Clear passage through centre, all front-bottom middle clear. A real open doorway back to the hall on far left x12% threshold y52%, with glimpse of cream hall; no other exit. Natural cloudy-day light rather than dramatic sunbeams."
+    },
+    {
+      "id": "parents",
+      "path": "source/public/fate/interior-art/einzbern-parents-soft-v1.png",
+      "role": "Kiritsugu and Irisviel's shared bedroom",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/302e4001fb762f67d3811ff66292a48b.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": false,
+      "prompt": "Create one 16:9 landscape full-room background painting for Sinefine's fixed-camera 2.5D game, no UI and no people. This is Kiritsugu, Irisviel and Illya's modest family new home in Fuyuki: PROJECT ADAPTATION, not the German Einzbern castle nor Emiya's traditional Japanese house. Reference 1 is the existing approved family lounge: preserve pale plaster, mellow oak, cream textiles, small European mementos and a garden with gardenias. Reference 2 establishes the user's approved soft blended anime background style: selective soft edges, restrained warm highlights, cool grey ambient fill, matte material transitions and simple foliage masses. Keep navigation thresholds crisp enough to see; no global blur, no haze filter, no crispy black outlines, no high-contrast orange sunshine, no glossy render. Slightly elevated fixed front three-quarter camera, grounded modest proportions, straight stable perspective, horizon around 35 percent. Full canvas is one room, broad readable oak floor across the foreground and centre; all furniture supported on the floor, nothing huge clipping foreground. No readable writing, labels, watermark or floor arrows. Keep open walking space from centre bottom to every doorway. Paint a peaceful shared parents' bedroom. Low ordinary double oak bed with cream quilt and subtly muted blue blanket on LEFT (x10–43%, footprint ending around y70%), modest bedside lamp, folded dark jacket and pale shawl on a closed wardrobe; neither military room nor castle chamber. A small upholstered pale-blue reading armchair and side table at right x71%, seat y56%, light curtain window nearby, garden visible as quiet broad foliage shapes. A small framed family photograph and plain travel case tucked on shelf suggest their past while prioritising ordinary home. Broad unobstructed centre and front floor. One real open doorway in back wall at x52%, threshold y45%, returns to hall. No people, no figures in mirrors, no huge foreground bed clipping canvas."
+    },
+    {
+      "id": "illya",
+      "path": "source/public/fate/interior-art/einzbern-illya-soft-v1.png",
+      "role": "Illya's private bedroom and reading seat",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/302e4001fb762f67d3811ff66292a48b.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": false,
+      "prompt": "Create one 16:9 landscape full-room background painting for Sinefine's fixed-camera 2.5D game, no UI and no people. This is Kiritsugu, Irisviel and Illya's modest family new home in Fuyuki: PROJECT ADAPTATION, not the German Einzbern castle nor Emiya's traditional Japanese house. Reference 1 is the existing approved family lounge: preserve pale plaster, mellow oak, cream textiles, small European mementos and a garden with gardenias. Reference 2 establishes the user's approved soft blended anime background style: selective soft edges, restrained warm highlights, cool grey ambient fill, matte material transitions and simple foliage masses. Keep navigation thresholds crisp enough to see; no global blur, no haze filter, no crispy black outlines, no high-contrast orange sunshine, no glossy render. Slightly elevated fixed front three-quarter camera, grounded modest proportions, straight stable perspective, horizon around 35 percent. Full canvas is one room, broad readable oak floor across the foreground and centre; all furniture supported on the floor, nothing huge clipping foreground. No readable writing, labels, watermark or floor arrows. Keep open walking space from centre bottom to every doorway. Paint Illya's personal room, cosy without making her an infant. Small cream/oak single bed on LEFT x9–36%, footprint ends at y67%, soft muted lavender blanket, a folded purple cape beside it. On the RIGHT a small but believable oak study desk x74–88% near back window, notebooks and a simple purple ribbon; a clearly visible modest padded reading chair at x65%, seat y58%. Low bookcase and one small plain white plush animal are optional restrained European family keepsakes, no piles of toys. Curtain window with soft shaded gardenias; cream walls with two small framed botanical pictures, no readable text. Broad clear centre foreground walkway. A single open hall doorway on back wall at x49%, threshold y45%. Room distinct from parents' room, calm pale lavender and dusty blue accents; no glaring pink or saturated purple lighting."
+    },
+    {
+      "id": "study",
+      "path": "source/public/fate/interior-art/einzbern-study-soft-v1.png",
+      "role": "Kiritsugu's daily study, notes and reading",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/302e4001fb762f67d3811ff66292a48b.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": false,
+      "prompt": "Create one 16:9 landscape full-room background painting for Sinefine's fixed-camera 2.5D game, no UI and no people. This is Kiritsugu, Irisviel and Illya's modest family new home in Fuyuki: PROJECT ADAPTATION, not the German Einzbern castle nor Emiya's traditional Japanese house. Reference 1 is the existing approved family lounge: preserve pale plaster, mellow oak, cream textiles, small European mementos and a garden with gardenias. Reference 2 establishes the user's approved soft blended anime background style: selective soft edges, restrained warm highlights, cool grey ambient fill, matte material transitions and simple foliage masses. Keep navigation thresholds crisp enough to see; no global blur, no haze filter, no crispy black outlines, no high-contrast orange sunshine, no glossy render. Slightly elevated fixed front three-quarter camera, grounded modest proportions, straight stable perspective, horizon around 35 percent. Full canvas is one room, broad readable oak floor across the foreground and centre; all furniture supported on the floor, nothing huge clipping foreground. No readable writing, labels, watermark or floor arrows. Keep open walking space from centre bottom to every doorway. Paint a modest private family study, no military bunker and no occult ritual. Dark warm-oak writing desk along LEFT x9–36%, footprint y51–67%, a CLOSED plain notebook and simple black desk lamp, shelf of books and a closed travel case; no guns, no cigarette smoke, no dramatic magic circles. Right side has a comfortable muted blue-grey upholstered reading armchair x73%, seat y55%, small low side table with closed books and plain mug. A small photo of family seen from a distance, translucent cream curtains and cool natural sky fill. One actual open hall doorway centre back at x51%, threshold y44%. Readable clear walking path through broad centre and foreground. Restrained warm lamp, matte soft edges, no black crushed shadows."
+    },
+    {
+      "id": "kiritsugu",
+      "path": "source/public/fate/character-art/kiritsugu-house-soft-v1.png",
+      "role": "Four-direction stand and registered six-phase side gait",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/124f4f711482e54c39ac39e7c36aabea.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": true,
+      "prompt": "Generate a production native transparent RGBA sprite atlas for a fixed-camera 2.5D anime game. Soft hand-painted anime/chibi blend, roughly 4.5 heads tall adults, consistent clothes and face, rounded soft edges but crisp eyes and soles; diffuse cool ambient fill with restrained warm highlights; no floor, no drawn shadows, no background, no gridlines, no cell captions, no weapons or magic. Fully complete bodies including every hair strand and both feet, blank alpha gutters around each figure, do not crop. Six exactly evenly spaced columns and three rows, eighteen cells; do not draw extra people outside cells. Row 1: four quiet standing directions in first four cells (front, back, LEFT profile, RIGHT profile), last two cells completely transparent. Row 2: LEFT-facing side-view six distinct walking phases in order: left foot planted ahead/right heel up, right swing passing left knee, feet under hips with left heel rising, right foot planted ahead/left heel up, left swing passing right knee, opposite feet under hips with right heel rising. Obvious alternating bent knees and independent foot separation; actual foot contact, not six copies of a wide stance. Opposite arms swing. All six side frames same body scale, feet same ground baseline, head height stable with small natural bob. Row 3 first three cells FRONT walk (left contact, passing, right contact); last three BACK walk (left contact, passing, right contact). Keep equal body proportions across rows and generous clear vertical row gutters. Only row 2 will be mirrored for rightward walking. Reference 1 is identity ONLY: Kiritsugu Emiya, adult man with messy short black hair, brown/dark eyes, quiet tired expression, small soft face; remove all action scene elements and weapon. House outfit follows his original black silhouette: simple charcoal hip-length jacket over dark shirt, straight black trousers, matte dark shoes. No huge windblown trench coat, no gloves, no cigarette. Reference 2 is soft light and painterly material treatment ONLY, never add street as background. Calm everyday walk, no running or combat. Keep dark outfit readable through cool-grey reflected light, avoid pure black cutout. Black messy hair and restrained expression consistent in all sixteen occupied cells."
+    },
+    {
+      "id": "irisviel",
+      "path": "source/public/fate/character-art/irisviel-house-soft-v1.png",
+      "role": "Four-direction stand and registered six-phase side gait",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/1e0a16afe463b56b7542a1793d53350a.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": true,
+      "prompt": "Generate a production native transparent RGBA sprite atlas for a fixed-camera 2.5D anime game. Soft hand-painted anime/chibi blend, roughly 4.5 heads tall adults, consistent clothes and face, rounded soft edges but crisp eyes and soles; diffuse cool ambient fill with restrained warm highlights; no floor, no drawn shadows, no background, no gridlines, no cell captions, no weapons or magic. Fully complete bodies including every hair strand and both feet, blank alpha gutters around each figure, do not crop. Six exactly evenly spaced columns and three rows, eighteen cells; do not draw extra people outside cells. Row 1: four quiet standing directions in first four cells (front, back, LEFT profile, RIGHT profile), last two cells completely transparent. Row 2: LEFT-facing side-view six distinct walking phases in order: left foot planted ahead/right heel up, right swing passing left knee, feet under hips with left heel rising, right foot planted ahead/left heel up, left swing passing right knee, opposite feet under hips with right heel rising. Obvious alternating bent knees and independent foot separation; actual foot contact, not six copies of a wide stance. Opposite arms swing. All six side frames same body scale, feet same ground baseline, head height stable with small natural bob. Row 3 first three cells FRONT walk (left contact, passing, right contact); last three BACK walk (left contact, passing, right contact). Keep equal body proportions across rows and generous clear vertical row gutters. Only row 2 will be mirrored for rightward walking. Reference 1 is identity and clothing colours: Irisviel von Einzbern, adult woman with long silver-white hair and ruby-red eyes, kind confident expression. Adapt white high-collar double-breasted outfit to peaceful house use: soft cream knee-length coat-dress with charcoal buttons, opaque dark leggings, pale-grey knee boots, no outdoor fur hat and no magic. Show white hair with gentle cool shadows, red eyes small and subtle. Reference 2 is diffuse soft light and painterly materials ONLY; never add street as background. All eighteen cell placements, sixteen occupied as specified. Coat hem must rise and fall gently enough that alternating knee bend and moving boot placement are visible across all six side steps; not a static skirt sliding along the floor. Long hair stays contained in its cell, no whip motions."
+    },
+    {
+      "id": "seated",
+      "path": "source/public/fate/character-art/einzbern-seated-soft-v1.png",
+      "role": "Five necessary chair poses; Illya quiet sitting reused separately",
+      "references": [
+        "D:/projects/sinefine/source/.verification/art-review/124f4f711482e54c39ac39e7c36aabea.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/1e0a16afe463b56b7542a1793d53350a.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/5bc52d7b94714ded88b2a288f743fc22.jpg",
+        "D:/projects/sinefine/source/.verification/art-review/f44025de5c3c8d4d909068eca4765676.jpg"
+      ],
+      "transparent": true,
+      "prompt": "Create ONE native transparent RGBA 2.5D game character pose atlas with 3 equal columns and 2 equal rows, soft hand-painted anime/chibi blend. Reference 1 identifies Kiritsugu only, reference 2 Irisviel only, reference 3 Illya's APPROVED purple winter outfit and proportions only, reference 4 soft painted light only. No background, floor, chairs, shadows, text, grid or extra figures. Row1 cell1: Kiritsugu seated quietly on an invisible ordinary chair, three-quarter facing RIGHT, hips supported, knees bent about 90 degrees, both feet beneath and slightly forward, hands on lap. Row1 cell2: Irisviel same quiet chair sitting facing RIGHT. Row1 cell3: completely blank alpha; Illya's qualified existing quiet sitting pose is being reused, DO NOT generate it again. Row2 cell1: Kiritsugu on ordinary invisible chair facing RIGHT, holding an open plain book in both hands, relaxed bent knees and both full feet visible. Row2 cell2: Irisviel same chair reading. Row2 cell3: Illya on invisible small chair, purple hat and coat with white bow, long silver hair, red eyes, short proportions matching reference3, knees bent, legs hanging naturally, both purple boots visible, reading a small open book in both hands; not cross-legged on floor. Kiritsugu messy black hair, charcoal hip-length jacket, dark shirt and trousers/shoes, no weapons or cigarette. Irisviel long silver hair red eyes, cream high-collar double-button coat-dress, dark leggings/pale-grey knee boots, NO hat. Adults roughly4.5 heads high standing proportions; Illya has smaller proportions as approved, neither toddler nor adult-sized head. Consistent painted lighting, restrained highlights, softened outlines, full body and generous clear alpha gutters. Do not draw the chair: furniture comes from room background. Full seated body silhouettes from hair top to both feet, no cut legs, no floor-length robe hiding knees."
+    }
+  ],
+  "nativeAssets": [
+    {
+      "id": "hall",
+      "path": "source/public/fate/interior-art/einzbern-hall-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-cc20ea6d-8d9c-4589-8135-cafb471c4ee8.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2113814,
+      "sha256": "3c33791786e0132ae2a4a5f33d016b29ae6a702710beb2c985371d9ffbec1e2f",
+      "transparent": false
+    },
+    {
+      "id": "kitchen",
+      "path": "source/public/fate/interior-art/einzbern-kitchen-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-2f0ba7fc-3f73-4a0a-b4be-805d26e49604.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2000357,
+      "sha256": "9106791d3042f1ceb77afaeb32aae9eac9e6756263fbd66d3ada7992ff9353d7",
+      "transparent": false
+    },
+    {
+      "id": "parents",
+      "path": "source/public/fate/interior-art/einzbern-parents-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-cca71b6b-9b39-4dff-8430-763f2b55b7e7.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2102742,
+      "sha256": "6f95376e50cd4196844268c493ada1a7531038b5cd462e41d77423d7b1a2f46a",
+      "transparent": false
+    },
+    {
+      "id": "illya",
+      "path": "source/public/fate/interior-art/einzbern-illya-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-67db483f-d54d-48ab-849e-ded886bace79.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2056628,
+      "sha256": "5f2fa8fbe63587fc1e164bdd4d656e08c8fe856f321745349733d924d308fa3d",
+      "transparent": false
+    },
+    {
+      "id": "study",
+      "path": "source/public/fate/interior-art/einzbern-study-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-f9aac6fb-93b9-42f9-a736-c3374ef60700.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2176269,
+      "sha256": "3e7996ad9e200cff6dd1a66f4f87cf9609bcf2dd3923ab0cedc65157641d92c1",
+      "transparent": false
+    },
+    {
+      "id": "kiritsugu",
+      "path": "source/public/fate/character-art/kiritsugu-house-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-c562913b-cd23-4b58-8210-97f70e03117c.png",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1792979,
+      "sha256": "20faed821ad25f435a7ee9240084a58fc5e3a522d083610ff948d9d15b0e79b3",
+      "transparent": true
+    },
+    {
+      "id": "irisviel",
+      "path": "source/public/fate/character-art/irisviel-house-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-3cd3f83d-8368-488e-84fb-e01b26108290.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2077230,
+      "sha256": "8709186e30f1aa7a9f5620ece8310edcc6eb41924fac7b201e22dd9adb4efbde",
+      "transparent": true
+    },
+    {
+      "id": "seated",
+      "path": "source/public/fate/character-art/einzbern-seated-soft-v1.png",
+      "source": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-bc08e86f-5cfc-4b0a-9de4-030c995ba3c3.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1847596,
+      "sha256": "b8635a9b6c444db68be33738c858fb94be8c9cb3b73246c77fa1edbb5e9ffd91",
+      "transparent": true
+    }
+  ]
+}

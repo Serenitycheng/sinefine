@@ -1,0 +1,898 @@
+{
+  "rin": {
+    "file": "/fate/character-art/rin-house-soft-v1.png",
+    "cellWidth": 295.6666666666667,
+    "cellHeight": 295.6666666666667,
+    "scale": 0.8703071672354948,
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "anchorX": 175.25488239486813,
+        "anchorY": 295,
+        "bounds": {
+          "x": 110,
+          "y": 4,
+          "width": 132,
+          "height": 292
+        }
+      },
+      {
+        "col": 1,
+        "row": 0,
+        "anchorX": 173.21993560128797,
+        "anchorY": 295,
+        "bounds": {
+          "x": 105,
+          "y": 6,
+          "width": 134,
+          "height": 290
+        }
+      },
+      {
+        "col": 2,
+        "row": 0,
+        "anchorX": 156.95996275605214,
+        "anchorY": 295,
+        "bounds": {
+          "x": 111,
+          "y": 2,
+          "width": 104,
+          "height": 294
+        }
+      },
+      {
+        "col": 3,
+        "row": 0,
+        "anchorX": 135.95560529751913,
+        "anchorY": 295,
+        "bounds": {
+          "x": 79,
+          "y": 2,
+          "width": 104,
+          "height": 294
+        }
+      },
+      {
+        "col": 4,
+        "row": 0,
+        "anchorX": 176.4044734389562,
+        "anchorY": 294,
+        "bounds": {
+          "x": 43,
+          "y": 120,
+          "width": 200,
+          "height": 175
+        }
+      },
+      {
+        "col": 5,
+        "row": 0,
+        "anchorX": 163.45778065351018,
+        "anchorY": 295,
+        "bounds": {
+          "x": 39,
+          "y": 120,
+          "width": 199,
+          "height": 176
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "anchorX": 174.0971229967175,
+        "anchorY": 284,
+        "bounds": {
+          "x": 76,
+          "y": 0,
+          "width": 166,
+          "height": 285
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "anchorX": 171.35938104448744,
+        "anchorY": 284,
+        "bounds": {
+          "x": 93,
+          "y": 0,
+          "width": 146,
+          "height": 285
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "anchorX": 159.01193504206614,
+        "anchorY": 284,
+        "bounds": {
+          "x": 107,
+          "y": 0,
+          "width": 117,
+          "height": 285
+        }
+      },
+      {
+        "col": 3,
+        "row": 1,
+        "anchorX": 151.57230826646762,
+        "anchorY": 285,
+        "bounds": {
+          "x": 58,
+          "y": 0,
+          "width": 164,
+          "height": 286
+        }
+      },
+      {
+        "col": 4,
+        "row": 1,
+        "anchorX": 152.58744946387765,
+        "anchorY": 284,
+        "bounds": {
+          "x": 57,
+          "y": 8,
+          "width": 163,
+          "height": 277
+        }
+      },
+      {
+        "col": 5,
+        "row": 1,
+        "anchorX": 141.58505987454856,
+        "anchorY": 285,
+        "bounds": {
+          "x": 49,
+          "y": 0,
+          "width": 162,
+          "height": 286
+        }
+      },
+      {
+        "col": 0,
+        "row": 2,
+        "anchorX": 157.09009341199607,
+        "anchorY": 283,
+        "bounds": {
+          "x": 84,
+          "y": 1,
+          "width": 147,
+          "height": 283
+        }
+      },
+      {
+        "col": 1,
+        "row": 2,
+        "anchorX": 152.71578282828284,
+        "anchorY": 283,
+        "bounds": {
+          "x": 80,
+          "y": 1,
+          "width": 146,
+          "height": 283
+        }
+      },
+      {
+        "col": 2,
+        "row": 2,
+        "anchorX": 149.65215170476313,
+        "anchorY": 283,
+        "bounds": {
+          "x": 78,
+          "y": 1,
+          "width": 142,
+          "height": 283
+        }
+      },
+      {
+        "col": 3,
+        "row": 2,
+        "anchorX": 147.45073209339137,
+        "anchorY": 283,
+        "bounds": {
+          "x": 76,
+          "y": 2,
+          "width": 144,
+          "height": 282
+        }
+      },
+      {
+        "col": 4,
+        "row": 2,
+        "anchorX": 146.36133906473884,
+        "anchorY": 283,
+        "bounds": {
+          "x": 75,
+          "y": 2,
+          "width": 144,
+          "height": 282
+        }
+      },
+      {
+        "col": 5,
+        "row": 2,
+        "anchorX": 146.83708165997322,
+        "anchorY": 277,
+        "bounds": {
+          "x": 78,
+          "y": 2,
+          "width": 138,
+          "height": 276
+        }
+      }
+    ]
+  },
+  "emiya": {
+    "file": "/fate/character-art/emiya-house-soft-v1.png",
+    "cellWidth": 295.6666666666667,
+    "cellHeight": 295.6666666666667,
+    "scale": 0.9757785467128027,
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "anchorX": 185.52000808407436,
+        "anchorY": 295,
+        "bounds": {
+          "x": 114,
+          "y": 7,
+          "width": 142,
+          "height": 289
+        }
+      },
+      {
+        "col": 1,
+        "row": 0,
+        "anchorX": 187.49302421009438,
+        "anchorY": 295,
+        "bounds": {
+          "x": 113,
+          "y": 7,
+          "width": 150,
+          "height": 289
+        }
+      },
+      {
+        "col": 2,
+        "row": 0,
+        "anchorX": 162.53100460330356,
+        "anchorY": 295,
+        "bounds": {
+          "x": 114,
+          "y": 7,
+          "width": 121,
+          "height": 289
+        }
+      },
+      {
+        "col": 3,
+        "row": 0,
+        "anchorX": 132.52257547421854,
+        "anchorY": 295,
+        "bounds": {
+          "x": 76,
+          "y": 7,
+          "width": 108,
+          "height": 289
+        }
+      },
+      {
+        "col": 4,
+        "row": 0,
+        "anchorX": 177.48732663797227,
+        "anchorY": 295,
+        "bounds": {
+          "x": 32,
+          "y": 118,
+          "width": 232,
+          "height": 178
+        }
+      },
+      {
+        "col": 5,
+        "row": 0,
+        "anchorX": 166.46744286330315,
+        "anchorY": 295,
+        "bounds": {
+          "x": 44,
+          "y": 121,
+          "width": 211,
+          "height": 175
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "anchorX": 166.31957857769973,
+        "anchorY": 294,
+        "bounds": {
+          "x": 71,
+          "y": 0,
+          "width": 186,
+          "height": 295
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "anchorX": 158.77517708654142,
+        "anchorY": 292,
+        "bounds": {
+          "x": 76,
+          "y": 0,
+          "width": 166,
+          "height": 293
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "anchorX": 150.94920899250624,
+        "anchorY": 294,
+        "bounds": {
+          "x": 68,
+          "y": 0,
+          "width": 168,
+          "height": 295
+        }
+      },
+      {
+        "col": 3,
+        "row": 1,
+        "anchorX": 132.37145313843507,
+        "anchorY": 292,
+        "bounds": {
+          "x": 70,
+          "y": 0,
+          "width": 164,
+          "height": 293
+        }
+      },
+      {
+        "col": 4,
+        "row": 1,
+        "anchorX": 126.88316467341306,
+        "anchorY": 294,
+        "bounds": {
+          "x": 32,
+          "y": 0,
+          "width": 233,
+          "height": 295
+        }
+      },
+      {
+        "col": 5,
+        "row": 1,
+        "anchorX": 120.56296992481202,
+        "anchorY": 294,
+        "bounds": {
+          "x": 30,
+          "y": 0,
+          "width": 223,
+          "height": 295
+        }
+      },
+      {
+        "col": 0,
+        "row": 2,
+        "anchorX": 153.86396135265701,
+        "anchorY": 287,
+        "bounds": {
+          "x": 88,
+          "y": 0,
+          "width": 140,
+          "height": 288
+        }
+      },
+      {
+        "col": 1,
+        "row": 2,
+        "anchorX": 148.81781620752062,
+        "anchorY": 288,
+        "bounds": {
+          "x": 87,
+          "y": 1,
+          "width": 126,
+          "height": 288
+        }
+      },
+      {
+        "col": 2,
+        "row": 2,
+        "anchorX": 150.35010402874977,
+        "anchorY": 288,
+        "bounds": {
+          "x": 90,
+          "y": 0,
+          "width": 128,
+          "height": 289
+        }
+      },
+      {
+        "col": 3,
+        "row": 2,
+        "anchorX": 148.78486707566464,
+        "anchorY": 286,
+        "bounds": {
+          "x": 76,
+          "y": 4,
+          "width": 134,
+          "height": 283
+        }
+      },
+      {
+        "col": 4,
+        "row": 2,
+        "anchorX": 142.76728669632027,
+        "anchorY": 286,
+        "bounds": {
+          "x": 77,
+          "y": 0,
+          "width": 134,
+          "height": 287
+        }
+      },
+      {
+        "col": 5,
+        "row": 2,
+        "anchorX": 140.72307389937106,
+        "anchorY": 289,
+        "bounds": {
+          "x": 74,
+          "y": 0,
+          "width": 135,
+          "height": 290
+        }
+      }
+    ]
+  },
+  "tokiomi": {
+    "file": "/fate/character-art/tokiomi-house-soft-v1.png",
+    "cellWidth": 295.6666666666667,
+    "cellHeight": 295.6666666666667,
+    "scale": 0.9877408056042032,
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "anchorX": 178.12659552207575,
+        "anchorY": 292,
+        "bounds": {
+          "x": 127,
+          "y": 7,
+          "width": 102,
+          "height": 286
+        }
+      },
+      {
+        "col": 1,
+        "row": 0,
+        "anchorX": 154.5928870292887,
+        "anchorY": 292,
+        "bounds": {
+          "x": 109,
+          "y": 8,
+          "width": 93,
+          "height": 285
+        }
+      },
+      {
+        "col": 2,
+        "row": 0,
+        "anchorX": 133.7907396271798,
+        "anchorY": 292,
+        "bounds": {
+          "x": 104,
+          "y": 8,
+          "width": 64,
+          "height": 285
+        }
+      },
+      {
+        "col": 3,
+        "row": 0,
+        "anchorX": 150.2861871802588,
+        "anchorY": 292,
+        "bounds": {
+          "x": 116,
+          "y": 7,
+          "width": 63,
+          "height": 286
+        }
+      },
+      {
+        "col": 4,
+        "row": 0,
+        "anchorX": 157.8092352092352,
+        "anchorY": 294,
+        "bounds": {
+          "x": 26,
+          "y": 57,
+          "width": 203,
+          "height": 238
+        }
+      },
+      {
+        "col": 5,
+        "row": 0,
+        "anchorX": 152.07446520444083,
+        "anchorY": 295,
+        "bounds": {
+          "x": 28,
+          "y": 58,
+          "width": 200,
+          "height": 238
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "anchorX": 143.94761029411765,
+        "anchorY": 285,
+        "bounds": {
+          "x": 63,
+          "y": 9,
+          "width": 175,
+          "height": 277
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "anchorX": 140.3350367294794,
+        "anchorY": 284,
+        "bounds": {
+          "x": 74,
+          "y": 9,
+          "width": 149,
+          "height": 276
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "anchorX": 136.26350710900473,
+        "anchorY": 284,
+        "bounds": {
+          "x": 74,
+          "y": 8,
+          "width": 137,
+          "height": 277
+        }
+      },
+      {
+        "col": 3,
+        "row": 1,
+        "anchorX": 139.57359307359306,
+        "anchorY": 284,
+        "bounds": {
+          "x": 63,
+          "y": 8,
+          "width": 170,
+          "height": 277
+        }
+      },
+      {
+        "col": 4,
+        "row": 1,
+        "anchorX": 142.3548088779285,
+        "anchorY": 284,
+        "bounds": {
+          "x": 66,
+          "y": 8,
+          "width": 167,
+          "height": 277
+        }
+      },
+      {
+        "col": 5,
+        "row": 1,
+        "anchorX": 139.7654013690106,
+        "anchorY": 284,
+        "bounds": {
+          "x": 59,
+          "y": 9,
+          "width": 171,
+          "height": 276
+        }
+      },
+      {
+        "col": 0,
+        "row": 2,
+        "anchorX": 158.89919769594732,
+        "anchorY": 282,
+        "bounds": {
+          "x": 105,
+          "y": 4,
+          "width": 110,
+          "height": 279
+        }
+      },
+      {
+        "col": 1,
+        "row": 2,
+        "anchorX": 148.18888654130572,
+        "anchorY": 283,
+        "bounds": {
+          "x": 94,
+          "y": 3,
+          "width": 105,
+          "height": 281
+        }
+      },
+      {
+        "col": 2,
+        "row": 2,
+        "anchorX": 141.83469174503657,
+        "anchorY": 283,
+        "bounds": {
+          "x": 86,
+          "y": 3,
+          "width": 125,
+          "height": 281
+        }
+      },
+      {
+        "col": 3,
+        "row": 2,
+        "anchorX": 149.0897489539749,
+        "anchorY": 282,
+        "bounds": {
+          "x": 98,
+          "y": 3,
+          "width": 106,
+          "height": 280
+        }
+      },
+      {
+        "col": 4,
+        "row": 2,
+        "anchorX": 145.6522192123359,
+        "anchorY": 283,
+        "bounds": {
+          "x": 90,
+          "y": 6,
+          "width": 105,
+          "height": 278
+        }
+      },
+      {
+        "col": 5,
+        "row": 2,
+        "anchorX": 136.78381822042897,
+        "anchorY": 283,
+        "bounds": {
+          "x": 86,
+          "y": 5,
+          "width": 114,
+          "height": 279
+        }
+      }
+    ]
+  },
+  "gilgamesh": {
+    "file": "/fate/character-art/gilgamesh-house-soft-v2.png",
+    "cellWidth": 295.6666666666667,
+    "cellHeight": 295.6666666666667,
+    "scale": 0.986013986013986,
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "anchorX": 162.00496874499117,
+        "anchorY": 293,
+        "bounds": {
+          "x": 86,
+          "y": 5,
+          "width": 149,
+          "height": 289
+        }
+      },
+      {
+        "col": 1,
+        "row": 0,
+        "anchorX": 155.8379165318667,
+        "anchorY": 294,
+        "bounds": {
+          "x": 76,
+          "y": 4,
+          "width": 158,
+          "height": 291
+        }
+      },
+      {
+        "col": 2,
+        "row": 0,
+        "anchorX": 157.1734763752568,
+        "anchorY": 295,
+        "bounds": {
+          "x": 109,
+          "y": 6,
+          "width": 122,
+          "height": 290
+        }
+      },
+      {
+        "col": 3,
+        "row": 0,
+        "anchorX": 153.03512102515424,
+        "anchorY": 295,
+        "bounds": {
+          "x": 82,
+          "y": 5,
+          "width": 115,
+          "height": 291
+        }
+      },
+      {
+        "col": 4,
+        "row": 0,
+        "anchorX": 109.56133933595949,
+        "anchorY": 290,
+        "bounds": {
+          "x": 31,
+          "y": 96,
+          "width": 249,
+          "height": 195
+        }
+      },
+      {
+        "col": 5,
+        "row": 0,
+        "anchorX": 108.92421441774492,
+        "anchorY": 290,
+        "bounds": {
+          "x": 23,
+          "y": 111,
+          "width": 246,
+          "height": 180
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "anchorX": 148.71229187071498,
+        "anchorY": 294,
+        "bounds": {
+          "x": 59,
+          "y": 6,
+          "width": 201,
+          "height": 289
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "anchorX": 150.80844001896634,
+        "anchorY": 294,
+        "bounds": {
+          "x": 82,
+          "y": 6,
+          "width": 172,
+          "height": 289
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "anchorX": 147.02793432982114,
+        "anchorY": 294,
+        "bounds": {
+          "x": 53,
+          "y": 0,
+          "width": 195,
+          "height": 295
+        }
+      },
+      {
+        "col": 3,
+        "row": 1,
+        "anchorX": 155.8529274004684,
+        "anchorY": 294,
+        "bounds": {
+          "x": 54,
+          "y": 0,
+          "width": 207,
+          "height": 295
+        }
+      },
+      {
+        "col": 4,
+        "row": 1,
+        "anchorX": 134.61437456807187,
+        "anchorY": 294,
+        "bounds": {
+          "x": 46,
+          "y": 7,
+          "width": 202,
+          "height": 288
+        }
+      },
+      {
+        "col": 5,
+        "row": 1,
+        "anchorX": 143.922419608725,
+        "anchorY": 294,
+        "bounds": {
+          "x": 46,
+          "y": 6,
+          "width": 197,
+          "height": 289
+        }
+      },
+      {
+        "col": 0,
+        "row": 2,
+        "anchorX": 157.84726962457339,
+        "anchorY": 290,
+        "bounds": {
+          "x": 78,
+          "y": 0,
+          "width": 159,
+          "height": 291
+        }
+      },
+      {
+        "col": 1,
+        "row": 2,
+        "anchorX": 154.23900252171475,
+        "anchorY": 288,
+        "bounds": {
+          "x": 76,
+          "y": 0,
+          "width": 152,
+          "height": 289
+        }
+      },
+      {
+        "col": 2,
+        "row": 2,
+        "anchorX": 149.086999716151,
+        "anchorY": 291,
+        "bounds": {
+          "x": 68,
+          "y": 0,
+          "width": 158,
+          "height": 292
+        }
+      },
+      {
+        "col": 3,
+        "row": 2,
+        "anchorX": 146.55115859163408,
+        "anchorY": 286,
+        "bounds": {
+          "x": 64,
+          "y": 0,
+          "width": 163,
+          "height": 287
+        }
+      },
+      {
+        "col": 4,
+        "row": 2,
+        "anchorX": 151.54585473220837,
+        "anchorY": 287,
+        "bounds": {
+          "x": 70,
+          "y": 0,
+          "width": 156,
+          "height": 288
+        }
+      },
+      {
+        "col": 5,
+        "row": 2,
+        "anchorX": 148.4981301421092,
+        "anchorY": 287,
+        "bounds": {
+          "x": 75,
+          "y": 0,
+          "width": 163,
+          "height": 288
+        }
+      }
+    ]
+  }
+}

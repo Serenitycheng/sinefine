@@ -8,7 +8,14 @@ export type CharacterArt = {
   reference: string | null;
   stage: 'study-ready' | 'to-refine';
   model: string | null;
-  scope: 'city-sample' | 'emiya-sample' | 'legacy';
+  scope:
+    | 'city-sample'
+    | 'emiya-sample'
+    | 'tohsaka-sample'
+    | 'matou-sample'
+    | 'einzbern-sample'
+    | 'waver-sample'
+    | 'legacy';
   frames: 'four-direction-six-frame' | 'four-direction-reused-frame' | 'legacy';
   height: number;
   variants: readonly string[];
@@ -19,6 +26,16 @@ const modelAssets: Partial<Record<ActorId, string>> = {
   saber: '/fate/character-art/saber-walk-soft-v1.png',
   sakura: '/fate/character-art/sakura-visit-soft-v1.png',
   taiga: '/fate/character-art/taiga-visit-soft-v1.png',
+  rin: '/fate/character-art/rin-house-soft-v1.png',
+  emiya: '/fate/character-art/emiya-house-soft-v1.png',
+  tokiomi: '/fate/character-art/tokiomi-house-soft-v1.png',
+  gilgamesh: '/fate/character-art/gilgamesh-house-soft-v2.png',
+  kariya: '/fate/character-art/kariya-house-soft-v1.png',
+  medusa: '/fate/character-art/medusa-house-soft-v1.png',
+  kiritsugu: '/fate/character-art/kiritsugu-house-soft-v1.png',
+  irisviel: '/fate/character-art/irisviel-house-soft-v1.png',
+  waver: '/fate/character-art/waver-adult-house-soft-v1.png',
+  iskandar: '/fate/character-art/iskandar-house-soft-v2.png',
 };
 /** Cover every selectable identity; old chibi sheets are a fallback, never
  * counted as finished 2.5D character models. Existing identity IDs stay intact. */
@@ -27,19 +44,42 @@ export const CHARACTER_ART: readonly CharacterArt[] = STREET_CAST.map(
     id: actor.id,
     name: actor.name,
     reference:
-      FATE_CAST.find((person) => person.id === actor.id)?.portraits[0]?.file ??
-      null,
+      actor.id === 'waver'
+        ? '/fate/portraits/waver-adult.png'
+        : (FATE_CAST.find((person) => person.id === actor.id)?.portraits[0]
+            ?.file ?? null),
     stage: modelAssets[actor.id] ? 'study-ready' : 'to-refine',
     model: modelAssets[actor.id] ?? null,
     scope:
       actor.id === 'illya'
         ? 'city-sample'
-        : modelAssets[actor.id]
-          ? 'emiya-sample'
-          : 'legacy',
+        : ['rin', 'emiya', 'tokiomi', 'gilgamesh'].includes(actor.id)
+          ? 'tohsaka-sample'
+          : ['kariya', 'medusa'].includes(actor.id)
+            ? 'matou-sample'
+            : ['kiritsugu', 'irisviel'].includes(actor.id)
+              ? 'einzbern-sample'
+              : ['waver', 'iskandar'].includes(actor.id)
+                ? 'waver-sample'
+                : modelAssets[actor.id]
+                  ? 'emiya-sample'
+                  : 'legacy',
     frames: ['illya', 'shirou', 'saber'].includes(actor.id)
       ? 'four-direction-six-frame'
-      : ['sakura', 'taiga'].includes(actor.id)
+      : [
+            'sakura',
+            'taiga',
+            'rin',
+            'emiya',
+            'tokiomi',
+            'gilgamesh',
+            'kariya',
+            'medusa',
+            'kiritsugu',
+            'irisviel',
+            'waver',
+            'iskandar',
+          ].includes(actor.id)
         ? 'four-direction-reused-frame'
         : 'legacy',
     height: actor.id === 'illya' ? 132 : actor.id === 'iskandar' ? 193 : 165,

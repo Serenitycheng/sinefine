@@ -29,6 +29,16 @@ import {
 } from '@/lib/fate-city-interior-navigation';
 import styles from './fate-city-interior.module.css';
 import FateEmiyaHouse from './fate-emiya-house';
+import { houseCamera, houseZoom } from '@/lib/fate-tohsaka-house';
+import { HOUSE_PREVIEWS } from '@/lib/fate-preview-houses';
+import {
+  nearestPreviewDoor,
+  mirrorPreviewSprite,
+  type PreviewHouse,
+  type PreviewDoor,
+  type PreviewAction,
+} from '@/lib/fate-preview-house';
+import type { ActorId } from '@/lib/street';
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 const INPUTS = [
@@ -59,54 +69,177 @@ export default function FateCityInterior({
 }) {
   return scene.id === 'emiya' ? (
     <FateEmiyaHouse onExit={onExit} />
+  ) : scene.id === 'tohsaka' ||
+    scene.id === 'matou' ||
+    scene.id === 'einzbern' ||
+    scene.id === 'waver' ? (
+    <HouseInterior
+      key={scene.id}
+      plan={HOUSE_PREVIEWS[scene.id]}
+      onExit={onExit}
+    />
   ) : (
     <SingleRoomInterior scene={scene} onExit={onExit} />
+  );
+}
+
+type HouseSession = {
+  plan: PreviewHouse;
+  room: string;
+  entry: CityPoint;
+  actor: ActorId;
+  zoom: number;
+  onZoom: (zoom: number) => void;
+  onActor: (actor: ActorId) => void;
+  onDoor: (door: PreviewDoor) => void;
+};
+function HouseInterior({
+  plan,
+  onExit,
+}: {
+  plan: PreviewHouse;
+  onExit: () => void;
+}) {
+  const [location, setLocation] = useState({
+    room: 'hall',
+    entry: { x: 500, y: 560 },
+    visit: 0,
+  });
+  const [actor, setActor] = useState<ActorId>(plan.cast[0].id);
+  const [zoom, setZoom] = useState(1.5);
+  const session: HouseSession = {
+    plan,
+    ...location,
+    actor,
+    zoom,
+    onZoom: setZoom,
+    onActor: setActor,
+    onDoor: (door) => {
+      if (!door.to) {
+        onExit();
+        return;
+      }
+      setLocation((old) => ({
+        room: door.to!,
+        entry: { ...door.arrival },
+        visit: old.visit + 1,
+      }));
+    },
+  };
+  return (
+    <SingleRoomInterior
+      key={location.visit}
+      scene={plan.rooms[location.room].scene}
+      onExit={onExit}
+      house={session}
+    />
   );
 }
 
 function SingleRoomInterior({
   scene,
   onExit,
+  house,
 }: {
   scene: CityInteriorScene;
   onExit: () => void;
+  house?: HouseSession;
 }) {
+  const entry = house?.entry ?? INTERIOR_ART_ENTRY;
   const [view, setView] = useState({
-    point: { ...INTERIOR_ART_ENTRY },
+    point: { ...entry },
     direction: 'up' as Direction,
     frame: 0,
   });
   const [size, setSize] = useState({ width: 1000, height: 600 });
-  const [zoom, setZoom] = useState(1);
+  const [layoutReady, setLayoutReady] = useState(false);
+  const [localZoom, setLocalZoom] = useState(1);
+  const zoom = house ? houseZoom(house.zoom, size) : localZoom;
+  const setZoom = (value: number | ((value: number) => number)) => {
+    const next = typeof value === 'function' ? value(zoom) : value;
+    if (house) house.onZoom(next);
+    else setLocalZoom(next);
+  };
   const [load, setLoad] = useState<'loading' | 'ready' | 'error'>('loading');
   const [attempt, setAttempt] = useState(0);
+  const modelActor = house?.actor;
+  const modelPlan = house?.plan;
+  const modelKey = modelActor ? `${modelActor}:${attempt}` : 'legacy';
+  const [modelStatus, setModelStatus] = useState<{
+    key: string;
+    status: 'ready' | 'error';
+  }>({ key: 'legacy', status: 'ready' });
+  const modelLoad =
+    modelStatus.key === modelKey ? modelStatus.status : 'loading';
+  const [pose, setPose] = useState<PreviewAction | null>(null);
+  const ready = layoutReady && load === 'ready' && modelLoad === 'ready';
   const [message, setMessage] = useState(
     '点地面沿路走；方向键或 WASD 行走，走近出口按 E 返回。',
   );
   const surface = useRef<HTMLDivElement>(null);
   const shell = useRef<HTMLDialogElement>(null);
-  const position = useRef<CityPoint>({ ...INTERIOR_ART_ENTRY });
+  const position = useRef<CityPoint>({ ...entry });
   const keys = useRef(new Set<string>());
   const held = useRef<CityPoint>({ x: 0, y: 0 });
   const route = useRef<CityPoint[]>([]);
   const destination = useRef<string | null>(null);
   const facing = useRef<Direction>('up');
   const walked = useRef(0);
+  const fingers = useRef(new Map<number, CityPoint>());
+  const pinch = useRef<{ gap: number; zoom: number } | null>(null);
+  const cameraGesture = useRef(false);
   const exit = useRef(onExit);
+  const session = useRef(house);
+  const camera = useRef({ zoom, size });
+  const currentPose = useRef<PreviewAction | null>(null);
   const stop = () => {
     keys.current.clear();
     held.current = { x: 0, y: 0 };
     route.current = [];
     destination.current = null;
+    fingers.current.clear();
+    pinch.current = null;
+    currentPose.current = null;
+    setPose(null);
   };
-  const canExit = distance(view.point, INTERIOR_ART_ENTRY) < 48;
+  const doors = house
+    ? house.plan.rooms[house.room].doors
+    : [
+        {
+          id: 'exit',
+          label: '出口',
+          point: INTERIOR_ART_ENTRY,
+          to: null,
+          arrival: INTERIOR_ART_ENTRY,
+        },
+      ];
+  const returnDoor = house
+    ? doors.find((d) => d.id === (house.room === 'hall' ? 'street' : 'hall'))!
+    : doors[0];
+  const canExit = distance(view.point, returnDoor.point) < 48;
   const fit = Math.min(
     size.width / INTERIOR_PAINT.width,
     size.height / INTERIOR_PAINT.height,
   );
   const scale = fit * zoom;
-  const foot = interiorProject(view.point, scene.floor);
-  const origin = {
+  const renderedPoint = pose?.contact ?? view.point;
+  const foot = interiorProject(renderedPoint, scene.floor);
+  const depth = interiorDepth(renderedPoint, scene.floor);
+  foot.y -= (pose?.elevation ?? 0) * depth;
+  const legacyAnchor =
+    ART_SPRITE_FRAMES[view.direction][Math.min(5, view.frame)];
+  const originalModel = house
+    ? house.plan.sprite(house.actor, view.direction, view.frame, pose?.pose)
+    : null;
+  const model =
+    originalModel && pose?.mirror
+      ? mirrorPreviewSprite(originalModel)
+      : originalModel;
+  const anchor = model
+    ? { x: model.anchorX, y: model.anchorY, scale: model.scale }
+    : legacyAnchor;
+  const spriteScale = depth * anchor.scale * (pose?.scale ?? 1);
+  const cameraTarget = {
     x:
       scale * INTERIOR_PAINT.width <= size.width
         ? (size.width - scale * INTERIOR_PAINT.width) / 2
@@ -122,10 +255,17 @@ function SingleRoomInterior({
             Math.min(0, size.height * 0.7 - foot.y * scale),
           ),
   };
-  const anchor = ART_SPRITE_FRAMES[view.direction][view.frame];
-  const spriteScale = interiorDepth(view.point, scene.floor) * anchor.scale;
+  const origin =
+    house && model
+      ? houseCamera(cameraTarget, scale, size, {
+          x: foot.x + (model.bounds.x - anchor.x) * spriteScale,
+          y: foot.y + (model.bounds.y - anchor.y) * spriteScale,
+          width: model.bounds.width * spriteScale,
+          height: model.bounds.height * spriteScale,
+        })
+      : cameraTarget;
   const walkTo = (point: CityPoint, id: string | null = null) => {
-    if (load !== 'ready') return;
+    if (!ready) return;
     stop();
     const path = interiorRoute(position.current, point, scene);
     if (!path) {
@@ -141,29 +281,83 @@ function SingleRoomInterior({
   useEffect(() => {
     actions.current = { walkTo, stop };
     exit.current = onExit;
+    session.current = house;
+    camera.current = { zoom, size };
   });
+  const isHouse = Boolean(house);
+  useEffect(() => {
+    const element = surface.current;
+    if (!element || !isHouse) return;
+    const wheel = (event: WheelEvent) => {
+      event.preventDefault();
+      if (event.deltaY === 0) return;
+      const current = camera.current;
+      session.current?.onZoom(
+        houseZoom(
+          current.zoom * (event.deltaY < 0 ? 1.12 : 1 / 1.12),
+          current.size,
+        ),
+      );
+    };
+    element.addEventListener('wheel', wheel, { passive: false });
+    return () => element.removeEventListener('wheel', wheel);
+  }, [isHouse]);
+  useEffect(() => {
+    if (!modelActor || !modelPlan) return;
+    let cancelled = false;
+    const files = [
+      ...new Set([
+        modelPlan.sprite(modelActor, 'down', 0).file,
+        modelPlan.sprite(modelActor, 'left', 1).file,
+        modelPlan.sprite(modelActor, 'down', 0, 'sit').file,
+        modelPlan.sprite(modelActor, 'down', 0, 'read').file,
+      ]),
+    ];
+    Promise.all(
+      files.map(
+        (file) =>
+          new Promise<void>((resolve, reject) => {
+            const image = new window.Image();
+            image.onload = () => resolve();
+            image.onerror = () => reject(new Error('Model image unavailable'));
+            image.src = file;
+          }),
+      ),
+    ).then(
+      () => {
+        if (!cancelled) setModelStatus({ key: modelKey, status: 'ready' });
+      },
+      () => {
+        if (!cancelled) setModelStatus({ key: modelKey, status: 'error' });
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [modelActor, modelKey, modelPlan]);
   useEffect(() => {
     const element = surface.current;
     if (!element) return;
-    const observer = new ResizeObserver(([entry]) =>
+    const observer = new ResizeObserver(([entry]) => {
       setSize({
         width: entry.contentRect.width,
         height: entry.contentRect.height,
-      }),
-    );
+      });
+      setLayoutReady(true);
+    });
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
   useEffect(() => {
-    if (load === 'ready') surface.current?.focus({ preventScroll: true });
-  }, [load]);
+    if (ready) surface.current?.focus({ preventScroll: true });
+  }, [ready]);
   useEffect(() => {
     const clear = () => actions.current.stop();
     const keydown = (event: KeyboardEvent) => {
       const key = event.key.toLowerCase();
       if (key === 'tab') {
         const buttons = shell.current?.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), [tabindex="0"]',
+          'button:not(:disabled), select:not(:disabled), [tabindex="0"]',
         );
         if (!buttons?.length) return;
         const first = buttons[0],
@@ -177,23 +371,51 @@ function SingleRoomInterior({
         }
         return;
       }
+      if (
+        (event.target as HTMLElement | null)?.closest('select,input,textarea')
+      )
+        return;
       if (key === 'escape') {
         event.preventDefault();
         clear();
         setMessage('已停止行走；点击「走回出口」可沿路返回。');
         return;
       }
-      if (load !== 'ready') return;
-      if (key === 'e' && distance(position.current, INTERIOR_ART_ENTRY) < 48) {
+      if (!ready) return;
+      const near = session.current
+        ? nearestPreviewDoor(
+            position.current,
+            session.current.plan.rooms[session.current.room],
+          )
+        : null;
+      if (
+        key === 'e' &&
+        (near ||
+          (!session.current &&
+            distance(position.current, INTERIOR_ART_ENTRY) < 48))
+      ) {
         event.preventDefault();
         clear();
-        exit.current();
+        if (near) session.current!.onDoor(near);
+        else exit.current();
+        return;
+      }
+      if (key === 'e' && session.current) {
+        const spot = scene.spots.find(
+          (s) => distance(s.point, position.current) < 48,
+        );
+        if (spot) {
+          event.preventDefault();
+          actions.current.walkTo(spot.point, spot.id);
+        }
         return;
       }
       if (!MOVE_KEYS.has(key)) return;
       event.preventDefault();
       route.current = [];
       destination.current = null;
+      currentPose.current = null;
+      setPose(null);
       keys.current.add(key);
     };
     const keyup = (event: KeyboardEvent) =>
@@ -212,9 +434,9 @@ function SingleRoomInterior({
       window.removeEventListener('blur', clear);
       document.removeEventListener('visibilitychange', hidden);
     };
-  }, [load]);
+  }, [ready, scene]);
   useEffect(() => {
-    if (load !== 'ready') return;
+    if (!ready) return;
     let raf = 0,
       last = 0,
       published = 0;
@@ -231,6 +453,7 @@ function SingleRoomInterior({
         Number(input.has('arrowdown') || input.has('s')) -
         Number(input.has('arrowup') || input.has('w'));
       const step = 185 * dt;
+      const tickStart = position.current;
       let moving = false;
       if (dx || dy) {
         const norm = Math.hypot(dx, dy);
@@ -276,7 +499,7 @@ function SingleRoomInterior({
                 ? 'down'
                 : 'up';
       }
-      if (moving) walked.current += step;
+      if (moving) walked.current += distance(tickStart, position.current);
       if (!route.current.length && destination.current) {
         const id = destination.current;
         destination.current = null;
@@ -284,12 +507,33 @@ function SingleRoomInterior({
           exit.current();
           return;
         }
+        if (id.startsWith('door:') && session.current) {
+          const door = session.current.plan.rooms[
+            session.current.room
+          ].doors.find((d) => d.id === id.slice(5));
+          if (door && distance(position.current, door.point) < 48) {
+            actions.current.stop();
+            session.current.onDoor(door);
+            return;
+          }
+        }
+        const action =
+          session.current &&
+          session.current.plan.rooms[session.current.room].actions.find(
+            (a) => a.id === id,
+          );
+        if (action) {
+          currentPose.current = action;
+          setPose(action);
+        }
         setMessage(scene.spots.find((s) => s.id === id)?.detail ?? '已到达。');
       }
-      if (now - published > 45 || !moving) {
+      if (now - published > (session.current ? 16 : 45) || !moving) {
         published = now;
         const point = { ...position.current };
-        const frame = moving ? 1 + (Math.floor(walked.current / 22) % 5) : 0;
+        const frame = moving
+          ? 1 + (Math.floor(walked.current / 22) % (session.current ? 6 : 5))
+          : 0;
         setView((old) =>
           distance(old.point, point) > 0.001 ||
           old.frame !== frame ||
@@ -302,7 +546,7 @@ function SingleRoomInterior({
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [scene, load]);
+  }, [scene, ready]);
 
   return (
     <dialog
@@ -312,6 +556,7 @@ function SingleRoomInterior({
       aria-label={`${scene.name} · ${scene.room}`}
       className={styles.shell}
       data-interior-id={scene.id}
+      data-house-room={house?.room}
     >
       <header className={styles.header}>
         <div>
@@ -322,25 +567,91 @@ function SingleRoomInterior({
         </div>
         <button
           type="button"
-          onClick={() => walkTo(INTERIOR_ART_ENTRY, 'exit')}
-          disabled={load !== 'ready'}
+          onClick={() =>
+            walkTo(returnDoor.point, house ? `door:${returnDoor.id}` : 'exit')
+          }
+          disabled={!ready}
         >
           <DoorOpen size={17} />
-          走回出口
+          {house && house.room !== 'hall' ? '走回玄关' : '走回出口'}
         </button>
       </header>
       <div
         ref={surface}
         className={styles.surface}
+        style={house ? { touchAction: 'none' } : undefined}
         role="application"
         tabIndex={0}
         aria-label={`${scene.name}室内行走：点击地面、方向键或 WASD，出口按 E`}
-        data-interior-load={load}
+        data-interior-load={
+          load === 'error' || modelLoad === 'error'
+            ? 'error'
+            : ready
+              ? 'ready'
+              : 'loading'
+        }
         data-interior-x={view.point.x.toFixed(3)}
         data-interior-y={view.point.y.toFixed(3)}
         data-interior-zoom={zoom}
-        onPointerDown={(event) => event.stopPropagation()}
+        data-interior-actor={house?.actor}
+        data-interior-frame={view.frame}
+        data-interior-direction={view.direction}
+        data-interior-pose={pose?.pose ?? 'stand'}
+        onPointerDown={(event) => {
+          event.stopPropagation();
+          if (!house) return;
+          if (event.pointerType !== 'touch') {
+            cameraGesture.current = false;
+            return;
+          }
+          if (!fingers.current.size) cameraGesture.current = false;
+          fingers.current.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+          });
+          if (fingers.current.size === 2) {
+            const [a, b] = [...fingers.current.values()];
+            pinch.current = { gap: distance(a, b), zoom };
+            cameraGesture.current = true;
+            for (const id of fingers.current.keys())
+              event.currentTarget.setPointerCapture(id);
+            keys.current.clear();
+            held.current = { x: 0, y: 0 };
+            route.current = [];
+            destination.current = null;
+          }
+        }}
+        onPointerMove={(event) => {
+          if (!fingers.current.has(event.pointerId)) return;
+          fingers.current.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+          });
+          if (pinch.current && fingers.current.size === 2) {
+            const [a, b] = [...fingers.current.values()];
+            if (pinch.current.gap > 1)
+              setZoom(
+                houseZoom(
+                  (pinch.current.zoom * distance(a, b)) / pinch.current.gap,
+                  size,
+                ),
+              );
+          }
+        }}
+        onPointerUp={(event) => {
+          fingers.current.delete(event.pointerId);
+          pinch.current = null;
+        }}
+        onPointerCancel={(event) => {
+          fingers.current.delete(event.pointerId);
+          pinch.current = null;
+        }}
+        onLostPointerCapture={(event) => {
+          fingers.current.delete(event.pointerId);
+          pinch.current = null;
+        }}
         onClick={(event) => {
+          if (house && cameraGesture.current) return;
           if ((event.target as HTMLElement).closest('button')) return;
           const rect = event.currentTarget.getBoundingClientRect();
           const point = interiorUnproject(
@@ -378,7 +689,7 @@ function SingleRoomInterior({
             onLoad={() => setLoad('ready')}
             onError={() => setLoad('error')}
           />
-          {load === 'ready' && (
+          {ready && (
             <>
               <div
                 className={styles.actor}
@@ -387,7 +698,8 @@ function SingleRoomInterior({
                   top: foot.y,
                   zIndex: Math.round(view.point.y) + 10,
                 }}
-                aria-label="伊莉雅的室内站位"
+                aria-label={`${house ? house.plan.cast.find((a) => a.id === house.actor)!.name : '伊莉雅'}的室内站位`}
+                data-house-actor={house?.actor}
               >
                 <span
                   className={styles.shadow}
@@ -398,11 +710,16 @@ function SingleRoomInterior({
                 <span
                   className={styles.sprite}
                   style={{
-                    width: 256 * spriteScale,
-                    height: 256 * spriteScale,
-                    backgroundImage: `url(${ILLYA_ART_SPRITE})`,
-                    backgroundPosition: `${(view.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.direction) / 3) * 100}%`,
-                    transform: `translate(${-anchor.x * spriteScale}px,${-anchor.y * spriteScale}px)`,
+                    width: (model?.cellWidth ?? 256) * spriteScale,
+                    height: (model?.cellHeight ?? 256) * spriteScale,
+                    backgroundImage: `url(${model?.file ?? ILLYA_ART_SPRITE})`,
+                    backgroundSize: model
+                      ? `${model.imageWidth * spriteScale}px ${model.imageHeight * spriteScale}px`
+                      : undefined,
+                    backgroundPosition: model
+                      ? `${-model.cropX * spriteScale}px ${-model.cropY * spriteScale}px`
+                      : `${(view.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.direction) / 3) * 100}%`,
+                    transform: `translate(${-anchor.x * spriteScale}px,${-anchor.y * spriteScale}px)${model?.mirror ? ' scaleX(-1)' : ''}`,
                   }}
                 />
               </div>
@@ -421,29 +738,35 @@ function SingleRoomInterior({
                     }}
                   />
                 ))}
-              <button
-                type="button"
-                className={styles.exit}
-                style={{
-                  left: interiorProject(INTERIOR_ART_ENTRY, scene.floor).x,
-                  top: interiorProject(INTERIOR_ART_ENTRY, scene.floor).y,
-                  transform: `translate(-50%,-35%) scale(${1 / scale})`,
-                }}
-                onClick={() => walkTo(INTERIOR_ART_ENTRY, 'exit')}
-              >
-                <DoorOpen size={19} />
-                出口
-              </button>
+              {doors.map((door) => (
+                <button
+                  key={door.id}
+                  type="button"
+                  className={styles.exit}
+                  style={{
+                    left: interiorProject(door.point, scene.floor).x,
+                    top: interiorProject(door.point, scene.floor).y,
+                    transform: `translate(-50%,-35%) scale(${1 / scale})`,
+                  }}
+                  data-house-door={house ? door.id : undefined}
+                  onClick={() =>
+                    walkTo(door.point, house ? `door:${door.id}` : 'exit')
+                  }
+                >
+                  <DoorOpen size={19} />
+                  {door.label}
+                </button>
+              ))}
             </>
           )}
         </div>
-        {load !== 'ready' && (
+        {!ready && (
           <output className={styles.loading}>
-            {load === 'loading' ? (
+            {load !== 'error' && modelLoad !== 'error' ? (
               '正在打开室内原画…'
             ) : (
               <>
-                <span>室内图片暂未载入。</span>
+                <span>室内或人物图片暂未载入。</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -487,12 +810,51 @@ function SingleRoomInterior({
         </div>
       </div>
       <footer className={styles.footer}>
+        {house && (
+          <div className={styles.houseTools}>
+            <label>
+              预览人物{' '}
+              <select
+                aria-label={`${house.plan.name}预览人物`}
+                value={house.actor}
+                onChange={(event) => {
+                  stop();
+                  house.onActor(event.target.value as ActorId);
+                }}
+              >
+                {house.plan.cast.map((actor) => (
+                  <option key={actor.id} value={actor.id}>
+                    {actor.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <span>{house.plan.routeSummary}</span>
+          </div>
+        )}
+        {house && (
+          <nav
+            className={styles.spots}
+            aria-label={`${house.plan.name}房间通路`}
+          >
+            {doors.map((door) => (
+              <button
+                key={door.id}
+                type="button"
+                disabled={!ready}
+                onClick={() => walkTo(door.point, `door:${door.id}`)}
+              >
+                {door.label}
+              </button>
+            ))}
+          </nav>
+        )}
         <div className={styles.spots}>
           {scene.spots.map((spot) => (
             <button
               key={spot.id}
               type="button"
-              disabled={load !== 'ready'}
+              disabled={!ready}
               onClick={() => walkTo(spot.point, spot.id)}
             >
               {spot.label}
@@ -500,13 +862,14 @@ function SingleRoomInterior({
           ))}
           <button
             type="button"
-            disabled={!canExit || load !== 'ready'}
+            disabled={!canExit || !ready}
             onClick={() => {
               stop();
-              onExit();
+              if (house) house.onDoor(returnDoor);
+              else onExit();
             }}
           >
-            从门口出去
+            {house && house.room !== 'hall' ? '从门口回玄关' : '从门口出去'}
           </button>
           <button
             type="button"
@@ -526,10 +889,12 @@ function SingleRoomInterior({
                 key={label}
                 type="button"
                 aria-label={`室内${label}`}
-                disabled={load !== 'ready'}
+                disabled={!ready}
                 onPointerDown={(event) => {
                   event.preventDefault();
                   event.currentTarget.setPointerCapture(event.pointerId);
+                  currentPose.current = null;
+                  setPose(null);
                   route.current = [];
                   destination.current = null;
                   held.current = { x, y };
@@ -546,6 +911,8 @@ function SingleRoomInterior({
                 onKeyDown={(event) => {
                   if (event.key === ' ' || event.key === 'Enter') {
                     event.preventDefault();
+                    currentPose.current = null;
+                    setPose(null);
                     route.current = [];
                     destination.current = null;
                     held.current = { x, y };

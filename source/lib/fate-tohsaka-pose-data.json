@@ -1,0 +1,130 @@
+{
+  "rin": {
+    "file": "/fate/character-art/tohsaka-seated-soft-v1.png",
+    "cellWidth": 443.5,
+    "cellHeight": 443.5,
+    "scale": 0.5105853051058531,
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "anchorX": 254.90805770071398,
+        "anchorY": 441,
+        "bounds": {
+          "x": 93,
+          "y": 33,
+          "width": 257,
+          "height": 409
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "anchorX": 255.99327420546933,
+        "anchorY": 433,
+        "bounds": {
+          "x": 92,
+          "y": 40,
+          "width": 266,
+          "height": 394
+        }
+      }
+    ]
+  },
+  "emiya": {
+    "file": "/fate/character-art/tohsaka-seated-soft-v1.png",
+    "cellWidth": 443.5,
+    "cellHeight": 443.5,
+    "scale": 0.5142857142857142,
+    "frames": [
+      {
+        "col": 1,
+        "row": 0,
+        "anchorX": 241.44251626898048,
+        "anchorY": 443,
+        "bounds": {
+          "x": 62,
+          "y": 9,
+          "width": 296,
+          "height": 435
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "anchorX": 241.4607710693131,
+        "anchorY": 439,
+        "bounds": {
+          "x": 63,
+          "y": 0,
+          "width": 303,
+          "height": 440
+        }
+      }
+    ]
+  },
+  "tokiomi": {
+    "file": "/fate/character-art/tohsaka-seated-soft-v1.png",
+    "cellWidth": 443.5,
+    "cellHeight": 443.5,
+    "scale": 0.5142857142857142,
+    "frames": [
+      {
+        "col": 2,
+        "row": 0,
+        "anchorX": 244.96557543030713,
+        "anchorY": 443,
+        "bounds": {
+          "x": 66,
+          "y": 9,
+          "width": 281,
+          "height": 435
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "anchorX": 232.92060085836908,
+        "anchorY": 439,
+        "bounds": {
+          "x": 70,
+          "y": 0,
+          "width": 277,
+          "height": 440
+        }
+      }
+    ]
+  },
+  "gilgamesh": {
+    "file": "/fate/character-art/tohsaka-seated-soft-v1.png",
+    "cellWidth": 443.5,
+    "cellHeight": 443.5,
+    "scale": 0.5131128848346637,
+    "frames": [
+      {
+        "col": 3,
+        "row": 0,
+        "anchorX": 244.33115290269828,
+        "anchorY": 443,
+        "bounds": {
+          "x": 59,
+          "y": 8,
+          "width": 308,
+          "height": 436
+        }
+      },
+      {
+        "col": 3,
+        "row": 1,
+        "anchorX": 249.7689010420516,
+        "anchorY": 440,
+        "bounds": {
+          "x": 61,
+          "y": 0,
+          "width": 315,
+          "height": 441
+        }
+      }
+    ]
+  }
+}

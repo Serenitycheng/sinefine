@@ -1,0 +1,74 @@
+{
+  "waver": {
+    "file": "/fate/character-art/waver-seated-soft-v1.png",
+    "imageWidth": 1254,
+    "imageHeight": 1254,
+    "scale": 0.41580756013745707,
+    "frames": [
+      {
+        "cropX": 177,
+        "cropY": 46,
+        "cellWidth": 356,
+        "cellHeight": 586,
+        "anchorX": 198.0822960193534,
+        "anchorY": 333.73999999999995,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 352,
+          "height": 582
+        }
+      },
+      {
+        "cropX": 175,
+        "cropY": 650,
+        "cellWidth": 363,
+        "cellHeight": 572,
+        "anchorX": 201.86795436092473,
+        "anchorY": 325.76,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 359,
+          "height": 568
+        }
+      }
+    ]
+  },
+  "iskandar": {
+    "file": "/fate/character-art/waver-seated-soft-v1.png",
+    "imageWidth": 1254,
+    "imageHeight": 1254,
+    "scale": 0.43111831442463533,
+    "frames": [
+      {
+        "cropX": 682,
+        "cropY": 16,
+        "cellWidth": 413,
+        "cellHeight": 619,
+        "anchorX": 266.2346972771602,
+        "anchorY": 372.2,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 409,
+          "height": 617
+        }
+      },
+      {
+        "cropX": 694,
+        "cropY": 641,
+        "cellWidth": 421,
+        "cellHeight": 586,
+        "anchorX": 257.7308114035088,
+        "anchorY": 351.2,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 417,
+          "height": 582
+        }
+      }
+    ]
+  }
+}

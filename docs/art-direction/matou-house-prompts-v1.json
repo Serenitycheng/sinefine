@@ -1,0 +1,145 @@
+{
+  "schema": 1,
+  "date": "2026-10-10",
+  "tool": "image_gen built-in",
+  "nativeAssets": [
+    {
+      "role": "hall",
+      "path": "source/public/fate/interior-art/matou-hall-soft-v1.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. NEW 16:9 full game background for MATOU HOUSE entrance hall, no characters/text/UI. Reference image ONLY the approved adjacent Matou sitting room's gentle painted anime rendering, old dark walnut, grey plaster and muted moss-green curtains. New room distinct from sitting room: old modest Western home entrance with quiet long passage at rear, open sitting-room doorway rear-left at x24%,y53%, dining doorway left-wall at x12%,y58%, upstairs bedroom stair landing rear-right x81%,y55%, basement archive doorway rear-middle x53%,y53%. Front entry is camera-side foreground. Stand-height camera modestly raised to see walking floor. Readable continuous old wood floor: rear y52%,x12..89%,fronty99%,x1..99%; keep entire lower43% and central passage completely open, put stair rails/coatstand/shoe cabinet above floor boundary and along walls. Muted ivy/ferns seen through tall side window, low warm lamps plus cool diffuse daylight. Soft bounced light, selective soft painted edges, matte wood, no glaring highlights or crushed black; atmosphere subdued but welcoming to daily life, NOT gothic haunted house or luxury Tohsaka hall. NO insects, worms, torture, horror clutter, abandoned decay. Match approved room's coherent light/palette, preserve usable door landing space.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/2f66a0514148034f016117fbe28401d9.jpg"
+        ],
+        "transparent_background": false
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-56962473-b6d7-40fb-a906-d9f5185fb55c.png",
+      "bytes": 2220653,
+      "width": 1672,
+      "height": 941,
+      "sha256": "55a78fc73254c5377b2153f06b76f66938eaa6bf5814784e0e0b5c877c0d0265"
+    },
+    {
+      "role": "kariya",
+      "path": "source/public/fate/character-art/kariya-house-soft-v1.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. NEW native transparent RGBA game sprite atlas for healthy hopeful KARIYA MATOU. Reference portrait ONLY identity/clothing: short soft WHITE/SILVER hair, BOTH normal open grey eyes, calm healthy face, dark navy zip hoodie over plain light-grey T-shirt, dark trousers, black shoes. Sakura reference ONLY gentle painted anime sprite style, soft diffuse edges and light, no shiny plastic. EXACTLY6 equally sized columns x3rows=18 separate FULL-BODY figures, landscape2:1, ample transparent margin per cell, NO grid/separators/labels/floor/shadow or props. Consistent adult6-head proportions and IDENTICAL clothing/face/scale all figures. Row1: front idle, back idle, left idle, right idle, left-facing relaxed standing, left-facing relaxed standing. Row2 SIX genuinely distinct LEFT-facing walk phases: left heel contact/right toe trailing, left down, passing, right heel contact, right down, passing; alternating knees and counter-swing arms with natural bend, same torso height; no repeated skating/stretching legs. Row3 cells1..3 THREE front walk phases alternatefeet, cells4..6 THREE back walk phases alternatefeet. Entire heads and shoes inside each cell with clear gaps. CRITICAL project adaptation: healthy hopeful man, NO worms/scars/eye injury/deformity/despair, no Berserker, no weapons/magic. Genuine transparent alpha background.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/6554615a79fdd7f5610da5b06385c4ff.jpg",
+          "D:/projects/sinefine/source/.verification/art-review/b3ec7234ed8eaa2352018db522975d3b.jpg"
+        ],
+        "transparent_background": true
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-214237a8-5f47-43a1-870a-87997ee75139.png",
+      "bytes": 800542,
+      "width": 1774,
+      "height": 887,
+      "sha256": "721d22f659e9fb65568a9c302627b7bc88e55f02c41e895cb3bf04ca7c34204b"
+    },
+    {
+      "role": "dining",
+      "path": "source/public/fate/interior-art/matou-dining-soft-v1.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. NEW16:9 playable MATOU HOUSE dining room and compact home kitchen, no people/text/UI. Reference ONLY approved Matou sitting-room atmosphere/style/materials: worn dark walnut, muted moss-green cloth, grey-white walls, thick green curtains, old tall window with ivy/ferns outside. Distinct practical family room, NOT luxury Tohsaka dining hall: small rectangular old wood table with THREE plain moss-green upholstered chairs and kettle/cups in rear-left x17..47%,y33..59%; one camera-facing clear chair at x26%,y54% for a separate actor sprite to sit on. Modest worktop and stove rear-right x63..94%,y32..56%, plain sink and bowl, no gleaming modern industrial appliances. Standing-height view modestly raised; whole lower36% and center-right aisle unobstructed wood walking floor. Rear floor y48%,x10..89%,front99%,x1..99%. Door returns to hall at camera-side foreground. Cool grey daylight through green curtains plus restrained lamp warmth, matte materials, softened shadows and selective painted anime edges, clear floor, no white glare, no crushed black or blur. Subdued lived-in family space, no insects/worms/horror/gothic dungeon. Coherent same old home as reference, different room.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/2f66a0514148034f016117fbe28401d9.jpg"
+        ],
+        "transparent_background": false
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-04ca2ce3-5eff-42d9-9da3-779bc2dfe9f8.png",
+      "bytes": 2160146,
+      "width": 1672,
+      "height": 941,
+      "sha256": "a87dd1839ee56a9b107a7dc39e60cc4acaf0c2ce945e1d5af7af9c68a8e12535"
+    },
+    {
+      "role": "bedroom",
+      "path": "source/public/fate/interior-art/matou-bedroom-soft-v1.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. NEW16:9 playable SAKURA MATOU bedroom upstairs, no people/text/UI. Reference ONLY approved house's gentle painted anime style, old walnut, muted moss-green/grey-white palette, diffuse daylight and cool shadows. Quiet modest personal teenage bedroom in an old Western home, cared for rather than haunted: single narrow wooden bed in rear-left x8..38%,y32..58%, simple pale-cream and dusty-lavender blanket, schoolbag neatly beside it; plain writing desk in rear-right x65..90%,y32..59%, schoolbooks and small flower vase. One worn moss-green upholstered reading chair at window center x53%,y48%, CLEAR seat facing diagonally left with all chair legs readable, narrow side table. Tall window, ivy/ferns outside, simple green curtain. Stand-height camera modestly raised, broad unobstructed lower36% wood floor and central aisle. Rear walking floor y46%,x10..89%,front99%,x1..99%. Hall return camera-side foreground. Soft restrained light, matte fabrics, no razor edges/shiny-white hotspots/black voids/global haze. Privacy and simple daily life, NOT wealthy glamour room, no horror/worms/insects or sexualized decorations.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/2f66a0514148034f016117fbe28401d9.jpg"
+        ],
+        "transparent_background": false
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-c94f6f33-4ae3-45a9-b96b-f40024251c9d.png",
+      "bytes": 2123852,
+      "width": 1672,
+      "height": 941,
+      "sha256": "e4a99458bf090fb413fbb8620dda2151bca2f0b408f9fec96f9d262d2accd8f0"
+    },
+    {
+      "role": "archive",
+      "path": "source/public/fate/interior-art/matou-archive-soft-v1.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. NEW16:9 playable MATOU HOUSE basement archive / old family study, NO people/text/UI. Reference ONLY approved house's muted old walnut/green/grey palette and gentle painted anime rendering. This is explicitly a hopeful GAME-ADAPTED safe family archive, NOT the canon worm torture chamber: no insects, worms, eggs, chains, bodies, torture or horror symbolism. Low grey stone walls, old wood beams, simple book/record shelves upper rear wall, an old practical writing table x16..45%,y34..56% with closed notebooks and tea cup, small safe storage cabinet upper-right x78..93%,y28..56%, no glowing magic array. Small high clerestory window with muted daylight and ivy outside, low warm desk lamp, shadows readable, no crushed blacks or blinding glow. Stand-height camera modestly raised, broad navigable stone floor lower40%, rear floor y45%,x11..89%,front99%,x1..99%; center and right aisle clear. Return upstairs/hall understood as camera-side foreground. Matte stone and soft edges, coherent old house, quiet book research and family keepsakes, no palace or dungeon.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/2f66a0514148034f016117fbe28401d9.jpg"
+        ],
+        "transparent_background": false
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-30568e31-3b7d-4429-b670-a184d1bcca78.png",
+      "bytes": 2334834,
+      "width": 1672,
+      "height": 941,
+      "sha256": "e32d4d49a22d7d14ede97f29184fc73a7f0f03accdeb32f20cb0cf93b1ac5b1c"
+    },
+    {
+      "role": "medusa",
+      "path": "source/public/fate/character-art/medusa-house-soft-v1.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. NEW genuine transparent RGBA game sprite atlas for MEDUSA, FIFTH-war Rider, distinct from Iskandar. Portrait ONLY identity and exact clothing: very long straight light purple hair, purple symbolic blindfold covering eyes, modest black sleeveless high-neck short dress with purple accents, long black gloves, black thigh-high boots. Keep blindfold all directions, soft diffuse matte cloth, no shiny fetish materials. Sakura reference ONLY gentle painted sprite style. EXACT6 evenly sized columns x3rows=18 separate FULL-BODY figures on transparent canvas, landscape2:1. Adult6-head game proportions; hair/heads/boots wholly INSIDE each individual cell with generous transparent gaps, NEVER cross cell boundaries. Same face/clothes/model proportions. Row1 cells: front idle, back idle, left idle, right idle, left relaxed idle, left relaxed idle. Row2 SIX distinct continuous LEFT-facing walk phases: LEFT heel contact/right toe back, left support with knees soft, PASSING with knees together and one heel raised under hip, RIGHT heel contact/left toe back, right support, PASSING with knees together. Alternate feet/arms clearly, true passing frames MUST have feet close beneath hips rather than six repeated wide strides. Row3 cells1..3 THREE front walks alternatingfeet, cells4..6 THREE back walks alternatingfeet. Tidy long hair moves mildly with gait, not a cape crossing cells. No chairs/props/weapon/chain, no floor/shadow/gridlines/guides/text, no strong outline/gloss, no revealing pose. Native transparent alpha required.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/a7e13a18dcbda0cb9eb686c6ad79dca7.jpg",
+          "D:/projects/sinefine/source/.verification/art-review/b3ec7234ed8eaa2352018db522975d3b.jpg"
+        ],
+        "transparent_background": true
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-abdb281a-4ab4-4ad1-b1be-64edf7791f48.png",
+      "bytes": 1419337,
+      "width": 1774,
+      "height": 887,
+      "sha256": "8b5149904c529353f2391e9ad4529e7429d0f4a358243d9396d90726c2692e1a"
+    },
+    {
+      "role": "seated",
+      "path": "source/public/fate/character-art/matou-seated-soft-v1.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. NEW native transparent RGBA sprite atlas with EXACT3 columns x2 rows, SIX separate FULL-BODY seated figures, landscape3:2, NO chairs/furniture/floor/shadow/background/guides. Reference images ONLY identity, proportions, clothing, gentle painted style. Column1 SAKURA MATOU: purple shoulder-length hair with red hairbow, white long-sleeve schoolshirt, brown vest, red neck ribbon, navy pleated skirt, knee-high navy socks and brown shoes; 5.5-head soft game proportions. Column2 HEALTHY HOPEFUL KARIYA: silver-white short hair, both normal grey eyes, navy zip hoodie/light grey T-shirt, dark trousers/black shoes, adult6-head; no scars/insects/eye injury. Column3 MEDUSA: very long purple hair, symbolic purple BLINDFOLD unchanged, black high-neck sleeveless shortdress with purple accents, long blackgloves, thigh-high black boots, adult6-head. Row1 ALL THREE seated facing diagonally LEFT on an INVISIBLE normal Western chair: hip at seat height, THIGHS nearly HORIZONTAL leftward, knees bent90degrees, SHINS VERTICAL DOWN, soles planted below knees, upright relaxed torso, hands resting on thighs. Row2 SAME chair-sitting bodies gently holding/reading a SMALL book in hands; keep Medusa blindfold. Critical NO crossleg/floor crouch/squatting/raised knees or reclining; hip must be higher than knees and feet. All six complete heads/hair/soles remain inside exactly one cell with generous transparent gaps. Consistent body/clothes/height per actor between rows. Soft diffuse matte lighting, gentle painted anime edges, no hard black outline or shiny speculars, no weapons or extra actors. Truly transparent alpha.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/b3ec7234ed8eaa2352018db522975d3b.jpg",
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-214237a8-5f47-43a1-870a-87997ee75139.png",
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-abdb281a-4ab4-4ad1-b1be-64edf7791f48.png"
+        ],
+        "transparent_background": true
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-b642be26-da35-481d-a9a7-7b837e965a65.png",
+      "bytes": 1899835,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "37a5691bbc2a4c409de8f0d49f5665f1c4e55c231a6245d2bf13093f5b3b27cb"
+    },
+    {
+      "role": "kariya_side",
+      "path": "source/public/fate/character-art/kariya-walk-side-soft-v2.png",
+      "args": {
+        "prompt": "Use case: stylized-concept. Create ONE NEW native transparent RGBA SIX-PHASE LEFT-facing WALK-CYCLE strip for healthy hopeful Kariya Matou. Reference existing atlas ONLY identity/clothes/style: silver-white hair, healthy both normal eyes, dark navy hoodie open over lightgrey T-shirt, dark trousers/black shoes. FIX the previous side gait: it held a wide stride almost every frame. EXACTLY6 columns, ONE row of SIX separate FULL-BODY walking figures, landscape3:1. Same actor, same torso/head/shoe scale, identical head/hip baseline, ample transparent margins, no separators/background/floor/shadow/props. Strong visible distinctions: frame1 LEFT heel planted well forward, RIGHT toe well behind, both legs extended contact. Frame2 LEFT support knee bent, RIGHT foot lifted behind heel, torso down only slightly. Frame3 PASSING: LEFT leg vertical UNDER HIP supporting; RIGHT knee bent FORWARD lifted, RIGHT shoe CLOSE to supporting ankle, feet close under body, NO spread legs. Frame4 RIGHT heel forward, LEFT toe back (opposite feet to frame1, opposite arm swing). Frame5 RIGHT knee bent support, LEFT heel lifted trailing. Frame6 PASSING: RIGHT leg vertical UNDER HIP supporting, LEFT knee bent FORWARD lifted, shoes close under body, opposite toframe3, NO wide stride. ALL face LEFT, not front or right. Natural adult6-head proportions, diffuse soft painted anime edges, no shiny speculars/strong outlines. NO injury/worms/scars/weapon. Do not repeat six long stride poses. Feet/heads completely within own columns. True transparent alpha.",
+        "referenced_image_paths": [
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-214237a8-5f47-43a1-870a-87997ee75139.png"
+        ],
+        "transparent_background": true
+      },
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-1b867758-3c0b-4f2c-ba17-d8de02209540.png",
+      "reason": "Only side walking replaced: initial side row lacked clear passing poses; other accepted frames reused.",
+      "bytes": 839862,
+      "width": 2172,
+      "height": 724,
+      "sha256": "ee454b87afb1a599f51b2845c58085987bc753ccd92825c88de970f5e6d2299f"
+    }
+  ],
+  "reused": [
+    "source/public/fate/interior-art/matou-main-soft-v1.png",
+    "source/public/fate/character-art/sakura-visit-soft-v1.png",
+    "source/lib/fate-emiya-visitor-data.json"
+  ]
+}

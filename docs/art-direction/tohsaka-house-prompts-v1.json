@@ -1,0 +1,176 @@
+{
+  "schema": 1,
+  "date": "2026-10-10",
+  "tool": "image_gen built-in",
+  "nativeAssets": [
+    {
+      "role": "hall",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-00df875d-7a27-418e-9f6b-c1348c9ae2df.png",
+      "path": "source/public/fate/interior-art/tohsaka-hall-soft-v1.png",
+      "args": {
+        "prompt": "New project game background: TOHSAKA MANSION entrance hall, 16:9, no people, no lettering, no UI. Reference image is ONLY the approved adjacent study's architecture, gentle painted anime style, muted mahogany/cream, refined old brass and soft warm afternoon light. Create a distinct modest Western family mansion entry hall: cream plaster above mahogany wainscoting, coat stand at far left, restrained oval entry rug, a stair flight starting along rear-right with readable lower stair landing, a clearly OPEN study doorway rear-left, an OPEN dining doorway on left wall, cellar stair doorway rear-middle, front entry understood as the camera-side edge. Camera at standing person's eye level with enough raised angle to see navigable floor. Important playable composition: whole lower 48% (y=52..100%) is broad unobstructed wooden floor, no table/banister/furniture across center corridor. Back boundary of this continuous floor at y=52%, x=13..88%, front corners x=2..98%,y=99%. Put staircase and all solid furniture above y=52%. Study door foot at x=24%,y=52%; dining door foot x=13%,y=58%; cellar door at x=52%,y=52%; upper stairs x=80%,y=54%. Soft cohesive edges and bounced light, no razor black outlines, no harsh white highlights, no fantasy palace or Japanese tatami. Keep individual doorway destinations visually distinct; no newly imposed medieval dungeon.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/c4f5cabcf1c13c5cb1d8d720c94f56d6.jpg"
+        ],
+        "transparent_background": false
+      },
+      "sha256": "ef6b28f29574a9695747d953a26062ef00b626958a86521b6fa2257c86f0fe84",
+      "bytes": 2227188,
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "role": "rin",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-ff9cee21-fe3e-435a-b4e3-0da147b381e0.png",
+      "path": "source/public/fate/character-art/rin-house-soft-v1.png",
+      "args": {
+        "prompt": "Create ONE native transparent RGBA sprite atlas for Rin Tohsaka, matching reference portrait identity (dark twin tails with black bows, blue eyes, red long sleeve white cross pullover, black skirt, black stockings and shoes) and approved Sakura sprite gentle painted game style. Portrait ONLY identity reference, Sakura ONLY proportions/style. EXACT 6 equally sized columns by 3 rows, 18 separate full-body figures on transparent canvas, no separators, labels, floor, props behind actor or background. Consistent 5.5-head anime game proportions, identical face/body/outfit/height, all feet within their cells, ample clear gap between figures, soft blended edges and diffuse light, no large chibi head, no strong shiny highlights. Row1 cells1..6: front standing, back standing, left standing, right standing, seated side-left with knees bent and shoes lower than knees (no chair), seated side-left reading small book (no chair). Row2 cells1..6: SIX genuine continuous LEFT-facing walk-cycle phases: left heel contact/right toe trailing, left down, passing, right heel contact, right down, passing; clearly alternating bent knees/arms and planted soles, no skating identical legs, torso same height. Row3 cells1..3 THREE FRONT-facing walking phases with alternating feet, cells4..6 THREE BACK-facing walking phases alternating feet. Each cell square, sheet landscape 2:1. Every figure within exactly one cell; no weapons or magic effects. Transparent background required.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/572bd0b9759c3482c1dc3367002fd74b.jpg",
+          "D:/projects/sinefine/source/.verification/art-review/d3e094b38ea8278d9dbee2b131bceefc.jpg"
+        ],
+        "transparent_background": true
+      },
+      "sha256": "a7fec10c112367d5577814364c5c02d919dd3ee9a541b649c575422fc6cdddec",
+      "bytes": 982839,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "role": "dining",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-60cef485-b95b-4198-b127-8e110717a715.png",
+      "path": "source/public/fate/interior-art/tohsaka-dining-soft-v1.png",
+      "args": {
+        "prompt": "New 16:9 playable game background, not an edit. Reference ONLY adjacent approved room's gentle painted anime rendering, old mahogany/cream/brass palette and warm diffuse light. NO people, no UI, no readable text. Standing eye-level camera modestly raised, broad visible floor, softly blended edges and diffuse highlights; no hard ink outlines, glaring speculars or photographic harshness. Maintain broad floor quadrilateral y=53% rear x=12..88%, y=99%frontx=1..99%. Specific room: TOHSAKA MANSION dining room with kitchen alcove. A modest dark-wood dining table and four cream upholstered chairs in REAR-LEFT zone x=16..48%,y=36..61%, porcelain cups; an old-fashioned compact kitchen in REAR-RIGHT x=64..94%,y=25..55%, wood cupboards, plain kettle and small oven, no restaurant appliances. Tall sash window with soft curtains and maple leaves. Leave the entire LOWER 35% unobstructed walkable floor, with broad clear right-side aisle beside table. Hall exit is camera-side foreground, not a portal stuck on the wall.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/c4f5cabcf1c13c5cb1d8d720c94f56d6.jpg"
+        ],
+        "transparent_background": false
+      },
+      "sha256": "554d6f192a105358ce6d2a0d1241d0f53e1b7c104960b7f2a78bc8610c4a209c",
+      "bytes": 2291151,
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "role": "bedroom",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-2e6848d1-e550-45ea-8427-fb39ed093c23.png",
+      "path": "source/public/fate/interior-art/tohsaka-bedroom-soft-v1.png",
+      "args": {
+        "prompt": "New 16:9 playable game background, not an edit. Reference ONLY adjacent approved room's gentle painted anime rendering, old mahogany/cream/brass palette and warm diffuse light. NO people, no UI, no readable text. Standing eye-level camera modestly raised, broad visible floor, softly blended edges and diffuse highlights; no hard ink outlines, glaring speculars or photographic harshness. Maintain broad floor quadrilateral y=53% rear x=12..88%, y=99%frontx=1..99%. Specific room: RIN TOHSAKA's private bedroom upstairs, restrained Western mansion family interior. A narrow modest wooden bed with soft cream and dusty rose covers in REAR-LEFT x=10..40%,y=35..60%; dark wooden writing desk rear-right x=66..90%,y=37..59%, homework books and small jewel box; one upholstered window reading chair near x=50%,y=54%, tall window looking onto maple/roses. Quiet personal teenage bedroom, no glamour makeup room, no lavish palace, no Japanese tatami, no anime posters. Entire LOWER 35% empty walkable wood floor and clear central aisle. Room door is camera-side foreground.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/c4f5cabcf1c13c5cb1d8d720c94f56d6.jpg"
+        ],
+        "transparent_background": false
+      },
+      "sha256": "920d60713282794ea120b30cb4745966b6cff8cb5b8d3ed7079abf2b7d5b36ad",
+      "bytes": 2256957,
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "role": "workshop",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-5230bd01-259d-498d-8966-809d2eaeb01e.png",
+      "path": "source/public/fate/interior-art/tohsaka-workshop-soft-v1.png",
+      "args": {
+        "prompt": "New 16:9 playable game background, not an edit. Reference ONLY adjacent approved room's gentle painted anime rendering, old mahogany/cream/brass palette and warm diffuse light. NO people, no UI, no readable text. Standing eye-level camera modestly raised, broad visible floor, softly blended edges and diffuse highlights; no hard ink outlines, glaring speculars or photographic harshness. Maintain broad floor quadrilateral y=53% rear x=12..88%, y=99%frontx=1..99%. Specific room: TOHSAKA family basement magic workshop, a modest carefully maintained family research room with muted cream stone walls, gentle amber brass lamps, dark wood shelves of books and small labelled-but-unreadable specimen boxes. One wood workbench with subtle gem specimens and magnifier at REAR-LEFT x=15..44%,y=40..60%, simple stool tucked in. Small old stone floor magic diagram at rear-middle x=43..68%,y=49..60% (subtle lines, NO blinding glow); small specimen cabinet REAR-RIGHT x=77..94%,y=37..58%. Stairwell leading upward at rear-left wall; actual usable exit camera-side foreground abstract connection. Leave ENTIRE LOWER 35% navigable stone floor empty. Cozy dim but readable, no torture room, neon, giant dungeon or crystal explosions.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/c4f5cabcf1c13c5cb1d8d720c94f56d6.jpg"
+        ],
+        "transparent_background": false
+      },
+      "sha256": "b9b751d95fc175a338121be9301a6b035e80da41c1440062b476dafdbe3594e8",
+      "bytes": 2229620,
+      "width": 1672,
+      "height": 941
+    },
+    {
+      "role": "emiya",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-b2097078-dd90-4101-a257-ff7d04d2158a.png",
+      "path": "source/public/fate/character-art/emiya-house-soft-v1.png",
+      "args": {
+        "prompt": "Create ONE native transparent RGBA sprite atlas for EMIYA, Archer (NOT young Shirou): adult athletic man, tan skin, short spiky WHITE hair, grey eyes, red open long coat/jacket, black bodysuit with silver chest piping, black boots. Keep exact portrait clothing and face, no swords. Portrait ONLY identity reference, approved Sakura ONLY gentle painted rendering reference, use consistent 6-head adult anime game proportions. EXACT 6 equally sized columns by 3 rows, 18 separate full-body figures on transparent canvas, no separators, labels, floor, props behind actor or background. Consistent 6-head adult anime game proportions, identical face/body/outfit/height, all feet within their cells, ample clear gap between figures, soft blended edges and diffuse light, no large chibi head, no strong shiny highlights. Row1 cells1..6: front standing, back standing, left standing, right standing, seated side-left with knees bent and shoes lower than knees (no chair), seated side-left reading small book (no chair). Row2 cells1..6: SIX genuine continuous LEFT-facing walk-cycle phases: left heel contact/right toe trailing, left down, passing, right heel contact, right down, passing; clearly alternating bent knees/arms and planted soles, no skating identical legs, torso same height. Row3 cells1..3 THREE FRONT-facing walking phases with alternating feet, cells4..6 THREE BACK-facing walking phases alternating feet. Each cell square, sheet landscape 2:1. Every figure within exactly one cell; no weapons or magic effects. Transparent background required.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/82141f68ed9e410085a37e75e82e6ec6.jpg",
+          "D:/projects/sinefine/source/.verification/art-review/d3e094b38ea8278d9dbee2b131bceefc.jpg"
+        ],
+        "transparent_background": true
+      },
+      "sha256": "12d8c7333b790316ddef60bb7d70a7c1fac4687cd5fb56a0c65c8fab9e03dc98",
+      "bytes": 1015121,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "role": "tokiomi",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-de803c50-5c80-434d-b1fb-bb89c0206c66.png",
+      "path": "source/public/fate/character-art/tokiomi-house-soft-v1.png",
+      "args": {
+        "prompt": "Create ONE native transparent RGBA sprite atlas for Tokiomi Tohsaka: elegant middle-aged man, short neatly combed brown hair, small trimmed moustache and pointed goatee, burgundy suit with long jacket and waistcoat, white shirt, dark tie, black formal shoes. Keep exact portrait face/attire. Do NOT give walking stick, allows accurate hands/reading. Portrait ONLY identity reference, approved Sakura ONLY gentle painted rendering reference, use consistent 6-head adult anime game proportions. EXACT 6 equally sized columns by 3 rows, 18 separate full-body figures on transparent canvas, no separators, labels, floor, props behind actor or background. Consistent 6-head adult anime game proportions, identical face/body/outfit/height, all feet within their cells, ample clear gap between figures, soft blended edges and diffuse light, no large chibi head, no strong shiny highlights. Row1 cells1..6: front standing, back standing, left standing, right standing, seated side-left with knees bent and shoes lower than knees (no chair), seated side-left reading small book (no chair). Row2 cells1..6: SIX genuine continuous LEFT-facing walk-cycle phases: left heel contact/right toe trailing, left down, passing, right heel contact, right down, passing; clearly alternating bent knees/arms and planted soles, no skating identical legs, torso same height. Row3 cells1..3 THREE FRONT-facing walking phases with alternating feet, cells4..6 THREE BACK-facing walking phases alternating feet. Each cell square, sheet landscape 2:1. Every figure within exactly one cell; no weapons or magic effects. Transparent background required.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/bd485d5fea60a7ee99e4a2311c913f4b.jpg",
+          "D:/projects/sinefine/source/.verification/art-review/d3e094b38ea8278d9dbee2b131bceefc.jpg"
+        ],
+        "transparent_background": true
+      },
+      "sha256": "22496b840057398fd20c934790e4c3396d60d9c55b188f7b15641e99a7931eaf",
+      "bytes": 787764,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "role": "gilgamesh",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-37be71c9-574c-4365-8c69-6cc262f8dc91.png",
+      "path": "source/.verification/tohsaka-20261010/gilgamesh-rejected-v1.png",
+      "args": {
+        "prompt": "Create ONE native transparent RGBA sprite atlas for Gilgamesh GOLD ARMOR variant: adult man, short swept spiky golden hair, RED eyes, restrained matte antique golden segmented armor with black underlayer and red hip cloth/cape accents, gold boots. Keep exact approved portrait, soften reflections, no weapons. This is gold variant, NOT black casual suit. Portrait ONLY identity reference, approved Sakura ONLY gentle painted rendering reference, use consistent 6-head adult anime game proportions. EXACT 6 equally sized columns by 3 rows, 18 separate full-body figures on transparent canvas, no separators, labels, floor, props behind actor or background. Consistent 6-head adult anime game proportions, identical face/body/outfit/height, all feet within their cells, ample clear gap between figures, soft blended edges and diffuse light, no large chibi head, no strong shiny highlights. Row1 cells1..6: front standing, back standing, left standing, right standing, seated side-left with knees bent and shoes lower than knees (no chair), seated side-left reading small book (no chair). Row2 cells1..6: SIX genuine continuous LEFT-facing walk-cycle phases: left heel contact/right toe trailing, left down, passing, right heel contact, right down, passing; clearly alternating bent knees/arms and planted soles, no skating identical legs, torso same height. Row3 cells1..3 THREE FRONT-facing walking phases with alternating feet, cells4..6 THREE BACK-facing walking phases alternating feet. Each cell square, sheet landscape 2:1. Every figure within exactly one cell; no weapons or magic effects. Transparent background required.",
+        "referenced_image_paths": [
+          "D:/projects/sinefine/source/.verification/art-review/c02c8960f4065e84fd6750fa9759d0b3.jpg",
+          "D:/projects/sinefine/source/.verification/art-review/d3e094b38ea8278d9dbee2b131bceefc.jpg"
+        ],
+        "transparent_background": true
+      },
+      "sha256": "61a318043845dba43e06418cc877b64f75c16bc84ca3d77b280cef7b928885ca",
+      "bytes": 1339678,
+      "width": 1774,
+      "height": 887,
+      "accepted": false,
+      "reason": "Rejected thin colored grid artifacts; original preserved, v2 is active."
+    },
+    {
+      "role": "gilgamesh_fix",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-929aa5ac-6468-4f9a-a66e-1dc482902868.png",
+      "path": "source/public/fate/character-art/gilgamesh-house-soft-v2.png",
+      "args": {
+        "prompt": "Edit this transparent sprite atlas. Preserve all 18 Gilgamesh figures, their identity, exact cells, heights and gentle painted style. REMOVE every thin colored grid line, row/column guide, crosshair, stray isolated speck and red/yellow artifact outside actual character silhouettes. Canvas 6 columns by3 rows, native2:1 landscape with transparent alpha, no visible separators whatsoever, clean transparent gaps. Do not erase red hip cloth/cape. No background, no shadows, no labels. This is a cleaning correction only. Preserve the stand and gait poses and all gold armor details.",
+        "referenced_image_paths": [
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-37be71c9-574c-4365-8c69-6cc262f8dc91.png"
+        ],
+        "transparent_background": true
+      },
+      "sha256": "a1547bc5612b3c1b1373229ef3800f09b1d5b2befb0d5683270e2465bf7c75de",
+      "bytes": 1350391,
+      "width": 1774,
+      "height": 887
+    },
+    {
+      "role": "seated",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-48d4ed36-f279-471c-a361-dfe1092cdf16.png",
+      "path": "source/public/fate/character-art/tohsaka-seated-soft-v1.png",
+      "args": {
+        "prompt": "NEW native transparent RGBA atlas of EIGHT separate full-body seated figures, EXACTLY4 columns x2 rows, landscape2:1. Reference input images only identity/style, NOT their faulty seated positions. Column1 Rin Tohsaka (red whitecross pullover black skirt stockings black twin tails), column2 EMIYA Archer (adult tan skin WHITEhair redcoat black silverbodysuit), column3 Tokiomi (brownhaired middleaged goatee burgundy suit), column4 Gilgamesh (goldhair REDEYES mattegoldarmor redhipcloth). Row1 all four sitting on an INVISIBLE normal Western chair facing diagonally LEFT, HIP at seat height, THIGHS HORIZONTAL extending left, KNEES bent at90degrees, SHINS VERTICAL DOWN, feet planted LOWER than hips/knees. Both feet visible. Back upright, hands resting gently on thighs. Row2 SAME four chairsitting poses reading small book in hands. CRITICAL: NO floor sitting, NO crouching, NO knees drawn up, NO crosslegged or reclining, shoes directly beneath knees, relaxed upright silhouette. Do NOT draw chairs or furniture; those are already painted in game. Consistent gentle diffuse painted anime style, softedges, adult6heads, Rin5.5heads, no gianthead or harsh highlights. All figures separate inside their cells with ample transparent margin, all soles same relative y baseline for each row. Native transparency no colored outlines, guidegridlines, labels or shadows. The reference standing images specify clothing and faces only.",
+        "referenced_image_paths": [
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-ff9cee21-fe3e-435a-b4e3-0da147b381e0.png",
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-b2097078-dd90-4101-a257-ff7d04d2158a.png",
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-de803c50-5c80-434d-b1fb-bb89c0206c66.png",
+          "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-37be71c9-574c-4365-8c69-6cc262f8dc91.png"
+        ],
+        "transparent_background": true
+      },
+      "sha256": "866e511d29913687f712eb3226a6f189046eb7236bf9e34b6775935b1bf408e3",
+      "bytes": 1182058,
+      "width": 1774,
+      "height": 887
+    }
+  ]
+}

@@ -1,0 +1,116 @@
+{
+  "kiritsugu": {
+    "file": "/fate/character-art/einzbern-seated-soft-v1.png",
+    "imageWidth": 1536,
+    "imageHeight": 1024,
+    "scale": 0.46484375,
+    "frames": [
+      {
+        "cropX": 143,
+        "cropY": 6,
+        "cellWidth": 369,
+        "cellHeight": 514,
+        "anchorX": 126.44606969454856,
+        "anchorY": 288.72,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 365,
+          "height": 512
+        }
+      },
+      {
+        "cropX": 144,
+        "cropY": 520,
+        "cellWidth": 368,
+        "cellHeight": 490,
+        "anchorX": 145.2269762588051,
+        "anchorY": 273.28000000000003,
+        "bounds": {
+          "x": 2,
+          "y": 0,
+          "width": 364,
+          "height": 488
+        }
+      }
+    ]
+  },
+  "irisviel": {
+    "file": "/fate/character-art/einzbern-seated-soft-v1.png",
+    "imageWidth": 1536,
+    "imageHeight": 1024,
+    "scale": 0.47695390781563124,
+    "frames": [
+      {
+        "cropX": 600,
+        "cropY": 19,
+        "cellWidth": 353,
+        "cellHeight": 501,
+        "anchorX": 141.90868043797263,
+        "anchorY": 281.44000000000005,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 349,
+          "height": 499
+        }
+      },
+      {
+        "cropX": 595,
+        "cropY": 539,
+        "cellWidth": 347,
+        "cellHeight": 473,
+        "anchorX": 150.38504693062896,
+        "anchorY": 264.64000000000004,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 343,
+          "height": 469
+        }
+      }
+    ]
+  },
+  "illya": {
+    "sit": {
+      "file": "/fate/character-art/illya-life-v2.png",
+      "imageWidth": 2172,
+      "imageHeight": 724,
+      "scale": 0.6622950819672131,
+      "frame": {
+        "cellWidth": 224,
+        "cellHeight": 311,
+        "cropX": 1886,
+        "cropY": 98,
+        "anchorX": 127,
+        "anchorY": 185,
+        "bounds": {
+          "x": 3,
+          "y": 3,
+          "width": 218,
+          "height": 305
+        }
+      }
+    },
+    "read": {
+      "file": "/fate/character-art/einzbern-seated-soft-v1.png",
+      "imageWidth": 1536,
+      "imageHeight": 1024,
+      "scale": 0.5113924050632911,
+      "frame": {
+        "cropX": 1096,
+        "cropY": 591,
+        "cellWidth": 259,
+        "cellHeight": 399,
+        "anchorX": 127.09146991622242,
+        "anchorY": 266.65000000000003,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 255,
+          "height": 395
+        }
+      }
+    }
+  }
+}

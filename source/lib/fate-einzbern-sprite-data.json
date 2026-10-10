@@ -1,0 +1,826 @@
+{
+  "kiritsugu": {
+    "file": "/fate/character-art/kiritsugu-house-soft-v1.png",
+    "imageWidth": 1024,
+    "imageHeight": 1536,
+    "cuts": [0, 524, 1024, 1536],
+    "frames": [
+      {
+        "cropX": 29,
+        "cropY": 42,
+        "cellWidth": 141,
+        "cellHeight": 482,
+        "anchorX": 74.11556264964086,
+        "anchorY": 479,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 139,
+          "height": 478
+        }
+      },
+      {
+        "cropX": 170,
+        "cropY": 42,
+        "cellWidth": 171,
+        "cellHeight": 482,
+        "anchorX": 102.24259752467492,
+        "anchorY": 479,
+        "bounds": {
+          "x": 0,
+          "y": 2,
+          "width": 171,
+          "height": 478
+        }
+      },
+      {
+        "cropX": 341,
+        "cropY": 42,
+        "cellWidth": 164,
+        "cellHeight": 482,
+        "anchorX": 110.40434469515122,
+        "anchorY": 481,
+        "bounds": {
+          "x": 0,
+          "y": 2,
+          "width": 162,
+          "height": 480
+        }
+      },
+      {
+        "cropX": 564,
+        "cropY": 41,
+        "cellWidth": 105,
+        "cellHeight": 483,
+        "anchorX": 45.89513697732332,
+        "anchorY": 482,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 101,
+          "height": 481
+        }
+      },
+      null,
+      null,
+      {
+        "cropX": 13,
+        "cropY": 581,
+        "cellWidth": 157,
+        "cellHeight": 408,
+        "anchorX": 88.82982982982983,
+        "anchorY": 405,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 155,
+          "height": 404
+        }
+      },
+      {
+        "cropX": 170,
+        "cropY": 582,
+        "cellWidth": 171,
+        "cellHeight": 406,
+        "anchorX": 106.71078125000003,
+        "anchorY": 403,
+        "bounds": {
+          "x": 0,
+          "y": 2,
+          "width": 171,
+          "height": 402
+        }
+      },
+      {
+        "cropX": 341,
+        "cropY": 581,
+        "cellWidth": 168,
+        "cellHeight": 408,
+        "anchorX": 98.90648401826485,
+        "anchorY": 405,
+        "bounds": {
+          "x": 0,
+          "y": 2,
+          "width": 166,
+          "height": 404
+        }
+      },
+      {
+        "cropX": 515,
+        "cropY": 584,
+        "cellWidth": 167,
+        "cellHeight": 404,
+        "anchorX": 96.08428207306713,
+        "anchorY": 401,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 165,
+          "height": 400
+        }
+      },
+      {
+        "cropX": 682,
+        "cropY": 581,
+        "cellWidth": 171,
+        "cellHeight": 407,
+        "anchorX": 103.04830668729585,
+        "anchorY": 404,
+        "bounds": {
+          "x": 0,
+          "y": 2,
+          "width": 171,
+          "height": 403
+        }
+      },
+      {
+        "cropX": 853,
+        "cropY": 581,
+        "cellWidth": 144,
+        "cellHeight": 406,
+        "anchorX": 96.66420815406684,
+        "anchorY": 403,
+        "bounds": {
+          "x": 0,
+          "y": 2,
+          "width": 142,
+          "height": 402
+        }
+      },
+      {
+        "cropX": 22,
+        "cropY": 1050,
+        "cellWidth": 142,
+        "cellHeight": 434,
+        "anchorX": 70.7221159974506,
+        "anchorY": 431,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 138,
+          "height": 430
+        }
+      },
+      {
+        "cropX": 183,
+        "cropY": 1049,
+        "cellWidth": 143,
+        "cellHeight": 435,
+        "anchorX": 72.13249884098283,
+        "anchorY": 432,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 139,
+          "height": 431
+        }
+      },
+      {
+        "cropX": 348,
+        "cropY": 1049,
+        "cellWidth": 141,
+        "cellHeight": 435,
+        "anchorX": 69.63244636773777,
+        "anchorY": 432,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 137,
+          "height": 431
+        }
+      },
+      {
+        "cropX": 514,
+        "cropY": 1050,
+        "cellWidth": 159,
+        "cellHeight": 428,
+        "anchorX": 85.76389535425005,
+        "anchorY": 425,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 155,
+          "height": 424
+        }
+      },
+      {
+        "cropX": 696,
+        "cropY": 1049,
+        "cellWidth": 152,
+        "cellHeight": 433,
+        "anchorX": 70.15750118315191,
+        "anchorY": 430,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 148,
+          "height": 429
+        }
+      },
+      {
+        "cropX": 862,
+        "cropY": 1050,
+        "cellWidth": 144,
+        "cellHeight": 431,
+        "anchorX": 73.5159259965668,
+        "anchorY": 428,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 140,
+          "height": 427
+        }
+      }
+    ],
+    "scales": {
+      "idle": 0.6375,
+      "side": 0.7593052109181141,
+      "front": 0.7099767981438515,
+      "back": 0.7166276346604216
+    }
+  },
+  "irisviel": {
+    "file": "/fate/character-art/irisviel-house-soft-v1.png",
+    "imageWidth": 1536,
+    "imageHeight": 1024,
+    "cuts": [0, 341, 682, 1024],
+    "frames": [
+      {
+        "cropX": 80,
+        "cropY": 7,
+        "cellWidth": 158,
+        "cellHeight": 323,
+        "anchorX": 77.48050536611873,
+        "anchorY": 320,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 154,
+          "height": 319
+        }
+      },
+      {
+        "cropX": 327,
+        "cropY": 7,
+        "cellWidth": 158,
+        "cellHeight": 321,
+        "anchorX": 77.86202109938921,
+        "anchorY": 318,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 154,
+          "height": 317
+        }
+      },
+      {
+        "cropX": 605,
+        "cropY": 7,
+        "cellWidth": 133,
+        "cellHeight": 323,
+        "anchorX": 67.89954163483571,
+        "anchorY": 320,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 129,
+          "height": 319
+        }
+      },
+      {
+        "cropX": 799,
+        "cropY": 7,
+        "cellWidth": 133,
+        "cellHeight": 323,
+        "anchorX": 65.48150256118379,
+        "anchorY": 320,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 129,
+          "height": 319
+        }
+      },
+      null,
+      null,
+      {
+        "cropX": 57,
+        "cropY": 346,
+        "cellWidth": 191,
+        "cellHeight": 319,
+        "anchorX": 113.6986970684039,
+        "anchorY": 316,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 187,
+          "height": 315
+        }
+      },
+      {
+        "cropX": 303,
+        "cropY": 346,
+        "cellWidth": 196,
+        "cellHeight": 320,
+        "anchorX": 116.58415043653457,
+        "anchorY": 317,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 192,
+          "height": 316
+        }
+      },
+      {
+        "cropX": 585,
+        "cropY": 346,
+        "cellWidth": 148,
+        "cellHeight": 321,
+        "anchorX": 76.39752428705731,
+        "anchorY": 318,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 144,
+          "height": 317
+        }
+      },
+      {
+        "cropX": 801,
+        "cropY": 346,
+        "cellWidth": 186,
+        "cellHeight": 320,
+        "anchorX": 106.73628462791964,
+        "anchorY": 317,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 182,
+          "height": 316
+        }
+      },
+      {
+        "cropX": 1060,
+        "cropY": 346,
+        "cellWidth": 185,
+        "cellHeight": 320,
+        "anchorX": 106.39776195320451,
+        "anchorY": 317,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 181,
+          "height": 316
+        }
+      },
+      {
+        "cropX": 1329,
+        "cropY": 346,
+        "cellWidth": 167,
+        "cellHeight": 320,
+        "anchorX": 86.97307747386503,
+        "anchorY": 317,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 163,
+          "height": 316
+        }
+      },
+      {
+        "cropX": 73,
+        "cropY": 683,
+        "cellWidth": 167,
+        "cellHeight": 326,
+        "anchorX": 81.36011080332409,
+        "anchorY": 323,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 163,
+          "height": 322
+        }
+      },
+      {
+        "cropX": 312,
+        "cropY": 683,
+        "cellWidth": 174,
+        "cellHeight": 326,
+        "anchorX": 84.52780279153535,
+        "anchorY": 323,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 170,
+          "height": 322
+        }
+      },
+      {
+        "cropX": 552,
+        "cropY": 683,
+        "cellWidth": 175,
+        "cellHeight": 326,
+        "anchorX": 85.3220626484225,
+        "anchorY": 323,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 171,
+          "height": 322
+        }
+      },
+      {
+        "cropX": 803,
+        "cropY": 682,
+        "cellWidth": 178,
+        "cellHeight": 326,
+        "anchorX": 86.43145759616482,
+        "anchorY": 323,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 174,
+          "height": 322
+        }
+      },
+      {
+        "cropX": 1058,
+        "cropY": 682,
+        "cellWidth": 174,
+        "cellHeight": 326,
+        "anchorX": 86.00323961587401,
+        "anchorY": 323,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 170,
+          "height": 322
+        }
+      },
+      {
+        "cropX": 1312,
+        "cropY": 682,
+        "cellWidth": 169,
+        "cellHeight": 326,
+        "anchorX": 81.97924528301883,
+        "anchorY": 323,
+        "bounds": {
+          "x": 2,
+          "y": 1,
+          "width": 165,
+          "height": 323
+        }
+      }
+    ],
+    "scales": {
+      "idle": 0.9498432601880877,
+      "side": 0.9588607594936709,
+      "front": 0.9409937888198758,
+      "back": 0.9409937888198758
+    }
+  },
+  "illya": {
+    "file": "/fate/art-sample/illya-walk-v1.png",
+    "imageWidth": 1536,
+    "imageHeight": 1024,
+    "cuts": [0, 256, 512, 768, 1024],
+    "frames": [
+      {
+        "cropX": 85,
+        "cropY": 10,
+        "cellWidth": 129,
+        "cellHeight": 246,
+        "anchorX": 64.36372292311356,
+        "anchorY": 244,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 125,
+          "height": 243
+        }
+      },
+      {
+        "cropX": 336,
+        "cropY": 11,
+        "cellWidth": 136,
+        "cellHeight": 245,
+        "anchorX": 70.47481515711644,
+        "anchorY": 242,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 132,
+          "height": 241
+        }
+      },
+      {
+        "cropX": 574,
+        "cropY": 8,
+        "cellWidth": 138,
+        "cellHeight": 248,
+        "anchorX": 75.43604926575085,
+        "anchorY": 245,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 134,
+          "height": 244
+        }
+      },
+      {
+        "cropX": 823,
+        "cropY": 10,
+        "cellWidth": 124,
+        "cellHeight": 244,
+        "anchorX": 61.74475271411336,
+        "anchorY": 241,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 120,
+          "height": 240
+        }
+      },
+      {
+        "cropX": 1055,
+        "cropY": 12,
+        "cellWidth": 143,
+        "cellHeight": 244,
+        "anchorX": 73.48508634222912,
+        "anchorY": 241,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 139,
+          "height": 240
+        }
+      },
+      {
+        "cropX": 1311,
+        "cropY": 10,
+        "cellWidth": 149,
+        "cellHeight": 246,
+        "anchorX": 73.76473118279569,
+        "anchorY": 243,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 145,
+          "height": 242
+        }
+      },
+      {
+        "cropX": 99,
+        "cropY": 263,
+        "cellWidth": 137,
+        "cellHeight": 249,
+        "anchorX": 61.795207509881436,
+        "anchorY": 246,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 133,
+          "height": 245
+        }
+      },
+      {
+        "cropX": 336,
+        "cropY": 262,
+        "cellWidth": 152,
+        "cellHeight": 250,
+        "anchorX": 76.93974014336919,
+        "anchorY": 247,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 148,
+          "height": 246
+        }
+      },
+      {
+        "cropX": 592,
+        "cropY": 263,
+        "cellWidth": 147,
+        "cellHeight": 249,
+        "anchorX": 72.9202702702703,
+        "anchorY": 246,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 143,
+          "height": 245
+        }
+      },
+      {
+        "cropX": 836,
+        "cropY": 262,
+        "cellWidth": 136,
+        "cellHeight": 250,
+        "anchorX": 65.47125114995401,
+        "anchorY": 247,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 132,
+          "height": 246
+        }
+      },
+      {
+        "cropX": 1080,
+        "cropY": 266,
+        "cellWidth": 159,
+        "cellHeight": 245,
+        "anchorX": 80.92362821948495,
+        "anchorY": 242,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 155,
+          "height": 241
+        }
+      },
+      {
+        "cropX": 1346,
+        "cropY": 267,
+        "cellWidth": 161,
+        "cellHeight": 244,
+        "anchorX": 80.18554476806912,
+        "anchorY": 241,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 157,
+          "height": 240
+        }
+      },
+      {
+        "cropX": 60,
+        "cropY": 517,
+        "cellWidth": 136,
+        "cellHeight": 249,
+        "anchorX": 73.57550822846079,
+        "anchorY": 246,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 132,
+          "height": 245
+        }
+      },
+      {
+        "cropX": 316,
+        "cropY": 515,
+        "cellWidth": 159,
+        "cellHeight": 250,
+        "anchorX": 72.89126350399249,
+        "anchorY": 247,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 155,
+          "height": 246
+        }
+      },
+      {
+        "cropX": 564,
+        "cropY": 515,
+        "cellWidth": 158,
+        "cellHeight": 250,
+        "anchorX": 76.28058968058963,
+        "anchorY": 247,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 154,
+          "height": 246
+        }
+      },
+      {
+        "cropX": 797,
+        "cropY": 517,
+        "cellWidth": 137,
+        "cellHeight": 248,
+        "anchorX": 72.96207768329123,
+        "anchorY": 245,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 133,
+          "height": 244
+        }
+      },
+      {
+        "cropX": 1051,
+        "cropY": 518,
+        "cellWidth": 165,
+        "cellHeight": 247,
+        "anchorX": 74.34225844004663,
+        "anchorY": 244,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 161,
+          "height": 243
+        }
+      },
+      {
+        "cropX": 1301,
+        "cropY": 515,
+        "cellWidth": 165,
+        "cellHeight": 253,
+        "anchorX": 76.59025722740716,
+        "anchorY": 250,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 161,
+          "height": 249
+        }
+      },
+      {
+        "cropX": 88,
+        "cropY": 768,
+        "cellWidth": 124,
+        "cellHeight": 237,
+        "anchorX": 60.30424710424711,
+        "anchorY": 234,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 120,
+          "height": 233
+        }
+      },
+      {
+        "cropX": 353,
+        "cropY": 768,
+        "cellWidth": 131,
+        "cellHeight": 236,
+        "anchorX": 57.887262455059044,
+        "anchorY": 233,
+        "bounds": {
+          "x": 2,
+          "y": 1,
+          "width": 127,
+          "height": 233
+        }
+      },
+      {
+        "cropX": 589,
+        "cropY": 768,
+        "cellWidth": 134,
+        "cellHeight": 236,
+        "anchorX": 64.02377654662973,
+        "anchorY": 233,
+        "bounds": {
+          "x": 2,
+          "y": 1,
+          "width": 130,
+          "height": 233
+        }
+      },
+      {
+        "cropX": 832,
+        "cropY": 769,
+        "cellWidth": 120,
+        "cellHeight": 236,
+        "anchorX": 58.53015790836139,
+        "anchorY": 233,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 116,
+          "height": 232
+        }
+      },
+      {
+        "cropX": 1076,
+        "cropY": 768,
+        "cellWidth": 131,
+        "cellHeight": 240,
+        "anchorX": 63.71864877371581,
+        "anchorY": 237,
+        "bounds": {
+          "x": 2,
+          "y": 1,
+          "width": 127,
+          "height": 237
+        }
+      },
+      {
+        "cropX": 1324,
+        "cropY": 768,
+        "cellWidth": 137,
+        "cellHeight": 241,
+        "anchorX": 66.85660466211448,
+        "anchorY": 238,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 133,
+          "height": 237
+        }
+      }
+    ]
+  }
+}

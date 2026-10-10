@@ -1,0 +1,711 @@
+{
+  "kariya": {
+    "file": "/fate/character-art/kariya-house-soft-v1.png",
+    "imageWidth": 1774,
+    "imageHeight": 887,
+    "cuts": [0, 312, 591, 887],
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "cropX": 143,
+        "cropY": 8,
+        "cellWidth": 105,
+        "cellHeight": 304,
+        "anchorX": 52.3815378968618,
+        "anchorY": 302,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 101,
+          "height": 301
+        }
+      },
+      {
+        "col": 1,
+        "row": 0,
+        "cropX": 441,
+        "cropY": 7,
+        "cellWidth": 104,
+        "cellHeight": 305,
+        "anchorX": 51.82400869092885,
+        "anchorY": 302,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 100,
+          "height": 301
+        }
+      },
+      {
+        "col": 2,
+        "row": 0,
+        "cropX": 710,
+        "cropY": 7,
+        "cellWidth": 83,
+        "cellHeight": 305,
+        "anchorX": 47.900531748514254,
+        "anchorY": 304,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 79,
+          "height": 303
+        }
+      },
+      {
+        "col": 3,
+        "row": 0,
+        "cropX": 984,
+        "cropY": 7,
+        "cellWidth": 86,
+        "cellHeight": 305,
+        "anchorX": 37.41763565891472,
+        "anchorY": 304,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 82,
+          "height": 303
+        }
+      },
+      {
+        "col": 4,
+        "row": 0,
+        "cropX": 1241,
+        "cropY": 7,
+        "cellWidth": 97,
+        "cellHeight": 305,
+        "anchorX": 53.076804237475244,
+        "anchorY": 304,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 93,
+          "height": 303
+        }
+      },
+      {
+        "col": 5,
+        "row": 0,
+        "cropX": 1515,
+        "cropY": 8,
+        "cellWidth": 108,
+        "cellHeight": 304,
+        "anchorX": 62.111983032873695,
+        "anchorY": 303,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 104,
+          "height": 302
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "cropX": 89,
+        "cropY": 320,
+        "cellWidth": 161,
+        "cellHeight": 266,
+        "anchorX": 89.75249320036264,
+        "anchorY": 263,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 157,
+          "height": 262
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "cropX": 389,
+        "cropY": 321,
+        "cellWidth": 145,
+        "cellHeight": 266,
+        "anchorX": 70.58881987577638,
+        "anchorY": 263,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 141,
+          "height": 262
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "cropX": 691,
+        "cropY": 321,
+        "cellWidth": 124,
+        "cellHeight": 266,
+        "anchorX": 54.49865771812085,
+        "anchorY": 263,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 120,
+          "height": 262
+        }
+      },
+      {
+        "col": 3,
+        "row": 1,
+        "cropX": 952,
+        "cropY": 320,
+        "cellWidth": 160,
+        "cellHeight": 266,
+        "anchorX": 89.79117740399874,
+        "anchorY": 263,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 156,
+          "height": 262
+        }
+      },
+      {
+        "col": 4,
+        "row": 1,
+        "cropX": 1251,
+        "cropY": 320,
+        "cellWidth": 147,
+        "cellHeight": 266,
+        "anchorX": 74.55957579538358,
+        "anchorY": 263,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 143,
+          "height": 262
+        }
+      },
+      {
+        "col": 5,
+        "row": 1,
+        "cropX": 1528,
+        "cropY": 320,
+        "cellWidth": 158,
+        "cellHeight": 266,
+        "anchorX": 82.03634123806592,
+        "anchorY": 263,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 154,
+          "height": 262
+        }
+      },
+      {
+        "col": 0,
+        "row": 2,
+        "cropX": 119,
+        "cropY": 591,
+        "cellWidth": 105,
+        "cellHeight": 285,
+        "anchorX": 53.030079565301776,
+        "anchorY": 282,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 101,
+          "height": 281
+        }
+      },
+      {
+        "col": 1,
+        "row": 2,
+        "cropX": 402,
+        "cropY": 591,
+        "cellWidth": 103,
+        "cellHeight": 286,
+        "anchorX": 51.40098135426888,
+        "anchorY": 283,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 99,
+          "height": 282
+        }
+      },
+      {
+        "col": 2,
+        "row": 2,
+        "cropX": 695,
+        "cropY": 591,
+        "cellWidth": 100,
+        "cellHeight": 286,
+        "anchorX": 49.61635345861657,
+        "anchorY": 283,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 96,
+          "height": 282
+        }
+      },
+      {
+        "col": 3,
+        "row": 2,
+        "cropX": 979,
+        "cropY": 591,
+        "cellWidth": 104,
+        "cellHeight": 282,
+        "anchorX": 52.317073170731646,
+        "anchorY": 279,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 100,
+          "height": 278
+        }
+      },
+      {
+        "col": 4,
+        "row": 2,
+        "cropX": 1266,
+        "cropY": 591,
+        "cellWidth": 105,
+        "cellHeight": 284,
+        "anchorX": 53.43423106947694,
+        "anchorY": 281,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 101,
+          "height": 280
+        }
+      },
+      {
+        "col": 5,
+        "row": 2,
+        "cropX": 1558,
+        "cropY": 592,
+        "cellWidth": 104,
+        "cellHeight": 282,
+        "anchorX": 53.27161484453359,
+        "anchorY": 279,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 100,
+          "height": 278
+        }
+      }
+    ],
+    "scales": {
+      "idle": 1.00990099009901,
+      "side": 1.16793893129771,
+      "front": 1.0851063829787233,
+      "back": 1.1007194244604317
+    },
+    "side": {
+      "file": "/fate/character-art/kariya-walk-side-soft-v2.png",
+      "imageWidth": 2172,
+      "imageHeight": 724,
+      "cuts": [0, 724],
+      "frames": [
+        {
+          "col": 0,
+          "row": 0,
+          "cropX": 26,
+          "cropY": 58,
+          "cellWidth": 324,
+          "cellHeight": 569,
+          "anchorX": 160.88578380257212,
+          "anchorY": 566,
+          "bounds": {
+            "x": 2,
+            "y": 2,
+            "width": 320,
+            "height": 565
+          }
+        },
+        {
+          "col": 1,
+          "row": 0,
+          "cropX": 422,
+          "cropY": 59,
+          "cellWidth": 243,
+          "cellHeight": 568,
+          "anchorX": 111.51367759445759,
+          "anchorY": 565,
+          "bounds": {
+            "x": 2,
+            "y": 2,
+            "width": 239,
+            "height": 564
+          }
+        },
+        {
+          "col": 2,
+          "row": 0,
+          "cropX": 791,
+          "cropY": 56,
+          "cellWidth": 295,
+          "cellHeight": 572,
+          "anchorX": 107.32337803552014,
+          "anchorY": 569,
+          "bounds": {
+            "x": 2,
+            "y": 2,
+            "width": 293,
+            "height": 568
+          }
+        },
+        {
+          "col": 3,
+          "row": 0,
+          "cropX": 1086,
+          "cropY": 58,
+          "cellWidth": 328,
+          "cellHeight": 570,
+          "anchorX": 169.2924796889106,
+          "anchorY": 567,
+          "bounds": {
+            "x": 0,
+            "y": 2,
+            "width": 326,
+            "height": 566
+          }
+        },
+        {
+          "col": 4,
+          "row": 0,
+          "cropX": 1509,
+          "cropY": 56,
+          "cellWidth": 240,
+          "cellHeight": 571,
+          "anchorX": 127.67071309655944,
+          "anchorY": 568,
+          "bounds": {
+            "x": 2,
+            "y": 2,
+            "width": 236,
+            "height": 567
+          }
+        },
+        {
+          "col": 5,
+          "row": 0,
+          "cropX": 1891,
+          "cropY": 57,
+          "cellWidth": 186,
+          "cellHeight": 571,
+          "anchorX": 107.62596090489797,
+          "anchorY": 568,
+          "bounds": {
+            "x": 2,
+            "y": 2,
+            "width": 182,
+            "height": 567
+          }
+        }
+      ],
+      "scale": 0.5396825396825397
+    }
+  },
+  "medusa": {
+    "file": "/fate/character-art/medusa-house-soft-v1.png",
+    "imageWidth": 1774,
+    "imageHeight": 887,
+    "cuts": [0, 327, 606, 887],
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "cropX": 69,
+        "cropY": 5,
+        "cellWidth": 175,
+        "cellHeight": 321,
+        "anchorX": 89.98037816625043,
+        "anchorY": 318,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 171,
+          "height": 317
+        }
+      },
+      {
+        "col": 1,
+        "row": 0,
+        "cropX": 380,
+        "cropY": 5,
+        "cellWidth": 144,
+        "cellHeight": 319,
+        "anchorX": 63.31412273800157,
+        "anchorY": 316,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 140,
+          "height": 315
+        }
+      },
+      {
+        "col": 2,
+        "row": 0,
+        "cropX": 692,
+        "cropY": 5,
+        "cellWidth": 125,
+        "cellHeight": 321,
+        "anchorX": 45.709067468843955,
+        "anchorY": 318,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 121,
+          "height": 317
+        }
+      },
+      {
+        "col": 3,
+        "row": 0,
+        "cropX": 958,
+        "cropY": 5,
+        "cellWidth": 124,
+        "cellHeight": 321,
+        "anchorX": 77.94595753806561,
+        "anchorY": 318,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 120,
+          "height": 317
+        }
+      },
+      {
+        "col": 4,
+        "row": 0,
+        "cropX": 1276,
+        "cropY": 5,
+        "cellWidth": 152,
+        "cellHeight": 319,
+        "anchorX": 71.67281368821295,
+        "anchorY": 316,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 148,
+          "height": 315
+        }
+      },
+      {
+        "col": 5,
+        "row": 0,
+        "cropX": 1560,
+        "cropY": 6,
+        "cellWidth": 160,
+        "cellHeight": 321,
+        "anchorX": 65.27881173944161,
+        "anchorY": 320,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 156,
+          "height": 319
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "cropX": 60,
+        "cropY": 330,
+        "cellWidth": 209,
+        "cellHeight": 276,
+        "anchorX": 105.8426493108729,
+        "anchorY": 275,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 205,
+          "height": 274
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "cropX": 373,
+        "cropY": 328,
+        "cellWidth": 187,
+        "cellHeight": 278,
+        "anchorX": 81.81284858500311,
+        "anchorY": 276,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 183,
+          "height": 275
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "cropX": 688,
+        "cropY": 330,
+        "cellWidth": 183,
+        "cellHeight": 276,
+        "anchorX": 78.3620084917851,
+        "anchorY": 274,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 179,
+          "height": 273
+        }
+      },
+      {
+        "col": 3,
+        "row": 1,
+        "cropX": 940,
+        "cropY": 329,
+        "cellWidth": 213,
+        "cellHeight": 277,
+        "anchorX": 104.45450964946826,
+        "anchorY": 276,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 209,
+          "height": 275
+        }
+      },
+      {
+        "col": 4,
+        "row": 1,
+        "cropX": 1259,
+        "cropY": 330,
+        "cellWidth": 204,
+        "cellHeight": 276,
+        "anchorX": 99.24977177286837,
+        "anchorY": 275,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 200,
+          "height": 274
+        }
+      },
+      {
+        "col": 5,
+        "row": 1,
+        "cropX": 1582,
+        "cropY": 330,
+        "cellWidth": 169,
+        "cellHeight": 276,
+        "anchorX": 62.67130669061521,
+        "anchorY": 274,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 165,
+          "height": 273
+        }
+      },
+      {
+        "col": 0,
+        "row": 2,
+        "cropX": 62,
+        "cropY": 607,
+        "cellWidth": 175,
+        "cellHeight": 270,
+        "anchorX": 85.82923203963665,
+        "anchorY": 267,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 171,
+          "height": 266
+        }
+      },
+      {
+        "col": 1,
+        "row": 2,
+        "cropX": 353,
+        "cropY": 607,
+        "cellWidth": 178,
+        "cellHeight": 272,
+        "anchorX": 88.45837382572074,
+        "anchorY": 269,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 174,
+          "height": 268
+        }
+      },
+      {
+        "col": 2,
+        "row": 2,
+        "cropX": 649,
+        "cropY": 607,
+        "cellWidth": 180,
+        "cellHeight": 272,
+        "anchorX": 88.86684739276029,
+        "anchorY": 269,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 176,
+          "height": 268
+        }
+      },
+      {
+        "col": 3,
+        "row": 2,
+        "cropX": 946,
+        "cropY": 606,
+        "cellWidth": 178,
+        "cellHeight": 269,
+        "anchorX": 89.41200523388943,
+        "anchorY": 266,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 174,
+          "height": 265
+        }
+      },
+      {
+        "col": 4,
+        "row": 2,
+        "cropX": 1243,
+        "cropY": 607,
+        "cellWidth": 180,
+        "cellHeight": 269,
+        "anchorX": 87.37734241908015,
+        "anchorY": 266,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 176,
+          "height": 265
+        }
+      },
+      {
+        "col": 5,
+        "row": 2,
+        "cropX": 1538,
+        "cropY": 608,
+        "cellWidth": 174,
+        "cellHeight": 266,
+        "anchorX": 86.15003501400565,
+        "anchorY": 263,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 170,
+          "height": 262
+        }
+      }
+    ],
+    "scales": {
+      "idle": 1.0126182965299684,
+      "side": 1.1715328467153285,
+      "front": 1.1977611940298507,
+      "back": 1.211320754716981
+    }
+  }
+}

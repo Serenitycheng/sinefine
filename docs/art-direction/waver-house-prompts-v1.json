@@ -1,0 +1,134 @@
+{
+  "date": "2026-10-10",
+  "tool": "Built-in imagegen",
+  "basis": "Existing Fuyuki lodging with adult Waver / Lord El-Melloi II as explicitly selected by the user; architecture adapted for the game.",
+  "reuse": [
+    "/fate/interior-art/waver-main-soft-v1.png"
+  ],
+  "references": [
+    {
+      "role": "house style and materials",
+      "path": "D:/projects/sinefine/source/.verification/art-review/5ae4f534e336b560b0b8aca843725b53.jpg"
+    },
+    {
+      "role": "adult Waver identity",
+      "path": "D:/projects/sinefine/source/.verification/art-review/8adaf5bf2463fb49523cf5fe090ae556.jpg"
+    },
+    {
+      "role": "Iskandar identity only",
+      "path": "D:/projects/sinefine/source/.verification/art-review/090de5f2542d7ce9c50bd4d27b72f7fe.jpg"
+    }
+  ],
+  "prompts": [
+    {
+      "id": "waver-adult",
+      "role": "Adult Waver four-direction idle and basic walking atlas",
+      "prompt": "Use case: stylized-concept. Asset type: native transparent 2.5D game character atlas, SIX evenly spaced columns by THREE rows on one wide 2:1 canvas. Derive an ADULT Waver Velvet / Lord El-Melloi II walking model from the attached approved adult portrait. Preserve the mature narrow face, long straight dark brown hair reaching well below shoulders, tired serious eyes, slim ADULT human proportions, burgundy brown jacket, black shirt and trousers, narrow deep red scarf and black shoes/gloves. The reference's book, smoky scenery and magic are NOT part of these standing/walking cells. Calm softly painted Japanese anime game art, natural warm/cool shading, softened edges, readable anatomy; no harsh black outlines, plastic shine or chibi proportions. Camera is a fixed gentle elevated 2.5D view, show complete head, hair, torso, hands, knees and feet with transparent padding for EVERY pose, no ground/background/text/labels/grid. Exactly: row 1 columns 1..4 standing front, standing back, left side, right side; columns 5..6 EMPTY transparent. Row 2 columns 1..6 are six LEFT-FACING SIDE walk phases: left heel forward/right toe back, left support/right knee bends, right passes left, right heel forward/left toe back, right support/left knee bends, left passes right. Clearly alternate legs with knee bending and opposite arms, plausible planted feet; never six duplicates or sliding single-leg stances. Row 3 columns 1..3 front walk phases with alternating planted feet; columns 4..6 back walk phases with alternating planted feet. Keep identical body size and clothing across each row; baseline and vertical body size steady. Do not draw the young short-haired green-sweater Waver. Genuine transparent RGBA."
+    },
+    {
+      "id": "hall",
+      "role": "Entrance and connecting hall",
+      "prompt": "Use case: stylized-concept. Asset type: new native wide 16:9 2.5D Japanese anime game interior background. Derive a companion entrance/hall of the same modest older Fuyuki Japanese lodging shown in the reference, retaining worn honey-brown timber, cream plaster, bamboo blind/green sofa era, homely proportions. NOT a western mansion or Clock Tower. This is a playable house hall: simple shoe cupboard far left, umbrella stand far right, household slippers at the edge only; a wide empty continuous wooden floor covering the entire lower 50%, no central furniture. Four CLEAR open interior doorways on the back/sides: large left opening at x=17% whose threshold is y=55% (sitting/research room); back-left doorway at x=38%, threshold y=47% (kitchen); back-right sliding doorway at x=62%, threshold y=47% (borrowed bedroom); right opening x=86%, threshold y=55% (engawa). Show only a short hint of each neighboring space, not whole rooms bleeding into walkable hall floor. Painted room geometry and all thresholds clear, no staircase. Camera fixed gentle elevated 2.5D angle consistent with reference, substantial front walking room, no people. Quiet afternoon diffuse light with softened transitions, restrained highlights and mellow cool-green shadows, fine natural brushwork, softly blended edges, low glare, still crisp enough to read doors/floor. No hard black outlines, photoreal materials, excessive sparkle, scene vignette, text, labels, icons, UI or watermark."
+    },
+    {
+      "id": "kitchen",
+      "role": "Kitchen and dining background",
+      "prompt": "Use case: stylized-concept. Asset type: companion native wide 16:9 playable 2.5D interior painting, same modest old Japanese Fuyuki lodging as the reference. Draw its kitchen and small dining room, not a luxury or western manor. Pale cream plaster, worn honey-brown timber floor and cabinets, a kettle, porcelain rice bowls and modest domestic cooker/sink along LEFT wall x=4%..35%; old household cupboard back-right. ONE simple small rectangular wooden dining table on RIGHT x=74%..95%, y=62%..78%; a clearly visible wooden dining chair in front-left of it at x=65%, y=73% facing diagonally RIGHT toward the table. The complete chair and its wooden seat at x=66%,y=66% must be readable and separate from tabletop. Empty center/front floor lower 46% for actual walking; no clutter blocking it. A single clear open return doorway on BACK CENTER x=50%, threshold y=49%, leading to the wood hall. Large window left casts soft diffuse afternoon light, one small pothos in a ceramic pot, no people or food inventory. Gentle fixed elevated 2.5D camera matching reference, clear continuous ground and furniture foot contacts. Softly painted anime background, mellow low-glare highlights, softened edges, natural material variation, quiet warm/cool shading. Avoid hard black outlines, harsh shiny light, hyperrealism, ornate grandeur, text, UI, labels, watermark, figures."
+    },
+    {
+      "id": "bedroom",
+      "role": "Borrowed bedroom background",
+      "prompt": "Use case: stylized-concept. Asset type: new companion native wide 16:9 playable 2.5D Japanese anime interior background matching the reference's modest old Fuyuki lodging. A plain BORROWED BEDROOM for adult Waver / Lord El-Melloi II visiting Fuyuki. Worn honey-brown timber, cream plaster, simple sliding doors; no Clock Tower stone or mansion. A low practical single bed / futon platform along LEFT x=4%..34%, muted blue-grey blanket, complete bed foot footprint y=58%..77%; small bedside wood cupboard, closed travel case by wall not blocking center. RIGHT writing desk x=76%..97%, notebooks, rolled map, two books and a small desk lamp; clearly visible side-on plain wooden reading chair just LEFT of desk around x=70%, y=68%, chair seat x=71%, y=62%, facing RIGHT toward desk. Red scarf and dark jacket hanging on a rear hook hint at adult Waver, no figure. Large empty continuous center and FRONT wooden floor lower 42% for walking. Single clear open return doorway BACK CENTER x=50%, threshold y=48% leading to hall, not behind furniture. A small ivy pot/window at left, quiet diffuse afternoon daylight, softened warm wood and cool green shadows, gentle highlights, fine hand-painted anime art, soft blended edges without blur. Fixed mild elevated 2.5D angle consistent with reference, readable ground contact and full chair. No people, text, labels, UI, harsh shiny contrasts, watermark."
+    },
+    {
+      "id": "engawa",
+      "role": "Garden-side veranda background",
+      "prompt": "Use case: stylized-concept. Asset type: companion native wide 16:9 2.5D painted Japanese game house area. Same old modest Fuyuki lodging as the reference, draw its quiet ENG AWA / covered garden-side wooden veranda. Camera mild elevated fixed 2.5D angle; entire lower 48% is a broad clear horizontal wood walkway, safe level surface across full frame. Rear-left wall has a clear open sliding return door x=12%, threshold y=59%, showing the house hall. House wall timber and shoji recede along LEFT; a short plain wooden garden bench x=22%..39%, feet y=74%, visible seat center x=30%, y=65% faces RIGHT along veranda, unobstructed. Empty lower/front wood for character walking. On the right/back edge low porch posts and railing distinguish the small shaded garden OUTSIDE; camellia shrub, ferns, stepping stones and soft leaf patterns, no walkable painted garden masquerading as veranda floor. One small watering can and ceramic potted fern near far-right edge only. Quiet afternoon diffuse light, softened sun patches, warm worn wood/cool leafy shadows, fine soft-blended Japanese anime illustration matching reference, no hard highlights or heavy outlines. No figures, no text, UI, map markers, labels or watermark. Not a temple, western courtyard, grand garden or floating balcony."
+    },
+    {
+      "id": "iskandar",
+      "role": "Repaired Iskandar four-direction idle and basic walking atlas",
+      "prompt": "Use case: precise-object-edit. Asset type: repair the attached native transparent 2.5D character atlas. Keep Iskandar's EXACT adult face, hair, physique, muted red T-shirt, trousers, shoes, ALL existing 16 standing/walking poses, six-column three-row order, same softly painted style. Fix only the production defects: REMOVE every thin vertical/horizontal tile GUIDE LINE and colored edge residue from the transparent background; no visible grid/borders at all. Add clear transparent breathing room above each complete hair silhouette and below each complete foot, and between every row/cell; no body part may touch the canvas boundary. Slightly reduce all figures UNIFORMLY only if needed to fit this padding, keep relative sizes within each direction group. Row1 col5 and col6 completely blank transparent. Preserve six left side phases and three front/three back phases; do not replace with duplicates or change clothes. No labels, numbers, floor, shadow or background. Genuine RGBA transparency.",
+      "initialPrompt": "Use case: stylized-concept. Asset type: native TRANSPARENT 2.5D game character atlas, SIX equal-width columns by THREE rows on a wide 2:1 canvas. Draw Iskandar / Rider from Fate/Zero using attached approved portrait ONLY to preserve the mature powerful face, spiky reddish hair, thick red beard, broad neck, very large muscular shoulders and heavy adult physique. A home WALKING model: unarmored simple subdued dark-red short-sleeve shirt, dark charcoal straight trousers, brown plain low shoes; small subtle simple gold geometric chest motif but NO words, logos or brand. No horse, sword, cape, armor, magic or background. Human adult anatomy, noticeably broader and somewhat taller than adult Waver; not chibi. Gentle elevated 2.5D camera with complete feet in every cell, generous clear RGBA padding and fixed body scale. Softly painted natural Japanese anime game figure, mellow warm/cool shading and softened edges, no harsh outlines or plastic highlights. Exactly row1 columns1..4 idle front/back/left/right, columns5..6 EMPTY transparent. Row2 columns1..6 six LEFT-SIDE walk phases alternating heel contact, support with bent opposite knee, pass, other heel contact, other support, other pass. Strong visible differences in knee bending, exchanging leg reach and opposite arms, plausible planted feet. Row3 columns1..3 front walk, columns4..6 back walk, alternating planted feet. Keep face/clothes/baseline/body size consistent across each row; no six duplicate walks, no full-height bobbing, no text/grid/cell borders, shadows or scenery. Genuine transparent RGBA.",
+      "rejectedSource": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-578fc092-318f-4016-ba90-6488c2c91d15.png",
+      "reason": "Grid lines and inadequate clear padding. One targeted repair; original output retained and not selected."
+    },
+    {
+      "id": "seated",
+      "role": "Two actors with seated and reading poses",
+      "prompt": "Use case: stylized-concept. Asset type: native transparent 2.5D game seated pose atlas, TWO evenly spaced columns by TWO rows on one square canvas, four complete independent sprites with generous transparent padding and NO grid or borders. Use reference1 for adult Waver / Lord El-Melloi II's identity, clothes: long dark-brown hair, mature narrow tired face, burgundy-brown jacket over black shirt/trousers, long subdued dark-red scarf, black gloves/shoes, slim human adult. Use reference2 for Iskandar's identity/clothes: large broad muscular middle-aged man, short spiky red hair and red beard, plain muted-red shirt with small gold motif, charcoal trousers, brown shoes. ROW1 col1 ADULT WAVER sitting calmly; col2 ISKANDAR sitting calmly. ROW2 col1 ADULT WAVER reading open book in lap; col2 ISKANDAR reading open book in lap. Every figure is complete HEAD TO TOE, gentle 3/4 LEFT facing, spine upright, pelvis on imaginary chair seat, bent knees projected to LEFT, lower legs down and shoes on imaginary level floor. Arms rest naturally on lap/hold book in reading row. No chair, bench, table, cushion, ground, shadow or scenery: the painted house supplies furniture. Sitting posture on a normal-height seat, not cross-legged or standing; consistent size within each actor column, Iskandar somewhat taller/broader. Fixed mild elevated 2.5D camera, softly painted anime rendering matching approved references, calm warm/cool shading, softened outlines, no hard glare. No young green-sweater Waver, armor, horse, weapons, text, labels or watermarks. Genuine transparent RGBA."
+    }
+  ],
+  "nativeAssets": [
+    {
+      "id": "waver-adult",
+      "path": "source/public/fate/character-art/waver-adult-house-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-d7a4514c-3948-4e47-8da9-7f1083633780.png",
+      "width": 1774,
+      "height": 887,
+      "bytes": 754362,
+      "sha256": "4a3d4bd9e963aa562bd59684fbdd19915f52217bb8b812a0b1552bf0243b5f43",
+      "transparent": true
+    },
+    {
+      "id": "hall",
+      "path": "source/public/fate/interior-art/waver-hall-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-55528e32-005a-4355-aab1-1b948212c5d6.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2061362,
+      "sha256": "3e27da1cb787db12a73b4d35996d955758bdcae46864d68762e5003a8df967a2",
+      "transparent": false
+    },
+    {
+      "id": "kitchen",
+      "path": "source/public/fate/interior-art/waver-kitchen-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-1ac27846-7bdb-4fbf-aba3-670b263b5cc4.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2011299,
+      "sha256": "601543a6c1986dcd9c9d77b423be8a0517acc23e61b054c6e435a5c7e48f7ca5",
+      "transparent": false
+    },
+    {
+      "id": "bedroom",
+      "path": "source/public/fate/interior-art/waver-bedroom-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-6a1dc746-d5fa-4274-9383-d85e4469c2c6.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2041483,
+      "sha256": "ec8f33fef1efbb639de751847b965fd0beacd892296663417fd39a9f4c43e16f",
+      "transparent": false
+    },
+    {
+      "id": "engawa",
+      "path": "source/public/fate/interior-art/waver-engawa-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-482f7387-aa85-4b5b-9bcb-caa7bd084996.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2163328,
+      "sha256": "fc6185af8f45941d5f2ee1eb0912e8aa25c8f24e8f5e42a14ba94dfcee77ead4",
+      "transparent": false
+    },
+    {
+      "id": "iskandar",
+      "path": "source/public/fate/character-art/iskandar-house-soft-v2.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-3a32b0c0-af68-491d-85c9-7078b6b5c31e.png",
+      "width": 1774,
+      "height": 887,
+      "bytes": 888068,
+      "sha256": "676451a8916f166043b25e9f6ef98590f44c2c05a6e885e810738fb3f0045934",
+      "transparent": true
+    },
+    {
+      "id": "seated",
+      "path": "source/public/fate/character-art/waver-seated-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-7fd9c46c-f540-4ab3-b929-73c0bce70b6c.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 998894,
+      "sha256": "5f4c9e912cb8a48bf8d6a2dc3270138abc35dbb1cb34585323ec3ec7ac9b82a8",
+      "transparent": true
+    }
+  ]
+}

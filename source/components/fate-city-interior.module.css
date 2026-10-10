@@ -38,6 +38,26 @@
   margin: 0;
   color: #b7bdaa;
 }
+.shell[data-house-room] .header > div {
+  flex: 1;
+  min-width: 0;
+}
+.shell[data-house-room] .header h2,
+.shell[data-house-room] .header p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shell[data-house-room] .header > button {
+  flex-shrink: 0;
+}
+@media (max-width: 600px) {
+  .shell[data-house-room] .header h2 span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 .shell button {
   display: inline-flex;
   align-items: center;
@@ -149,6 +169,42 @@
   border-top: 1px solid #8e947e40;
   background: #2d3a32;
 }
+/* Reserve the same controls area across rooms so text wrapping cannot change
+   the camera scale or its maximum zoom during a door transition. */
+.shell[data-house-room] .footer {
+  flex: 0 0 176px;
+  max-height: 40%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.shell[data-house-room] .surface {
+  min-height: 0;
+}
+.houseTools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  font-size: 11px;
+  color: #bebda1;
+}
+.houseTools label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.houseTools select {
+  background: #26362f;
+  color: #e0dec7;
+  border: 1px solid #6c715d;
+  border-radius: 7px;
+  padding: 4px 7px;
+  min-height: 32px;
+}
+.houseTools select:focus-visible {
+  outline: 2px solid #d8c68d;
+  outline-offset: 2px;
+}
 .spots {
   display: flex;
   flex-wrap: wrap;
@@ -202,6 +258,9 @@
   }
   .footer {
     padding: 8px 10px;
+  }
+  .shell[data-house-room] .footer {
+    flex-basis: 196px;
   }
   .spots {
     gap: 4px;

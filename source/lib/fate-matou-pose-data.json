@@ -1,0 +1,122 @@
+{
+  "sakura": {
+    "file": "/fate/character-art/matou-seated-soft-v1.png",
+    "imageWidth": 1536,
+    "imageHeight": 1024,
+    "scale": 0.4035433070866142,
+    "frames": [
+      {
+        "col": 0,
+        "row": 0,
+        "cropX": 148,
+        "cropY": 25,
+        "cellWidth": 245,
+        "cellHeight": 512,
+        "anchorX": 53.1473087818697,
+        "anchorY": 509,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 241,
+          "height": 508
+        }
+      },
+      {
+        "col": 0,
+        "row": 1,
+        "cropX": 165,
+        "cropY": 541,
+        "cellWidth": 232,
+        "cellHeight": 474,
+        "anchorX": 49.01714285714286,
+        "anchorY": 471,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 228,
+          "height": 470
+        }
+      }
+    ]
+  },
+  "kariya": {
+    "file": "/fate/character-art/matou-seated-soft-v1.png",
+    "imageWidth": 1536,
+    "imageHeight": 1024,
+    "scale": 0.42134831460674155,
+    "frames": [
+      {
+        "col": 1,
+        "row": 0,
+        "cropX": 606,
+        "cropY": 2,
+        "cellWidth": 271,
+        "cellHeight": 536,
+        "anchorX": 138.56435643564362,
+        "anchorY": 535,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 267,
+          "height": 534
+        }
+      },
+      {
+        "col": 1,
+        "row": 1,
+        "cropX": 606,
+        "cropY": 538,
+        "cellWidth": 275,
+        "cellHeight": 478,
+        "anchorX": 105.47955390334573,
+        "anchorY": 475,
+        "bounds": {
+          "x": 2,
+          "y": 0,
+          "width": 271,
+          "height": 476
+        }
+      }
+    ]
+  },
+  "medusa": {
+    "file": "/fate/character-art/matou-seated-soft-v1.png",
+    "imageWidth": 1536,
+    "imageHeight": 1024,
+    "scale": 0.43103448275862066,
+    "frames": [
+      {
+        "col": 2,
+        "row": 0,
+        "cropX": 1108,
+        "cropY": 14,
+        "cellWidth": 378,
+        "cellHeight": 524,
+        "anchorX": 47.12797619047615,
+        "anchorY": 523,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 374,
+          "height": 522
+        }
+      },
+      {
+        "col": 2,
+        "row": 1,
+        "cropX": 1117,
+        "cropY": 538,
+        "cellWidth": 385,
+        "cellHeight": 477,
+        "anchorX": 56.023890784982996,
+        "anchorY": 474,
+        "bounds": {
+          "x": 2,
+          "y": 1,
+          "width": 381,
+          "height": 474
+        }
+      }
+    ]
+  }
+}

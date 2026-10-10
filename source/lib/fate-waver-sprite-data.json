@@ -1,0 +1,484 @@
+{
+  "waver": {
+    "file": "/fate/character-art/waver-adult-house-soft-v1.png",
+    "imageWidth": 1774,
+    "imageHeight": 887,
+    "cuts": [0, 310, 591, 887],
+    "frames": [
+      {
+        "cropX": 134,
+        "cropY": 2,
+        "cellWidth": 115,
+        "cellHeight": 308,
+        "anchorX": 55.89918161239771,
+        "anchorY": 307,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 111,
+          "height": 306
+        }
+      },
+      {
+        "cropX": 409,
+        "cropY": 2,
+        "cellWidth": 116,
+        "cellHeight": 308,
+        "anchorX": 54.59138808139534,
+        "anchorY": 306,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 112,
+          "height": 305
+        }
+      },
+      {
+        "cropX": 699,
+        "cropY": 2,
+        "cellWidth": 114,
+        "cellHeight": 308,
+        "anchorX": 61.259583789704266,
+        "anchorY": 305,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 110,
+          "height": 304
+        }
+      },
+      {
+        "cropX": 962,
+        "cropY": 2,
+        "cellWidth": 113,
+        "cellHeight": 308,
+        "anchorX": 50.904542462146196,
+        "anchorY": 306,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 109,
+          "height": 305
+        }
+      },
+      null,
+      null,
+      {
+        "cropX": 70,
+        "cropY": 314,
+        "cellWidth": 166,
+        "cellHeight": 274,
+        "anchorX": 96.98914518317503,
+        "anchorY": 271,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 162,
+          "height": 270
+        }
+      },
+      {
+        "cropX": 360,
+        "cropY": 314,
+        "cellWidth": 151,
+        "cellHeight": 274,
+        "anchorX": 79.44761338878988,
+        "anchorY": 271,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 147,
+          "height": 270
+        }
+      },
+      {
+        "cropX": 638,
+        "cropY": 314,
+        "cellWidth": 166,
+        "cellHeight": 274,
+        "anchorX": 91.89848156182211,
+        "anchorY": 271,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 162,
+          "height": 270
+        }
+      },
+      {
+        "cropX": 924,
+        "cropY": 314,
+        "cellWidth": 181,
+        "cellHeight": 274,
+        "anchorX": 98.10344827586209,
+        "anchorY": 271,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 177,
+          "height": 270
+        }
+      },
+      {
+        "cropX": 1258,
+        "cropY": 314,
+        "cellWidth": 137,
+        "cellHeight": 274,
+        "anchorX": 55.55725946079633,
+        "anchorY": 271,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 133,
+          "height": 270
+        }
+      },
+      {
+        "cropX": 1515,
+        "cropY": 313,
+        "cellWidth": 172,
+        "cellHeight": 274,
+        "anchorX": 91.5640314378179,
+        "anchorY": 271,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 168,
+          "height": 270
+        }
+      },
+      {
+        "cropX": 95,
+        "cropY": 594,
+        "cellWidth": 127,
+        "cellHeight": 290,
+        "anchorX": 66.46980108499096,
+        "anchorY": 287,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 123,
+          "height": 286
+        }
+      },
+      {
+        "cropX": 380,
+        "cropY": 594,
+        "cellWidth": 125,
+        "cellHeight": 290,
+        "anchorX": 65.04420396184884,
+        "anchorY": 287,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 121,
+          "height": 286
+        }
+      },
+      {
+        "cropX": 680,
+        "cropY": 592,
+        "cellWidth": 117,
+        "cellHeight": 292,
+        "anchorX": 58.36777520896317,
+        "anchorY": 289,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 113,
+          "height": 288
+        }
+      },
+      {
+        "cropX": 965,
+        "cropY": 594,
+        "cellWidth": 133,
+        "cellHeight": 290,
+        "anchorX": 64.7663941871026,
+        "anchorY": 287,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 129,
+          "height": 286
+        }
+      },
+      {
+        "cropX": 1265,
+        "cropY": 593,
+        "cellWidth": 125,
+        "cellHeight": 291,
+        "anchorX": 62.4024257784215,
+        "anchorY": 288,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 121,
+          "height": 287
+        }
+      },
+      {
+        "cropX": 1558,
+        "cropY": 593,
+        "cellWidth": 123,
+        "cellHeight": 283,
+        "anchorX": 61.66229819563159,
+        "anchorY": 280,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 119,
+          "height": 279
+        }
+      }
+    ],
+    "variant": "adult",
+    "scales": {
+      "idle": 1.022950819672131,
+      "side": 1.1555555555555554,
+      "front": 1.0909090909090908,
+      "back": 1.0909090909090908
+    }
+  },
+  "iskandar": {
+    "file": "/fate/character-art/iskandar-house-soft-v2.png",
+    "imageWidth": 1774,
+    "imageHeight": 887,
+    "cuts": [0, 300, 591, 887],
+    "frames": [
+      {
+        "cropX": 98,
+        "cropY": 23,
+        "cellWidth": 157,
+        "cellHeight": 277,
+        "anchorX": 77.86593591905566,
+        "anchorY": 275,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 153,
+          "height": 274
+        }
+      },
+      {
+        "cropX": 364,
+        "cropY": 24,
+        "cellWidth": 157,
+        "cellHeight": 276,
+        "anchorX": 78.05123849964616,
+        "anchorY": 273,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 153,
+          "height": 272
+        }
+      },
+      {
+        "cropX": 697,
+        "cropY": 26,
+        "cellWidth": 88,
+        "cellHeight": 274,
+        "anchorX": 47.08631115997798,
+        "anchorY": 273,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 84,
+          "height": 272
+        }
+      },
+      {
+        "cropX": 997,
+        "cropY": 22,
+        "cellWidth": 88,
+        "cellHeight": 278,
+        "anchorX": 43.48439241917504,
+        "anchorY": 277,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 84,
+          "height": 276
+        }
+      },
+      null,
+      null,
+      {
+        "cropX": 64,
+        "cropY": 329,
+        "cellWidth": 188,
+        "cellHeight": 261,
+        "anchorX": 101.95876826722338,
+        "anchorY": 258,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 184,
+          "height": 257
+        }
+      },
+      {
+        "cropX": 358,
+        "cropY": 328,
+        "cellWidth": 186,
+        "cellHeight": 263,
+        "anchorX": 99.48246812386157,
+        "anchorY": 260,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 182,
+          "height": 259
+        }
+      },
+      {
+        "cropX": 659,
+        "cropY": 329,
+        "cellWidth": 184,
+        "cellHeight": 262,
+        "anchorX": 94.86266506602647,
+        "anchorY": 259,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 180,
+          "height": 258
+        }
+      },
+      {
+        "cropX": 939,
+        "cropY": 329,
+        "cellWidth": 202,
+        "cellHeight": 262,
+        "anchorX": 107.8322383857344,
+        "anchorY": 259,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 198,
+          "height": 258
+        }
+      },
+      {
+        "cropX": 1254,
+        "cropY": 328,
+        "cellWidth": 189,
+        "cellHeight": 263,
+        "anchorX": 93.77090998283052,
+        "anchorY": 260,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 185,
+          "height": 259
+        }
+      },
+      {
+        "cropX": 1529,
+        "cropY": 328,
+        "cellWidth": 194,
+        "cellHeight": 263,
+        "anchorX": 101.04016860897605,
+        "anchorY": 260,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 190,
+          "height": 259
+        }
+      },
+      {
+        "cropX": 86,
+        "cropY": 606,
+        "cellWidth": 146,
+        "cellHeight": 261,
+        "anchorX": 73.93559218559218,
+        "anchorY": 258,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 142,
+          "height": 257
+        }
+      },
+      {
+        "cropX": 370,
+        "cropY": 606,
+        "cellWidth": 146,
+        "cellHeight": 260,
+        "anchorX": 72.72767381713066,
+        "anchorY": 257,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 142,
+          "height": 256
+        }
+      },
+      {
+        "cropX": 668,
+        "cropY": 606,
+        "cellWidth": 145,
+        "cellHeight": 260,
+        "anchorX": 71.99800061519534,
+        "anchorY": 257,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 141,
+          "height": 256
+        }
+      },
+      {
+        "cropX": 964,
+        "cropY": 610,
+        "cellWidth": 147,
+        "cellHeight": 255,
+        "anchorX": 74.15739589807345,
+        "anchorY": 252,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 143,
+          "height": 251
+        }
+      },
+      {
+        "cropX": 1258,
+        "cropY": 608,
+        "cellWidth": 149,
+        "cellHeight": 258,
+        "anchorX": 73.41119661988841,
+        "anchorY": 255,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 145,
+          "height": 254
+        }
+      },
+      {
+        "cropX": 1545,
+        "cropY": 608,
+        "cellWidth": 147,
+        "cellHeight": 256,
+        "anchorX": 72.22438572090869,
+        "anchorY": 253,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 143,
+          "height": 252
+        }
+      }
+    ],
+    "variant": "walking",
+    "scales": {
+      "idle": 1.197080291970803,
+      "side": 1.2664092664092663,
+      "front": 1.28125,
+      "back": 1.3015873015873016
+    }
+  }
+}
