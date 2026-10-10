@@ -46,6 +46,7 @@ import {
   type FateStorageStamp,
 } from '@/lib/fate-local-session';
 import { FateStorageNotice } from './fate-storage-notice';
+import type { EmiyaGameSave } from '@/lib/fate-emiya-game';
 
 type StorageStatus =
   | 'loading'
@@ -69,6 +70,12 @@ type FateContextValue = ReturnType<typeof useDeepSeekConnection> & {
   append: (entry: Exchange, life?: DailyLife, revision?: number) => boolean;
   updateSettings: (settings: FateSettings) => void;
   saveLife: (life: DailyLife, revision: number, final?: boolean) => void;
+  saveEmiya: (
+    life: DailyLife,
+    emiya: EmiyaGameSave,
+    revision: number,
+    final?: boolean,
+  ) => void;
   saveRevision: number;
   setWaverStage: (stage: WaverStage) => void;
   setHousing: (housing: FateHousing) => void;
@@ -410,6 +417,12 @@ export function FateProvider({ children }: { children: ReactNode }) {
           ),
         saveLife: (life, revision, final) =>
           updateCurrent((previous) => ({ ...previous, life }), revision, final),
+        saveEmiya: (life, emiya, revision, final) =>
+          updateCurrent(
+            (previous) => ({ ...previous, version: 2, life, emiya }),
+            revision,
+            final,
+          ),
         updateSettings: (settings) => {
           try {
             commitLibrary(

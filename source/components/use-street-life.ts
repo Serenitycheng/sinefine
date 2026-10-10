@@ -45,6 +45,10 @@ import {
   type IndoorPosition,
 } from '@/lib/fate-indoor-map';
 import type { Point } from '@/lib/street';
+import {
+  EmiyaGameSession,
+  type EmiyaStreetReturn,
+} from '@/lib/fate-emiya-game';
 import { teleportStreetActor } from '@/lib/fate-navigation';
 import {
   startPublicOuting,
@@ -80,6 +84,8 @@ export function useStreetLife(
   const life = useRef(createDailyLife());
   const engineRevision = useRef(fate.saveRevision);
   const initialized = useRef(false);
+  const emiyaRef = useRef<EmiyaGameSession | null>(null);
+  const [emiya, setEmiya] = useState<EmiyaGameSession | null>(null);
   const [view, setView] = useState(createDailyLife);
   const [running, setRunning] = useState(false),
     [speed, setSpeed] = useState<FateClockSpeed>(1);
@@ -134,6 +140,13 @@ export function useStreetLife(
   });
   const publish = useCallback(() => {
     if (!initialized.current) return;
+    if (emiyaRef.current) {
+      const next = emiyaRef.current.gameSave();
+      setView(next.life);
+      ctx.current.saveEmiya(next.life, next.emiya, engineRevision.current);
+      sincePublish.current = 0;
+      return;
+    }
     const next = snapshotLife(life.current, actors.current);
     setView(next);
     ctx.current.saveLife(next, engineRevision.current);
@@ -153,6 +166,14 @@ export function useStreetLife(
       if (!alive || initialized.current) return;
       life.current = saved ? structuredClone(saved) : createDailyLife();
       initialized.current = true;
+      const house = ctx.current.save.emiya;
+      if (house?.active) {
+        const session = new EmiyaGameSession(life.current, house.street, house);
+        session.clockSpeed = config.current.speed;
+        session.walkPace = config.current.walkPace;
+        emiyaRef.current = session;
+        setEmiya(session);
+      }
       for (const actor of actors.current)
         Object.assign(actor, life.current.positions[actor.id], {
           path: [],
@@ -178,6 +199,16 @@ export function useStreetLife(
     cancel,
   ]);
   const saveLatest = useCallback(() => {
+    if (initialized.current && emiyaRef.current) {
+      const next = emiyaRef.current.gameSave();
+      ctx.current.saveEmiya(
+        next.life,
+        next.emiya,
+        engineRevision.current,
+        true,
+      );
+      return;
+    }
     if (initialized.current)
       ctx.current.saveLife(
         snapshotLife(life.current, actors.current),
@@ -188,6 +219,7 @@ export function useStreetLife(
   useEffect(() => {
     const stop = () => {
       config.current.running = false;
+      if (emiyaRef.current) emiyaRef.current.running = false;
       setRunning(false);
       cancel();
       publish();
@@ -372,6 +404,12 @@ export function useStreetLife(
   const advance = useCallback(
     (dt: number) => {
       if (!initialized.current) return;
+      if (emiyaRef.current) {
+        // The house owns movement and the daily clock. This loop only persists it.
+        sincePublish.current += dt;
+        if (sincePublish.current >= 1) publish();
+        return;
+      }
       const opt = opts.current,
         cfg = config.current;
       const before = life.current.nextId;
@@ -462,9 +500,66 @@ export function useStreetLife(
     [],
   );
   const currentIndoor = useCallback(
-    (): IndoorPosition | undefined => life.current.indoor,
+    (): IndoorPosition | undefined =>
+      emiyaRef.current?.life.indoor ?? life.current.indoor,
     [],
   );
+  const enterEmiya = useCallback(
+    (street: EmiyaStreetReturn) => {
+      const opt = opts.current;
+      const actor = actors.current.find(
+        (candidate) => candidate.id === 'shirou',
+      );
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        opt.mode !== 'control' ||
+        opt.active !== 'shirou' ||
+        !actor ||
+        !nearHomeEntrance(actor, 'emiya') ||
+        life.current.indoor ||
+        emiyaRef.current ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return false;
+      cancel();
+      life.current.people.shirou.activity = null;
+      actor.path = [];
+      const session = new EmiyaGameSession(
+        snapshotLife(life.current, actors.current),
+        street,
+        ctx.current.save.emiya,
+      );
+      session.clockSpeed = config.current.speed;
+      session.walkPace = config.current.walkPace;
+      session.running = config.current.running;
+      emiyaRef.current = session;
+      setEmiya(session);
+      publish();
+      return true;
+    },
+    [actors, cancel, publish],
+  );
+  const leaveEmiya = useCallback(() => {
+    const session = emiyaRef.current;
+    if (!session) return null;
+    const running = session.running;
+    const next = session.release();
+    life.current = next.life;
+    for (const actor of actors.current)
+      Object.assign(actor, next.life.positions[actor.id], {
+        path: [],
+        frame: 0,
+      });
+    config.current.running = running;
+    setRunning(running);
+    emiyaRef.current = null;
+    setEmiya(null);
+    setView(next.life);
+    ctx.current.saveEmiya(next.life, next.emiya, engineRevision.current);
+    return session.street;
+  }, [actors]);
   const enterHome = useCallback(
     (home: HomeId) => {
       const opt = opts.current;
@@ -503,6 +598,7 @@ export function useStreetLife(
   }, [publish]);
   const moveInside = useCallback(
     (dt: number, input: Point) => {
+      if (emiyaRef.current) return;
       const position = life.current.indoor;
       const opt = opts.current;
       if (
@@ -764,6 +860,10 @@ export function useStreetLife(
   }
   return {
     view,
+    emiya,
+    enterEmiya,
+    leaveEmiya,
+    saveEmiya: publish,
     running,
     speed,
     walkPace,

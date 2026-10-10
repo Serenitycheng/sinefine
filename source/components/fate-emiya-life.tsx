@@ -19,21 +19,7 @@ import styles from './fate-emiya-house.module.css';
 export default function FateEmiyaLifePlaytest() {
   const [session, setSession] = useState<EmiyaLifeSession | null>(null);
   const [open, setOpen] = useState(true);
-  const [selected, setSelected] = useState<PartnerId | null>(null);
-  const [householdOpen, setHouseholdOpen] = useState(false);
-  const selectResident = useCallback((id: PartnerId) => {
-    setSelected(id);
-    setHouseholdOpen(true);
-  }, []);
-  const [residentRequest, setResidentRequest] = useState<{
-    id: PartnerId;
-    serial: number;
-  } | null>(null);
   const [notice, setNotice] = useState('正在打开试玩记录…');
-  const [actionRequest, setActionRequest] = useState<{
-    id: string;
-    serial: number;
-  } | null>(null);
   useEffect(() => {
     let cancelled = false;
     queueMicrotask(() => {
@@ -58,7 +44,7 @@ export default function FateEmiyaLifePlaytest() {
       cancelled = true;
     };
   }, []);
-  const persist = () => {
+  const persist = useCallback(() => {
     if (!session) return;
     try {
       localStorage.setItem(EMIYA_LIFE_KEY, JSON.stringify(session.save()));
@@ -66,26 +52,19 @@ export default function FateEmiyaLifePlaytest() {
     } catch {
       setNotice('试玩记录暂未保存；可点击重新保存。');
     }
-  };
+  }, [session]);
   useEffect(() => {
     if (!session) return;
-    const save = () => {
-      try {
-        localStorage.setItem(EMIYA_LIFE_KEY, JSON.stringify(session.save()));
-      } catch {
-        setNotice('试玩记录暂未保存；可点击重新保存。');
-      }
-    };
-    const timer = window.setInterval(save, 15000);
-    window.addEventListener('pagehide', save);
-    document.addEventListener('visibilitychange', save);
+    const timer = window.setInterval(persist, 15000);
+    window.addEventListener('pagehide', persist);
+    document.addEventListener('visibilitychange', persist);
     return () => {
       window.clearInterval(timer);
-      window.removeEventListener('pagehide', save);
-      document.removeEventListener('visibilitychange', save);
-      save();
+      window.removeEventListener('pagehide', persist);
+      document.removeEventListener('visibilitychange', persist);
+      persist();
     };
-  }, [session]);
+  }, [session, persist]);
   if (!session || !open)
     return (
       <main className={styles.lifeLanding}>
@@ -100,8 +79,53 @@ export default function FateEmiyaLifePlaytest() {
       </main>
     );
   return (
+    <FateEmiyaLifeScene
+      session={session}
+      notice={notice}
+      onSave={persist}
+      onExit={() => {
+        persist();
+        setOpen(false);
+      }}
+    />
+  );
+}
+
+/** The same scene uses either the isolated adapter or the formal save owner. */
+export function FateEmiyaLifeScene({
+  session,
+  notice,
+  onSave,
+  onExit,
+  formal = false,
+  suspended = false,
+}: {
+  session: EmiyaLifeSession;
+  notice: string;
+  onSave: () => void;
+  onExit: () => void;
+  formal?: boolean;
+  suspended?: boolean;
+}) {
+  const [selected, setSelected] = useState<PartnerId | null>(null);
+  const [householdOpen, setHouseholdOpen] = useState(false);
+  const selectResident = useCallback((id: PartnerId) => {
+    setSelected(id);
+    setHouseholdOpen(true);
+  }, []);
+  const [residentRequest, setResidentRequest] = useState<{
+    id: PartnerId;
+    serial: number;
+  } | null>(null);
+  const [actionRequest, setActionRequest] = useState<{
+    id: string;
+    serial: number;
+  } | null>(null);
+  return (
     <FateEmiyaHouse
       life={session}
+      suspended={suspended}
+      lifeLabel={formal ? '卫宫士郎 · 家庭生活' : undefined}
       onResidentSelect={selectResident}
       residentRequest={residentRequest}
       actionRequest={actionRequest}
@@ -126,15 +150,17 @@ export default function FateEmiyaLifePlaytest() {
               serial: (previous?.serial ?? 0) + 1,
             }));
           }}
-          onSave={persist}
+          onSave={onSave}
         />
       }
-      onExit={() => {
-        persist();
-        setOpen(false);
-      }}
+      onExit={onExit}
       lifeControls={
-        <EmiyaLifeControls session={session} notice={notice} onSave={persist} />
+        <EmiyaLifeControls
+          session={session}
+          notice={notice}
+          onSave={onSave}
+          formal={formal}
+        />
       }
     />
   );
@@ -362,10 +388,12 @@ function EmiyaLifeControls({
   session,
   notice,
   onSave,
+  formal = false,
 }: {
   session: EmiyaLifeSession;
   notice: string;
   onSave: () => void;
+  formal?: boolean;
 }) {
   const [, refresh] = useState(0);
   useEffect(() => {
@@ -406,7 +434,7 @@ function EmiyaLifeControls({
             等半小时
           </button>
           <button type="button" onClick={onSave}>
-            保存试玩记录
+            {formal ? '保存进度' : '保存试玩记录'}
           </button>
         </div>
         <ul aria-label="卫宫宅居民的实际日常">
@@ -421,7 +449,10 @@ function EmiyaLifeControls({
             </li>
           ))}
         </ul>
-        <output>{notice} 原游戏记录保留。</output>
+        <output>
+          {notice}
+          {formal ? '' : ' 原游戏记录保留。'}
+        </output>
       </div>
     </details>
   );

@@ -12,6 +12,8 @@ import {
   type PointerEvent,
 } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { createPortal } from 'react-dom';
 import {
   ArrowLeft,
   ArrowDown,
@@ -108,6 +110,11 @@ import {
 import interiorStyles from './fate-interior.module.css';
 import styles from './street-walk.module.css';
 import { STREET_CAST } from '@/lib/fate-street-cast';
+import type { EmiyaStreetReturn } from '@/lib/fate-emiya-game';
+
+const FateEmiyaLifeScene = dynamic(() =>
+  import('./fate-emiya-life').then((module) => module.FateEmiyaLifeScene),
+);
 
 const BASE_CAST = STREET_CAST;
 
@@ -250,6 +257,7 @@ export default function StreetWalk({
   const outingPoint =
     outing && outing.kind !== 'cafe' ? publicOutingPoint(outing) : null;
   const dailyActions = useRef({
+    emiyaActive: !!daily.emiya,
     advance: daily.advance,
     walkPace: daily.walkPace,
     isInside: daily.isInside,
@@ -261,6 +269,7 @@ export default function StreetWalk({
   });
   useEffect(() => {
     dailyActions.current = {
+      emiyaActive: !!daily.emiya,
       advance: daily.advance,
       walkPace: daily.walkPace,
       isInside: daily.isInside,
@@ -271,6 +280,7 @@ export default function StreetWalk({
       interaction: daily.interaction,
     };
   }, [
+    daily.emiya,
     daily.advance,
     daily.walkPace,
     daily.isInside,
@@ -351,6 +361,25 @@ export default function StreetWalk({
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
   const period = lifePeriod(daily.view.minutes);
+  const restoreEmiyaCamera = useCallback((street: EmiyaStreetReturn) => {
+    setScene(street.scene);
+    setZoomLevels({ ...street.zoom });
+    camera.current = { ...street.camera };
+    cameraScene.current = street.scene;
+    manualCamera.current = street.manual ? { ...street.manual } : null;
+    freeView.current = { ...street.point };
+    following.current = street.manual ? null : 'shirou';
+    const place = nearbyStreetPlace(street.point);
+    if (place) {
+      scenePlaceRef.current = place;
+      setScenePlace(place);
+    }
+    settings.current = {
+      ...settings.current,
+      scene: street.scene,
+      zoom: street.zoom[street.scene],
+    };
+  }, []);
   const restoredIndoor = useRef(false);
 
   useEffect(() => {
@@ -365,7 +394,10 @@ export default function StreetWalk({
   }, [active, mode, scene, zoom, ready, interiorView, suspended]);
   useEffect(() => {
     if (!fate.loaded || restoredIndoor.current) return;
-    const saved = fate.save.life?.indoor;
+    const house = fate.save.emiya;
+    const saved = house?.active
+      ? { actor: 'shirou' as const, home: 'emiya' as const }
+      : fate.save.life?.indoor;
     if (!saved) return;
     let alive = true;
     queueMicrotask(() => {
@@ -373,20 +405,22 @@ export default function StreetWalk({
       restoredIndoor.current = true;
       setActive(saved.actor);
       setMode('control');
-      setScene('street');
+      const scene = house?.active ? house.street.scene : 'street';
+      setScene(scene);
+      if (house?.active) restoreEmiyaCamera(house.street);
       setInteriorView(saved.home);
       settings.current = {
         ...settings.current,
         active: saved.actor,
         mode: 'control',
-        scene: 'street',
+        scene,
         interior: true,
       };
     });
     return () => {
       alive = false;
     };
-  }, [fate.loaded, fate.save.life]);
+  }, [fate.loaded, fate.save.life, fate.save.emiya, restoreEmiyaCamera]);
   useEffect(() => {
     if (interiorView) interiorSurface.current?.focus({ preventScroll: true });
     else stage.current?.focus({ preventScroll: true });
@@ -449,6 +483,7 @@ export default function StreetWalk({
     };
     host.addEventListener('wheel', wheel, { passive: false });
     const keyDown = (e: KeyboardEvent) => {
+      if (dailyActions.current.emiyaActive) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (
         (e.target as HTMLElement)?.closest(
@@ -530,6 +565,11 @@ export default function StreetWalk({
       const dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
       let opts = settings.current;
+      if (dailyActions.current.emiyaActive) {
+        dailyActions.current.advance(dt);
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       if (opts.ready && !document.hidden) {
         let pad = null;
         let status = '连接手柄后，按任意按钮';
@@ -931,6 +971,42 @@ export default function StreetWalk({
     setInteriorView(value);
   }
   function enterInterior(home: keyof typeof FATE_HOMES) {
+    if (
+      home === 'emiya' &&
+      settings.current.active === 'shirou' &&
+      settings.current.mode === 'control'
+    ) {
+      const actor = actors.current.find(
+        (candidate) => candidate.id === 'shirou',
+      )!;
+      if (
+        !daily.enterEmiya({
+          actor: 'shirou',
+          point: { x: actor.x, y: actor.y },
+          scene,
+          zoom: { ...zoomLevels },
+          camera: { ...camera.current },
+          manual: manualCamera.current ? { ...manualCamera.current } : null,
+        })
+      ) {
+        setHint('请先控制士郎，走到卫宫宅门前。');
+        return;
+      }
+      journey.current = null;
+      setJourneyLabel(null);
+      setRouteNotice('');
+      keys.current.clear();
+      touchKeys.current.clear();
+      indoorPath.current = [];
+      pointer.current = null;
+      setAtlasOpen(false);
+      setSelectedPlace(null);
+      setLifePanel(false);
+      dailyActions.current.emiyaActive = true;
+      settings.current = { ...settings.current, interior: true };
+      setInteriorView('emiya');
+      return;
+    }
     if (!daily.enterHome(home)) {
       setHint('请先进入角色，沿街走到住宅门前。');
       return;
@@ -950,7 +1026,11 @@ export default function StreetWalk({
     setHint(`已进入${FATE_HOMES[home].name}，可在室内沿走廊移动。`);
   }
   function leaveInterior() {
-    daily.leaveHome();
+    if (daily.emiya) {
+      const street = daily.leaveEmiya();
+      if (street) restoreEmiyaCamera(street);
+      dailyActions.current.emiyaActive = false;
+    } else daily.leaveHome();
     keys.current.clear();
     touchKeys.current.clear();
     indoorPath.current = [];
@@ -1290,7 +1370,7 @@ export default function StreetWalk({
   const encounter = liveEncounter(daily.view)?.dialogue;
   const speech = liveSpeech(daily.view);
   return (
-    <main className={styles.shell}>
+    <main className={styles.shell} inert={!!daily.emiya}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="返回世界">
           <span className={styles.wordmark}>
@@ -1853,7 +1933,7 @@ export default function StreetWalk({
               onClose={() => setSelectedPlace(null)}
             />
           )}
-          {interiorView && (
+          {interiorView && !daily.emiya && (
             <div
               ref={interiorSurface}
               className={interiorStyles.surface}
@@ -2050,6 +2130,21 @@ export default function StreetWalk({
           }}
         />
       ) : null}
+      {daily.emiya &&
+        createPortal(
+          <FateEmiyaLifeScene
+            session={daily.emiya}
+            formal
+            suspended={suspended || fate.storageBlocked}
+            notice={
+              fate.storageNotice ||
+              (fate.persistent ? '进度保存在正式存档中。' : '本页进度待保存。')
+            }
+            onSave={daily.saveEmiya}
+            onExit={leaveInterior}
+          />,
+          document.body,
+        )}
     </main>
   );
 }

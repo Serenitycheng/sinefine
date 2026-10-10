@@ -10,6 +10,7 @@ import { samePavement, isActorId } from './street';
 import { parseDailyLife, type DailyLife } from './fate-life';
 import { reviseSocial } from './fate-social';
 import { storedDialogueTurns, type DialogueTurn } from './fate-dialogue';
+import { parseEmiyaGameSave, type EmiyaGameSave } from './fate-emiya-game';
 export type Exchange = {
   turns?: DialogueTurn[];
   waverStage?: WaverStage;
@@ -22,9 +23,10 @@ export type Exchange = {
   createdAt: string;
 };
 export type FateSave = FateSettings & {
-  version: 1;
+  version: 1 | 2;
   history: Exchange[];
   life?: DailyLife;
+  emiya?: EmiyaGameSave;
 };
 export const FATE_STORAGE_KEY = 'sine-fine-fate-v1';
 export function emptyFateSave(): FateSave {
@@ -40,7 +42,9 @@ export function parseFateSave(input: unknown): FateSave {
   if (!input || typeof input !== 'object') throw new Error('存档格式不正确');
   const x = input as Record<string, unknown>;
   if (
-    x.version !== 1 ||
+    (x.version !== 1 && x.version !== 2) ||
+    (x.version === 1 && x.emiya !== undefined) ||
+    (x.version === 2 && (x.emiya === undefined || x.life === undefined)) ||
     typeof x.worldNote !== 'string' ||
     x.worldNote.length > 2000 ||
     !Array.isArray(x.history) ||
@@ -84,11 +88,15 @@ export function parseFateSave(input: unknown): FateSave {
       createdAt: e.createdAt,
     };
   });
+  const life = x.life === undefined ? undefined : parseDailyLife(x.life);
   return {
-    version: 1,
+    version: x.version as 1 | 2,
     ...parseFateSettings(x as FateSettings),
     history,
-    ...(x.life === undefined ? {} : { life: parseDailyLife(x.life) }),
+    ...(life ? { life } : {}),
+    ...(x.emiya === undefined
+      ? {}
+      : { emiya: parseEmiyaGameSave(x.emiya, life!) }),
   };
 }
 export function updateFateSettings(

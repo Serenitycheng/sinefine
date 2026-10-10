@@ -194,6 +194,8 @@ export default function FateEmiyaHouse({
   onResidentSelect,
   residentRequest,
   actionRequest,
+  lifeLabel,
+  suspended = false,
 }: {
   onExit: () => void;
   life?: EmiyaLifeSession;
@@ -202,8 +204,11 @@ export default function FateEmiyaHouse({
   onResidentSelect?: (id: PartnerId) => void;
   residentRequest?: { id: PartnerId; serial: number } | null;
   actionRequest?: { id: string; serial: number } | null;
+  lifeLabel?: string;
+  suspended?: boolean;
 }) {
   const activities = life ? EMIYA_LIFE_ACTIVITIES : EMIYA_ACTIVITIES;
+  const paused = useRef(suspended);
   const engine = useRef<Engine | null>(null);
   const [view, setView] = useState(() => snapshot(createEngine(life)));
   useLayoutEffect(() => {
@@ -457,6 +462,22 @@ export default function FateEmiyaHouse({
     activity,
   });
   useLayoutEffect(() => {
+    paused.current = suspended;
+    if (suspended) {
+      keys.current.clear();
+      held.current = { x: 0, y: 0 };
+      const current = engine.current;
+      if (current) {
+        current.player.legs = [];
+        current.player.frame = 0;
+        current.player.walked = 0;
+        current.goal = null;
+        current.activity = null;
+        setView(snapshot(current));
+      }
+    }
+  }, [suspended]);
+  useLayoutEffect(() => {
     commands.current = {
       stop,
       interact,
@@ -514,6 +535,7 @@ export default function FateEmiyaHouse({
       activeWindow.current = true;
     };
     const keydown = (event: KeyboardEvent) => {
+      if (paused.current) return;
       const key = event.key.toLowerCase();
       if (key === 'tab') {
         const buttons = shell.current?.querySelectorAll<HTMLElement>(
@@ -617,6 +639,10 @@ export default function FateEmiyaHouse({
     const tick = (now: number) => {
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
       last = now;
+      if (paused.current) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const e = engine.current!,
         player = e.player;
       const wasWalking = player.frame !== 0;
@@ -687,7 +713,10 @@ export default function FateEmiyaHouse({
             : currentScene;
         player.point = interiorMove(
           player.point,
-          { x: delta.x * 185 * dt, y: delta.y * 185 * dt },
+          {
+            x: delta.x * 185 * dt * (life?.walkPace ?? 1),
+            y: delta.y * 185 * dt * (life?.walkPace ?? 1),
+          },
           collisionScene,
         );
         travelled = gap(previous.point, player.point);
@@ -711,10 +740,12 @@ export default function FateEmiyaHouse({
           cross(door);
         }
       } else if (player.legs.length) {
-        const advanced = emiyaAdvanceRoute(player, player.legs, 185 * dt, [
-          ...e.inhabitants,
-          ...(e.residentVisible ? [e.resident] : []),
-        ]);
+        const advanced = emiyaAdvanceRoute(
+          player,
+          player.legs,
+          185 * dt * (life?.walkPace ?? 1),
+          [...e.inhabitants, ...(e.residentVisible ? [e.resident] : [])],
+        );
         player.room = advanced.location.room;
         player.point = advanced.location.point;
         player.legs = advanced.legs;
@@ -1031,11 +1062,13 @@ export default function FateEmiyaHouse({
     <dialog
       ref={shell}
       open
+      inert={suspended}
       aria-modal="true"
       aria-label={`卫宫宅 · ${room.name}`}
       className={`${base.shell} ${styles.shell}`}
       data-interior-id="emiya"
       data-house-room={room.id}
+      data-house-suspended={suspended}
     >
       <header className={base.header}>
         <div>
@@ -1044,10 +1077,11 @@ export default function FateEmiyaHouse({
           </h2>
           <p>
             {life
-              ? '卫宫士郎 · 家庭生活试玩 · 独立记录'
+              ? (lifeLabel ?? '卫宫士郎 · 家庭生活试玩 · 独立记录')
               : '日式家屋形制参考 · 连通布局创作 · 室内样板'}
           </p>
           {lifeControls}
+          {suspended && <output>正在确认正式进度，室内已暂停。</output>}
         </div>
         <button
           type="button"

@@ -207,6 +207,10 @@ export function useBackgroundLife() {
     };
   }, [fate.cloudUsername, fate.loaded, refresh]);
   async function change(enabled: boolean, keepLocal = false) {
+    if (enabled && ctx.current.save.emiya?.active) {
+      setNotice('请先从卫宫宅走回街道，再开启后台日常。');
+      return;
+    }
     const stored = readBackgroundMarker();
     if (stored?.active && stored.username !== view?.username) {
       setNotice(

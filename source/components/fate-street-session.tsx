@@ -15,7 +15,7 @@ import { FateAISettings } from './fate-ai-settings';
 import styles from './fate-street-session.module.css';
 
 export default function FateStreetSession() {
-  const { saveRevision, storageBlocked } = useFate();
+  const { saveRevision, storageBlocked, save } = useFate();
   const background = useBackgroundLife();
   const [backgroundOpen, setBackgroundOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -40,7 +40,17 @@ export default function FateStreetSession() {
                   ? '正在确认后台进度 · 本地暂歇'
                   : '本地日常 · 离开页面后暂停'}
         </output>
-        <button onClick={() => setBackgroundOpen(true)}>后台日常设置</button>
+        <button
+          disabled={save.emiya?.active}
+          title={
+            save.emiya?.active
+              ? '请先从庭院走回街道，再设置后台日常。'
+              : undefined
+          }
+          onClick={() => setBackgroundOpen(true)}
+        >
+          后台日常设置
+        </button>
       </div>
       <div className={styles.game} inert={background.suspended}>
         <StreetWalk

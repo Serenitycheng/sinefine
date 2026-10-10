@@ -41,7 +41,11 @@ import {
 } from './fate-emiya-residents';
 import { homeCarePlan, takeHomeCare } from './fate-self-care';
 import { spendPlayerTime } from './fate-player-time';
-import { clockRate } from './fate-clock';
+import {
+  clockRate,
+  type FateClockSpeed,
+  type FateWalkPace,
+} from './fate-clock';
 import {
   interiorWalkable,
   interiorClearSegment,
@@ -142,6 +146,8 @@ export class EmiyaLifeSession {
   location: EmiyaLocation;
   meal: boolean;
   running = true;
+  clockSpeed: FateClockSpeed = 1;
+  walkPace: FateWalkPace = 1;
   house: EmiyaResidents;
   household: EmiyaHouseholdSave;
   constructor(save: EmiyaLifeSave = createEmiyaLifeSave()) {
@@ -184,7 +190,8 @@ export class EmiyaLifeSession {
     advanceDailyLife(this.life, this.actors, dt, {
       running: this.running,
       speed: 1,
-      clockRate: clockRate(1),
+      clockRate: clockRate(this.clockSpeed),
+      motionRate: this.walkPace,
       controlled: 'shirou',
     });
     return this.stepHouse(dt, this.running);
