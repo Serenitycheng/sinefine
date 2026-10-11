@@ -1,0 +1,187 @@
+{
+  "version": 1,
+  "building": "temple",
+  "date": "2026-10-10",
+  "style": "柔和融合版，原画与本地投影、寻路、碰撞的 2.5D",
+  "setting": "沿用葛木、美狄亚现有柳洞寺住宅关系；新房间布局为游戏创作",
+  "reused": [
+    "source/public/fate/interior-art/temple-main-soft-v1.png"
+  ],
+  "references": [
+    "https://www.fate-sn.com/ubw/sp/chara/",
+    "https://www.fate-sn.com/ubw/story/08.html"
+  ],
+  "generator": "Built-in image_gen",
+  "prompts": [
+    {
+      "id": "hall",
+      "role": "玄关木廊与五处实际门槛",
+      "prompt": "Use case: concept-art. Asset type: finished 16:9 painted background for a walkable Sinefine 2.5D room. Input image 1 is the approved temple communal room, use ONLY its gentle anime background painting, wood construction and warm natural light as style/architecture reference, do not duplicate its layout. Draw a NEW quiet Ryudou Temple residential entrance and broad timber corridor, daylight, eye-height front three-quarter view, full continuous room, no people. Composition designed for 1600x900 floor registration: visible wooden walking floor from 44% to 97% of image, very wide unobstructed foreground. FIVE unmistakable open room thresholds: one on left wall at x14%, floor threshold y62%; three on rear wall at x35%,55%,75%, thresholds around y51%; one on right wall at x92%, threshold y66% opening onto an engawa. Open doors expose only muted hints beyond, no tiny steps into the doorways. Shoe cabinet confined extreme left x0-8%, broom/umbrella holder extreme right x95-99%; center remains empty. Old cedar beams, shoji, lime plaster, modest temple furnishings, forest green hints beyond. Match gentle blended brushwork, soft edges, readable carpentry, diffuse amber daylight and cool green reflected light. Avoid harsh white highlights, glossy 3D rendering, heavy black outlines, dramatic shadows, oversaturation, UI, text, labels, people, extra foreground objects. Landscape 16:9, opaque full image.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "kitchen",
+      "role": "寺院斋堂与厨房，榻榻米低餐桌",
+      "prompt": "Use case: concept-art. Asset type: finished wide 16:9 painted background for a walkable Sinefine 2.5D room. Image1 is the temple communal room, reference its soft anime background brushwork, old wood, green forest light and modest Japanese temple design only. Draw a NEW Ryudou Temple refectory and small household kitchen, no people, eye-height front three-quarter room view. Composition: wooden/tatami continuous walkable floor from 48% to bottom, clear wide central passage x35-66% throughout; one open return doorway centered x50% on rear wall, floor threshold y51%, visible wood corridor beyond. Cooking counter and simple stove confined left x0-30%, backshelf on right rear x77-97%. At right foreground x76-98%, y62-78% draw a modest LOW rectangular wooden dining table; one clearly visible sage-green floor cushion on its LEFT side centered x69%, bottom y77%; sitting is on folded legs on tatami, NO tall chairs. Bowls, quiet kettle and neatly stacked dishes, small window with cedars and moss; no modern restaurant fixtures. Soft amber and cool green daylight, readable geometry with blended edges, warm aged timber, gentle contrast and no hard white shine. Match painterly cohesive 2.5D game art, not glossy 3D, not chibi, no black thick outlines, no people, UI, words, labels or diagrams, no tables in central route. Landscape 16:9.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "quarters",
+      "role": "葛木僧房与低书案，教师阅览角",
+      "prompt": "Use case: concept-art. Asset type: finished wide 16:9 painted background for a walkable Sinefine 2.5D temple lodging. Image1 is approved temple communal room; use its gentle painted anime style, warm aged wood, shoji and diffuse forest daylight, do not copy furniture layout. Draw a NEW modest room used by Souichirou Kuzuki at Ryudou Temple: tatami monk lodging with a teacher's reading corner, no people. Eye-height front three-quarter view, visible empty central tatami path x33-65% from y48% to bottom. One open return doorway centered x51% rear wall, floor threshold y51%, muted timber corridor beyond. A neatly folded futon and dark green bedding confined LEFT x0-26%, a small clothes rail and black teacher's jacket at back-left. A LOW writing/reading desk at RIGHT x82-99%, y59-74%, papers and books; one distinct plain green floor cushion just LEFT of desk at x76%, bottom y77%, for a folded-leg reading pose. No tall chair. Shelves, modest ink cup, few textbooks, shoji with cedars and moss beyond, warm muted earth and green palette. Clear readable wood and tatami perspective, soft blended edges and diffuse amber/cool-green light, no sharp white glare or dramatic shadows. Avoid people, words, UI, glowing magic, altar, excessive clutter, central-route furniture, glossy 3D render, thick outlines. Landscape16:9.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "craft",
+      "role": "美狄亚手作与资料静室，项目改编",
+      "prompt": "Use case: concept-art. Asset type: finished wide 16:9 painted background for a walkable Sinefine 2.5D temple room. Image1 is approved Ryudou Temple communal room, reference its soft blended anime background style, old beams, shoji, warm/cool woodland daylight only. Draw a NEW modest quiet handcraft and reference room for Medea inside the temple, household adaptation, no people. Front three-quarter eye-height view, spacious clear tatami central path x32-62%, floor from y48% to bottom. One open rear return doorway centered x49%, threshold y51% with quiet wood corridor beyond. A LOW handcraft/reading table at RIGHT x78-98%, y60-77%; a prominent muted lavender-gray floor cushion to its LEFT centered x70%, bottom y77%, no tall chair. Rolled cloth in baskets, small unfinished wooden ornaments and carefully stacked books, scissors safely resting on back table, subdued purple-blue fabrics; small rear cabinet left x5-28%. Nothing magical glowing, no dangerous symbols or dungeon. Materials are ordinary temple wood, straw tatami and cloth, softly lit with cedar garden reflected green outside shoji. Keep readable carpentry with painterly edges, gentle harmony, no hard glare. Avoid central obstructions, modern industrial workbench, high chairs, characters, words, UI, overlays, glossy plastic 3D, thick hard outlines, extreme shadows. Landscape16:9.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "engawa",
+      "role": "庭边木廊与座布团，明确安全铺板范围",
+      "prompt": "Use case: concept-art. Asset type: finished wide 16:9 painted walkable 2.5D background for Sinefine. Image1 approved temple communal room is style/architecture reference: soft anime painting, quiet shoji, aged cedar and forest garden daylight. Draw a NEW broad garden-side timber engawa at Ryudou Temple, no people, eye-height front three-quarter view. The wooden veranda is a safe continuous walkable floor from 54% to image bottom, wide uncluttered central passage x42-73%. One clearly open doorway on LEFT wall centered x16%, threshold y66%, leads back into timber corridor. Cedar beams and closed shoji on left, low railing confined BACK edge separating outside moss, stones, maple and cedar grove from playable wood floor. Near LEFT-MIDDLE, centered x33%, bottom y73%, one flat thick muted sage-green floor cushion placed directly on broad wood boards, enough space for a folded-leg resting pose. NO tall bench or chair. A small fern pot and watering can confined extreme RIGHT x89-96%, bottom y69%. Atmospheric gentle green garden light, softly scattered warm sunshine on worn timber, calm natural colors and readable perspective. No harsh white highlights, no extreme dark shadows, no glossy 3D, no people, text, UI, extra cushions, objects in central route, front railing blocking camera, steps across passage. Landscape16:9.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "kuzuki",
+      "role": "葛木四向站姿与四向完整六相位步态",
+      "prompt": "Use case: character-design. Asset type: native transparent game sprite atlas for a gentle painted 2.5D Sinefine room. Image1 is ONLY Souichirou Kuzuki identity reference: mature serious narrow rectangular face, short black hair, thin rectangular glasses, dark desaturated forest-green/charcoal teacher suit, pale shirt and dark tie. Image2 is ONLY the soft blended temple painting/style/light reference. Make this one adult male, full normal adult proportions, quiet ordinary walking, no combat. A precise SIX-COLUMN FOUR-ROW transparent atlas, 24 equal rectangular cells; no labels, gridlines or background. Keep every figure fully INSIDE its cell with clear transparent gaps, head and feet complete, same character proportions and apparent height, pelvis stable, grounded soles. ROW1 col1 front idle, col2 back idle, col3 LEFT idle, col4 RIGHT idle, col5-6 EMPTY transparent. ROW2 all six cells a LEFT-facing natural six-phase walking cycle: lead heel contact, weight transfer, passing with lifted trailing knee, opposite lead heel contact, opposite weight transfer, opposite passing. Distinct bent knees and separated feet, relaxed alternating arms, no floating identical-leg skating. ROW3 all six cells FRONT-facing six-phase walk in the same phase sequence; ROW4 all six cells BACK-facing six-phase walk in same sequence. SIDE row always faces image LEFT. Teacher trousers and plain black indoor footwear, natural hand shapes, no weapons, no fists, no motion effects. Soft painted anime shading, edges gently blended, subtle warm temple light, readable face/feet, no thick black outline, harsh rim light or glossy plastic. Transparent RGBA, landscape atlas about 3:2 aspect; absolutely no white backdrop or text.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/portraits/kuzuki.png",
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": true
+    },
+    {
+      "id": "medea-initial",
+      "role": "美狄亚四向站姿与四向完整六相位步态",
+      "prompt": "Use case: character-design. Asset type: native transparent sprite atlas for Sinefine's soft painted 2.5D temple. Image1 is ONLY Medea identity reference: adult woman, pale skin, long lavender/silver hair, pointed ears, violet eyes, recognizable muted deep purple gown with restrained gold trims and small dark shoulder cape. Image2 is ONLY gentle temple painting/style/light reference. Make this ONE character, normal adult proportions, face uncovered with hood down, ordinary calm walk, no combat magic, staff or dagger. SIX-COLUMN FOUR-ROW transparent atlas with 24 equal cells, all figures isolated inside their cells with generous clear gaps and complete heads/feet. ROW1: front idle, back idle, LEFT idle, RIGHT idle, two EMPTY cells. ROW2: six LEFT-facing walking phases, heel contact, weight transfer, passing with lifted trailing knee, opposite contact, opposite weight transfer, opposite passing. ROW3: six FRONT-facing walking phases same sequence. ROW4: six BACK-facing walking phases same sequence. Clear opposed arms, subtle alternating hips/knees and visible separated shoes underneath an ankle-length hem that sways with each step. Legs must change weight and foot contacts; no identical straight-legged sliding poses, no floating. Cape is short and subdued, never a sweeping huge silhouette; ankles and plain dark flat shoes remain visible at every phase. Same scale, consistent torso proportions, aligned grounded soles, softly painted faces and cloth, gently blended edges, warm/cool diffuse temple light, natural cloth folds, no harsh glossy shine or thick outlines. No white backdrop, text, frames, gridlines, glows, weapons, other characters. Transparent RGBA, landscape atlas about3:2.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/portraits/medea.png",
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": true,
+      "selected": false,
+      "rejectedSource": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-e9071b4b-b969-41f9-bd65-6be1b1ed2d31.png",
+      "reason": "侧向六帧几乎都维持同一宽步，缺少收腿与通过相位"
+    },
+    {
+      "id": "medea",
+      "role": "仅定向修正侧向收腿与通过相位，选择 v2",
+      "prompt": "Use case: precise-object-edit. Image1 is edit target, the existing Medea transparent SIX-COLUMN FOUR-ROW atlas. Keep the same identity, native canvas dimensions, palette, scale, cell positions, row1 four idle figures/two empty cells, row3 front walking and row4 back walking. Change ONLY row2 six LEFT-facing walking figures: its current six poses all show a similar wide stride and look like skating. Rebuild row2 into an unmistakable six-phase gait with LARGE distinct silhouette changes between extended stride and narrow passing poses. Col1 wide heel-contact stride, left foot forward, right trailing; col2 feet much closer under hips, weight down, trailing heel lifting; col3 NARROW passing pose, planted leg nearly straight under torso, opposite knee bent FORWARD and shoe fully lifted under the skirt, not a wide stride; col4 wide opposite heel-contact, opposite leg leads and opposite arm leads; col5 feet close again with reversed weight; col6 NARROW passing with the other knee bent forward/lifted, mirrored limb state of col3 while still facing LEFT. Relaxed opposed arms, distinct sleeve positions. Both col3 and col6 must have feet close together under body, lifted shoe and bent knee, unlike col1/4. Slight ankle-length hem lift permits the passing leg to be read, keep modest gown and purple/gold costume, pointed ears, lavender hair, no props. Shorten cape sway on passing frames, do not use cape movement as substitute for leg change. Stable body height/proportions, complete head/feet within each original cell and transparent gaps. Preserve real transparent RGBA. No background, labels, outlines, grid or extra characters. Single targeted repair, keep all other rows unchanged.",
+      "referenced_image_paths": [
+        "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-e9071b4b-b969-41f9-bd65-6be1b1ed2d31.png"
+      ],
+      "transparent_background": true
+    },
+    {
+      "id": "seated",
+      "role": "葛木与美狄亚低桌座布团坐姿／阅读姿势",
+      "prompt": "Use case: character-design. Asset type: native transparent pose atlas for floor-cushion interactions in Sinefine soft painted 2.5D temple rooms. Image1 identity/costume reference for Souichirou Kuzuki ONLY; image2 identity/costume reference for Medea ONLY; image3 gentle temple painting/style/light ONLY. Produce a precise TWO-COLUMN TWO-ROW transparent sheet with FOUR distinct complete full-body poses. TOP LEFT Kuzuki calmly sitting cross-legged or with folded knees directly on floor, hands resting naturally on lap; TOP RIGHT Medea same calm folded-leg floor sitting, gown neatly gathered around folded legs. BOTTOM LEFT Kuzuki sitting with folded legs READING a small OPEN book held in both hands; BOTTOM RIGHT Medea same reading pose, open book in hands. All four are three-quarter view gently facing image RIGHT, normal adult proportions, intact glasses/face and lavender hair/pointed ears respectively. Keep Kuzuki's desaturated dark teacher suit, pale shirt/tie and black socks; keep Medea's muted violet/gold gown, short dark cape and face uncovered. Feet and folded legs complete, seated weight clearly grounded, neither standing nor kneeling upright; no dangling legs, no tall chairs. Include ONLY characters and book in reading cells, no drawn cushions, floor, furniture or shadows: game background supplies cushion. Exact equal isolated cells, generous transparent margins, consistent body scale between a character's two poses, head and robe fully inside cells. Soft blended anime shading and diffuse warm/cool temple light, no thick outline, sharp glint, plastic 3D, text, labels, grid lines, weapons, spells or other people. Transparent RGBA, square atlas.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/character-art/kuzuki-house-soft-v1.png",
+        "D:/projects/sinefine/source/public/fate/character-art/medea-house-soft-v2.png",
+        "D:/projects/sinefine/source/public/fate/interior-art/temple-main-soft-v1.png"
+      ],
+      "transparent_background": true
+    }
+  ],
+  "nativeAssets": [
+    {
+      "id": "hall",
+      "path": "source/public/fate/interior-art/temple-hall-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-790ffd37-a969-4759-a473-14b4c5e2f281.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2055421,
+      "sha256": "49a2a064efc2a43bd5e3901beebdd96fd1ecf162ef40acdc15e85da8645cbb60",
+      "transparent": false
+    },
+    {
+      "id": "kitchen",
+      "path": "source/public/fate/interior-art/temple-kitchen-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-7128f547-4dee-4c58-b728-d2986a1d07b2.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2376636,
+      "sha256": "a2dff2fa7daf36585fe63806f6a6b0452b0f937010c3a2780f75b06e5d076fda",
+      "transparent": false
+    },
+    {
+      "id": "quarters",
+      "path": "source/public/fate/interior-art/temple-quarters-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-fe0de10c-3e89-4f54-bd4d-9cd0f3bf40bf.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2353449,
+      "sha256": "f418b32e66f437ffe3402bf1fcce6d4950e5e5538480955d30cc799235b0aa29",
+      "transparent": false
+    },
+    {
+      "id": "craft",
+      "path": "source/public/fate/interior-art/temple-craft-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-a7ecf9ba-6e8c-43b5-b3fa-7abd97ba21b8.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2461000,
+      "sha256": "d2e2fed46bd83fe63137832f46bfe83cdd33796e268dd790a9597a1b896c9969",
+      "transparent": false
+    },
+    {
+      "id": "engawa",
+      "path": "source/public/fate/interior-art/temple-engawa-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-ada04806-e694-4dce-9a6b-0ab10c7cacab.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2649084,
+      "sha256": "996397a6703836478cc05d6c7829d6f1376c2559f97d9c393b72e8b9652e804c",
+      "transparent": false
+    },
+    {
+      "id": "kuzuki",
+      "path": "source/public/fate/character-art/kuzuki-house-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-43cdbed4-b992-4195-8a22-5266b227381d.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1627426,
+      "sha256": "8223bd50cb3eebcef75e217980876181206c2f7a0838344c200e27bd0398d633",
+      "transparent": true
+    },
+    {
+      "id": "medea",
+      "path": "source/public/fate/character-art/medea-house-soft-v2.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-332e7932-98b1-42bb-8cd7-dd08ccb89dd4.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 2169959,
+      "sha256": "e7204ac0ed0059e95a2cbd31dad4670439a7d293d76c8f3838e14c4c953c491a",
+      "transparent": true
+    },
+    {
+      "id": "seated",
+      "path": "source/public/fate/character-art/temple-seated-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-00f569c7-62bf-4099-aa69-6fbbe6c9e25f.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1465943,
+      "sha256": "2fe24a19ef0370b23937cf4da26d926f8763644454c49851f84bee9b4e657fbd",
+      "transparent": true
+    }
+  ]
+}

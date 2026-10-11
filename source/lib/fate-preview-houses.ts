@@ -14,10 +14,22 @@ import {
 import { einzbernSprite } from './fate-einzbern-sprites';
 import { WAVER_ROOMS, WAVER_CAST, type WaverActorId } from './fate-waver-house';
 import { waverSprite } from './fate-waver-sprites';
+import {
+  TEMPLE_ROOMS,
+  TEMPLE_CAST,
+  type TempleActorId,
+} from './fate-temple-house';
+import { templeSprite } from './fate-temple-sprites';
+import {
+  CHURCH_ROOMS,
+  CHURCH_CAST,
+  type ChurchActorId,
+} from './fate-church-house';
+import { churchSprite } from './fate-church-sprites';
 import type { PreviewHouse } from './fate-preview-house';
 
 export const HOUSE_PREVIEWS: Record<
-  'tohsaka' | 'matou' | 'einzbern' | 'waver',
+  'tohsaka' | 'matou' | 'einzbern' | 'waver' | 'temple' | 'church',
   PreviewHouse
 > = {
   tohsaka: {
@@ -64,5 +76,21 @@ export const HOUSE_PREVIEWS: Record<
     routeSummary: '玄关 → 起居资料角／厨房餐间／借住卧室／庭边缘侧',
     sprite: (actor, direction, phase, pose) =>
       waverSprite(actor as WaverActorId, direction, phase, pose),
+  },
+  temple: {
+    name: '柳洞寺',
+    rooms: TEMPLE_ROOMS,
+    cast: TEMPLE_CAST,
+    routeSummary: '木廊 → 共用生活间／斋堂／葛木僧房／手作静室／庭边木廊',
+    sprite: (actor, direction, phase, pose) =>
+      templeSprite(actor as TempleActorId, direction, phase, pose),
+  },
+  church: {
+    name: '冬木教会',
+    rooms: CHURCH_ROOMS,
+    cast: CHURCH_CAST,
+    routeSummary: '门厅 → 礼拜堂／祭衣间／绮礼生活间／地下资料室',
+    sprite: (actor, direction, phase, pose) =>
+      churchSprite(actor as ChurchActorId, direction, phase, pose),
   },
 };

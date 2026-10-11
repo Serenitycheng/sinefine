@@ -72,7 +72,9 @@ export default function FateCityInterior({
   ) : scene.id === 'tohsaka' ||
     scene.id === 'matou' ||
     scene.id === 'einzbern' ||
-    scene.id === 'waver' ? (
+    scene.id === 'waver' ||
+    scene.id === 'temple' ||
+    scene.id === 'church' ? (
     <HouseInterior
       key={scene.id}
       plan={HOUSE_PREVIEWS[scene.id]}

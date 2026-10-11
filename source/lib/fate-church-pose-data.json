@@ -1,0 +1,74 @@
+{
+  "kirei": {
+    "file": "/fate/character-art/church-seated-soft-v1.png",
+    "imageWidth": 1254,
+    "imageHeight": 1254,
+    "scale": 0.40129449838187703,
+    "frames": [
+      {
+        "cropX": 227,
+        "cropY": 9,
+        "cellWidth": 421,
+        "cellHeight": 620,
+        "anchorX": 107.0420732941891,
+        "anchorY": 354.26,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 417,
+          "height": 618
+        }
+      },
+      {
+        "cropX": 222,
+        "cropY": 630,
+        "cellWidth": 426,
+        "cellHeight": 605,
+        "anchorX": 112.73915991862458,
+        "anchorY": 344.57,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 422,
+          "height": 601
+        }
+      }
+    ]
+  },
+  "cu": {
+    "file": "/fate/character-art/church-seated-soft-v1.png",
+    "imageWidth": 1254,
+    "imageHeight": 1254,
+    "scale": 0.38095238095238093,
+    "frames": [
+      {
+        "cropX": 752,
+        "cropY": 18,
+        "cellWidth": 453,
+        "cellHeight": 611,
+        "anchorX": 149.34722853248525,
+        "anchorY": 343.04,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 449,
+          "height": 609
+        }
+      },
+      {
+        "cropX": 751,
+        "cropY": 639,
+        "cellWidth": 454,
+        "cellHeight": 597,
+        "anchorX": 161.0107746361051,
+        "anchorY": 334.08000000000004,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 450,
+          "height": 593
+        }
+      }
+    ]
+  }
+}

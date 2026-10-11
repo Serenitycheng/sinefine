@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "building": "church",
+  "date": "2026-10-11",
+  "style": "柔和融合版，固定原画与本地投影的 2.5D",
+  "setting": "沿用绮礼／库丘林原教会归属；居住和辅助房间平面为项目创作",
+  "references": [
+    "https://typemoon.com/products/f-sn/character/12/",
+    "https://www.fate-sn.com/ubw/sp/chara/"
+  ],
+  "reused": [
+    "source/public/fate/interior-art/church-main-soft-v1.png"
+  ],
+  "generator": "Built-in image_gen",
+  "prompts": [
+    {
+      "id": "hall",
+      "role": "church-hall",
+      "prompt": "Use case: stylized-concept. Asset: finished painted background for a walkable 2.5D game. Image1 is STYLE/architecture reference only, preserve its soft painting, do not copy its room layout. NEW Fuyuki church narthex and side corridor, same building language as reference chapel but a different room. Warm grey stone floor from y48% to bottom, wide clear foreground x25-72%. Four distinct navigable thresholds: broad central arched opening to the chapel at x50%, ground y54%; open side door at x14%, ground y62% to vestry; door on right rear at x77%, ground y56% to modest living quarters; enclosed stone staircase going down on far right at x92%, ground y81%, with a clearly visible ordinary wooden gate at its top, do not draw an endless dark void. Keep each threshold's landing free of objects. Umbrella holder and bench confined x0-8%, notice board on left rear wall x25-35%. Small pointed window, old wooden trim and one amber lantern, diffuse daylight. Soft blended anime background painting for Sinefine, match the approved church reference: warm aged wood, pale stone and softly reflected cool daylight, readable architecture and gentle edges, no harsh white shine, no heavy black outlines, no glossy 3D render, no excessive saturation, no people, no UI or labels. Complete continuous 16:9 room at eye-height three-quarter view, not a floorplan or collage. Clear walking floor and visible actual thresholds.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/church-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "kirei",
+      "role": "church-character-kirei",
+      "prompt": "Kirei Kotomine, mature tall lean man, short tousled dark brown hair, calm serious narrow face, dark eyes, black ankle-length priest cassock, small white clerical collar, simple gold cross necklace, dark trousers and black shoes as in image1. Empty hands in every walking pose, no book that locks his arms. Crucially the cassock hem is above the shoes and follows the alternating legs; passing phases collect the feet under him visibly, hem sways gently rather than freezing a wide stride. Use case: stylized-concept. A production game SPRITE ATLAS on genuinely TRANSPARENT background, clean RGBA alpha, no floor, no cast shadow, no grid/letters/UI. Exactly 6 columns and 4 equally spaced rows, fixed body size and foot baseline per row, whole body from hair to soles safely inside each cell with generous transparent gutters. Match the reference portrait's face, hair and costume, redraw in gentle painted anime style coherent with Sinefine's soft backgrounds, no chibi proportions or thick black outlines. Row1 cells1-4: IDLE facing front, back, LEFT profile, RIGHT profile; cells5-6 completely EMPTY transparent. Row2: SIX genuinely different slow walking phases ALL facing LEFT, not six identical split-leg poses: left heel contact, left flat support with rear right heel lifting, right leg passing under torso with bent knee and feet close, right heel contact, right support with left heel lifting, left leg passing under torso. Clear alternating feet and passing/collected phases, readable heel-to-toe sequence, modest natural stride, slight counter-swing arms, no skating, running or lunging. Row3 SIX distinct walking phases facing FRONT; row4 SIX phases facing BACK. Same character in every populated cell. Native horizontal canvas approx 1536x1024; no overlapping cells, clipped hair, duplicate feet, extra limbs or asymmetrical growth.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/portraits/kirei.png"
+      ],
+      "transparent_background": true
+    },
+    {
+      "id": "vestry",
+      "role": "church-vestry",
+      "prompt": "Use case: stylized-concept. Asset: finished painted background for a walkable 2.5D game. Image1 is STYLE/architecture reference only, preserve its soft painting, do not copy its room layout. NEW modest church vestry and document preparation room, pale stone wall and dark wood fittings. Clear floor from y47% to bottom, central walking lane x30-60%. One open return door at rear x50%, threshold y52%. Robe cabinet and folded white cloth on left x0-23%, small wash basin extreme left foreground x0-17%; right-side old writing table x77-98%, y62-78%, with a single chair on the LEFT side centered x68%, seat y70%, soles-resting floor y80%, facing RIGHT toward the table. Fully readable warm grey cushion and chair legs, no high armrests blocking the body. Books and neat church papers with no legible text. One narrow stained-glass side window, soft natural light. Soft blended anime background painting for Sinefine, match the approved church reference: warm aged wood, pale stone and softly reflected cool daylight, readable architecture and gentle edges, no harsh white shine, no heavy black outlines, no glossy 3D render, no excessive saturation, no people, no UI or labels. Complete continuous 16:9 room at eye-height three-quarter view, not a floorplan or collage. Clear walking floor and visible actual thresholds.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/church-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "quarters",
+      "role": "church-quarters",
+      "prompt": "Use case: stylized-concept. Asset: finished painted background for a walkable 2.5D game. Image1 is STYLE/architecture reference only, preserve its soft painting, do not copy its room layout. NEW Kirei's modest church living and sleeping room, warm grey plaster/stone, dark old wood, no luxury hotel. Clear floor from y47% to bottom with wide central lane x43-61%. One open return door on back wall centered x51%, threshold y52%. Plain narrow bed at far rear left x0-23%, neatly folded black priest's coat. A small tea/breakfast side table at LEFT foreground x0-26%, y65-80%; its visible wooden chair on RIGHT side centered x34%, seat y71%, foot floor y81%, facing LEFT toward table. A writing desk at RIGHT x78-99%, y61-80%, another wooden chair on its LEFT centered x70%, seat y71%, foot floor y81%, facing RIGHT. Both seats grey-green cloth, chairs separated by clear central route. Teapot, small cup and book, no complex food systems or inventory. Soft window light and muted green outside. Soft blended anime background painting for Sinefine, match the approved church reference: warm aged wood, pale stone and softly reflected cool daylight, readable architecture and gentle edges, no harsh white shine, no heavy black outlines, no glossy 3D render, no excessive saturation, no people, no UI or labels. Complete continuous 16:9 room at eye-height three-quarter view, not a floorplan or collage. Clear walking floor and visible actual thresholds.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/church-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "cellar",
+      "role": "church-cellar",
+      "prompt": "Use case: stylized-concept. Asset: finished painted background for a walkable 2.5D game. Image1 is STYLE/architecture reference only, preserve its soft painting, do not copy its room layout. NEW lower church archive and preparation room, project adaptation of a subterranean church space. Quiet clean limestone vaults, dark wood shelves and one softly glowing amber lamp with diffuse light, readable rather than pitch black. Broad clear stone floor from y47% to bottom, central lane x34-61%. One open stone stair-return doorway on back wall centered x48%, threshold y53%, steps behind the threshold only, no stairs in foreground navigation floor. Archive shelves at LEFT x0-28%, ordinary sealed books and cloth bundles, no people or explicit disturbing objects. Preparation table at RIGHT x77-98%, y63-80%, one visible wooden chair on LEFT centered x68%, seat y71%, foot floor y81%, facing RIGHT; simple neutral documents, wooden box and folded cloth. Cool grey-green stone with warm reflected light, gentle contrasts. Soft blended anime background painting for Sinefine, match the approved church reference: warm aged wood, pale stone and softly reflected cool daylight, readable architecture and gentle edges, no harsh white shine, no heavy black outlines, no glossy 3D render, no excessive saturation, no people, no UI or labels. Complete continuous 16:9 room at eye-height three-quarter view, not a floorplan or collage. Clear walking floor and visible actual thresholds.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/interior-art/church-main-soft-v1.png"
+      ],
+      "transparent_background": false
+    },
+    {
+      "id": "cu",
+      "role": "church-character-cu",
+      "prompt": "Cu Chulainn/Lancer, lean athletic adult man, blue swept-back spiky hair with long blue tail, red eyes and relaxed confident face matching image1. Deep muted BLUE fitted servant suit with simple pale/silver seam accents, small plain silver neck/shoulder guards, matching dark blue footwear, no large ornate armor or cape. Preserve recognisable Fate Lancer identity; simplify the portrait's shiny ornamentation to the established soft anime look. NO spear or weapons in indoor movement, hands empty and naturally relaxed. Hair tail remains inside its own cell. Use case: stylized-concept. A production game SPRITE ATLAS on genuinely TRANSPARENT background, clean RGBA alpha, no floor, no cast shadow, no grid/letters/UI. Exactly 6 columns and 4 equally spaced rows, fixed body size and foot baseline per row, whole body from hair to soles safely inside each cell with generous transparent gutters. Match the reference portrait's face, hair and costume, redraw in gentle painted anime style coherent with Sinefine's soft backgrounds, no chibi proportions or thick black outlines. Row1 cells1-4: IDLE facing front, back, LEFT profile, RIGHT profile; cells5-6 completely EMPTY transparent. Row2: SIX genuinely different slow walking phases ALL facing LEFT, not six identical split-leg poses: left heel contact, left flat support with rear right heel lifting, right leg passing under torso with bent knee and feet close, right heel contact, right support with left heel lifting, left leg passing under torso. Clear alternating feet and passing/collected phases, readable heel-to-toe sequence, modest natural stride, slight counter-swing arms, no skating, running or lunging. Row3 SIX distinct walking phases facing FRONT; row4 SIX phases facing BACK. Same character in every populated cell. Native horizontal canvas approx 1536x1024; no overlapping cells, clipped hair, duplicate feet, extra limbs or asymmetrical growth.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/portraits/cu.png"
+      ],
+      "transparent_background": true
+    },
+    {
+      "id": "seated",
+      "role": "two-character-chair-poses",
+      "prompt": "Use case: stylized-concept. A production transparent RGBA game character atlas with exactly TWO COLUMNS and TWO ROWS of FOUR isolated full-body SEATED cutouts. Image1 Kirei and image2 Cu are identity references only; match the same soft painted anime rendering and costumes planned for the walking sheets. Left column Kirei Kotomine in black priest cassock, white clerical collar, small gold cross; right column Cu Chulainn, swept spiky blue hair and tail, red eyes, fitted muted blue suit with simple silver trim. Row1 both calmly sitting, empty hands resting naturally on thighs. Row2 both seated reading a small neutral closed-style/open paper book held near lap, hands visible. All four characters in three-quarter profile facing RIGHT, seated on an INVISIBLE ordinary chair, hips at one consistent seat height, thighs almost horizontal, knees bent ninety degrees, BOTH feet flat lower than knees. Kirei's cassock drapes over thighs, shoes visible; Cu's ponytail clear. NO actual chair, floor, throne or support painted; no cross-legged floor sitting, no kneeling. Transparent gutters around EACH complete body including hair, hands, book and soles, even 2x2 quadrants, consistent proportions, no cropped feet, labels or grids, no exaggerated muscle shine or harsh black outlines. Approx square 1254x1254.",
+      "referenced_image_paths": [
+        "D:/projects/sinefine/source/public/fate/portraits/kirei.png",
+        "D:/projects/sinefine/source/public/fate/portraits/cu.png"
+      ],
+      "transparent_background": true
+    }
+  ],
+  "nativeAssets": [
+    {
+      "id": "hall",
+      "path": "source/public/fate/interior-art/church-hall-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-bbec638e-5ec4-4fed-8866-cd8f42161ebf.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2250889,
+      "sha256": "fcd9484181d79d59fabe8440f8600cced8e116a2b4c4b1cc00b6285835ce8376",
+      "transparent": false
+    },
+    {
+      "id": "kirei",
+      "path": "source/public/fate/character-art/kirei-house-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-c8dc4cae-d98a-4c8e-9da5-8ae7d3a9cded.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1543783,
+      "sha256": "cb4f4ff5edb424ffe0f66af59fa3132f8c8483f8aa00f91f4fd71c426b61afb6",
+      "transparent": true
+    },
+    {
+      "id": "vestry",
+      "path": "source/public/fate/interior-art/church-vestry-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-2d5873d0-7e5a-4a66-8195-41bd5b05e56f.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2128867,
+      "sha256": "85a834ba3a533e819466b6be61c16e2e84c0850793395332172d99430c44aa4f",
+      "transparent": false
+    },
+    {
+      "id": "quarters",
+      "path": "source/public/fate/interior-art/church-quarters-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-78b8734e-5906-407b-baa8-c6fc9dcabd49.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2163846,
+      "sha256": "d17f4a21910d685c20d75667090f93307806dd01976c18ae806049bf754394ee",
+      "transparent": false
+    },
+    {
+      "id": "cellar",
+      "path": "source/public/fate/interior-art/church-cellar-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-2c0d4a44-66d3-450d-8e1f-6b50ed74222c.png",
+      "width": 1672,
+      "height": 941,
+      "bytes": 2316804,
+      "sha256": "6f8814231eef8798b0357537485d2a415808e7917fc3e78ecd7b143e9f4ea76a",
+      "transparent": false
+    },
+    {
+      "id": "cu",
+      "path": "source/public/fate/character-art/cu-house-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-086c8f48-8157-496f-a21b-684ec918f66b.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1933875,
+      "sha256": "c3c9ab2003e611c2d5a51901cf40400a92279aac1ee8884f4df329d131d95c61",
+      "transparent": true
+    },
+    {
+      "id": "seated",
+      "path": "source/public/fate/character-art/church-seated-soft-v1.png",
+      "source": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-e59d4de6-684c-4939-b868-82e1dafae7ba.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 1000306,
+      "sha256": "6987c8328b68b92debef5ffda30d3893917d38b0cd008a0d6cdcd34d889572d4",
+      "transparent": true
+    }
+  ]
+}

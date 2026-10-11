@@ -159,13 +159,17 @@ void test('character and indoor production covers all identities while retaining
   );
   const ready = CHARACTER_ART.filter((actor) => actor.stage === 'study-ready');
   assert.deepEqual(ready.map((actor) => actor.id).sort(), [
+    'cu',
     'emiya',
     'gilgamesh',
     'illya',
     'irisviel',
     'iskandar',
     'kariya',
+    'kirei',
     'kiritsugu',
+    'kuzuki',
+    'medea',
     'medusa',
     'rin',
     'saber',

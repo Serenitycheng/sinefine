@@ -15,6 +15,8 @@ export type CharacterArt = {
     | 'matou-sample'
     | 'einzbern-sample'
     | 'waver-sample'
+    | 'temple-sample'
+    | 'church-sample'
     | 'legacy';
   frames: 'four-direction-six-frame' | 'four-direction-reused-frame' | 'legacy';
   height: number;
@@ -36,6 +38,10 @@ const modelAssets: Partial<Record<ActorId, string>> = {
   irisviel: '/fate/character-art/irisviel-house-soft-v1.png',
   waver: '/fate/character-art/waver-adult-house-soft-v1.png',
   iskandar: '/fate/character-art/iskandar-house-soft-v2.png',
+  kuzuki: '/fate/character-art/kuzuki-house-soft-v1.png',
+  medea: '/fate/character-art/medea-house-soft-v2.png',
+  kirei: '/fate/character-art/kirei-house-soft-v1.png',
+  cu: '/fate/character-art/cu-house-soft-v1.png',
 };
 /** Cover every selectable identity; old chibi sheets are a fallback, never
  * counted as finished 2.5D character models. Existing identity IDs stay intact. */
@@ -61,10 +67,22 @@ export const CHARACTER_ART: readonly CharacterArt[] = STREET_CAST.map(
               ? 'einzbern-sample'
               : ['waver', 'iskandar'].includes(actor.id)
                 ? 'waver-sample'
-                : modelAssets[actor.id]
-                  ? 'emiya-sample'
-                  : 'legacy',
-    frames: ['illya', 'shirou', 'saber'].includes(actor.id)
+                : ['kuzuki', 'medea'].includes(actor.id)
+                  ? 'temple-sample'
+                  : ['kirei', 'cu'].includes(actor.id)
+                    ? 'church-sample'
+                    : modelAssets[actor.id]
+                      ? 'emiya-sample'
+                      : 'legacy',
+    frames: [
+      'illya',
+      'shirou',
+      'saber',
+      'kuzuki',
+      'medea',
+      'kirei',
+      'cu',
+    ].includes(actor.id)
       ? 'four-direction-six-frame'
       : [
             'sakura',

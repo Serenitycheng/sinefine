@@ -236,6 +236,18 @@
   user-select: none;
 }
 @media (max-width: 600px) {
+  .shell[data-interior-id='temple'][data-house-room='hall'] .world .exit,
+  .shell[data-interior-id='church'][data-house-room='hall'] .world .exit {
+    flex-direction: column;
+    gap: 2px;
+    padding: 4px 5px;
+    font-size: 12px;
+  }
+  .shell[data-interior-id='temple'][data-house-room='hall'] .world .exit svg,
+  .shell[data-interior-id='church'][data-house-room='hall'] .world .exit svg {
+    width: 14px;
+    height: 14px;
+  }
   .header {
     padding: 11px 12px;
     align-items: flex-start;

@@ -1,0 +1,74 @@
+{
+  "kuzuki": {
+    "file": "/fate/character-art/temple-seated-soft-v1.png",
+    "imageWidth": 1254,
+    "imageHeight": 1254,
+    "scale": 0.30823117338003503,
+    "frames": [
+      {
+        "cropX": 99,
+        "cropY": 35,
+        "cellWidth": 452,
+        "cellHeight": 575,
+        "anchorX": 213.27988786398987,
+        "anchorY": 572,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 448,
+          "height": 571
+        }
+      },
+      {
+        "cropX": 98,
+        "cropY": 643,
+        "cellWidth": 454,
+        "cellHeight": 573,
+        "anchorX": 196.16651143099068,
+        "anchorY": 570,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 450,
+          "height": 569
+        }
+      }
+    ]
+  },
+  "medea": {
+    "file": "/fate/character-art/temple-seated-soft-v1.png",
+    "imageWidth": 1254,
+    "imageHeight": 1254,
+    "scale": 0.3296296296296296,
+    "frames": [
+      {
+        "cropX": 654,
+        "cropY": 75,
+        "cellWidth": 554,
+        "cellHeight": 544,
+        "anchorX": 258.15171384643213,
+        "anchorY": 541,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 550,
+          "height": 540
+        }
+      },
+      {
+        "cropX": 654,
+        "cropY": 679,
+        "cellWidth": 564,
+        "cellHeight": 537,
+        "anchorX": 256.87425943938456,
+        "anchorY": 534,
+        "bounds": {
+          "x": 2,
+          "y": 2,
+          "width": 560,
+          "height": 533
+        }
+      }
+    ]
+  }
+}
