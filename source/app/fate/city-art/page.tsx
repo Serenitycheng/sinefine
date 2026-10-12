@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import FateCityArt from '@/components/fate-city-art';
 
 export const metadata: Metadata = {
-  title: '冬木街区制作 · SINE FINE｜无终之庭',
-  description: '按冬木地图制作街区、角色和室内；纯2D总览与融合版2.5D住宅坂试点。',
+  title: '冬木 2.5D 街区 · SINE FINE｜无终之庭',
+  description: '沿冬木市道路漫游，进入住宅与公共建筑，体验柔和融合版 2.5D 场景。',
 };
-export default function CityArtPage() { return <FateCityArt/>; }
+export default function CityArtPage() {
+  return <FateCityArt />;
+}

@@ -1075,9 +1075,9 @@ export default function FateCityArt() {
     <main className={styles.shell}>
       <header className={styles.header} inert={Boolean(opened)}>
         <div className={styles.brand}>
-          SINE FINE <h1>冬木街区制作</h1>
+          SINE FINE <h1>冬木 2.5D 街区</h1>
         </div>
-        <nav aria-label="美术预览方式">
+        <nav aria-label="冬木场景视图">
           <button
             type="button"
             aria-pressed={tab === 'map'}

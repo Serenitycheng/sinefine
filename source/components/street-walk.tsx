@@ -1393,10 +1393,10 @@ export default function StreetWalk({
           <Link
             href="/fate/city-art"
             className={styles.aiButton}
-            aria-label="查看按冬木地图制作的街区预览"
+            aria-label="查看冬木 2.5D 街区与室内场景"
           >
             <Palette size={16} />
-            <span>街区预览</span>
+            <span>2.5D 街区</span>
           </Link>
           <button
             type="button"
