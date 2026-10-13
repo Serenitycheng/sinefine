@@ -1,7 +1,9 @@
 'use client';
 
 import { memo, useId } from 'react';
-import { DISTRICT_LANDMARKS, STREET_SCENE_SCALE } from '@/lib/fate-district';
+import { STREET_SCENE_SCALE } from '@/lib/fate-district';
+import { FORMAL_LANDMARKS as DISTRICT_LANDMARKS } from '@/lib/fate-formal-buildings';
+import { LOCAL_APPROACHES } from '@/lib/fate-local-entrances';
 import {
   ATLAS_SIZE,
   BUILDING_ATLAS,
@@ -420,8 +422,14 @@ export const FateStreetScenery = memo(function FateStreetScenery({
           <PaintedBuilding key={i} {...b} bottom={b.y} />
         ))}
         <RoadSurface prefix={prefix} />
-        {Object.values(HOME_ENTRANCES).map((entrance) => (
-          <g key={`approach-${entrance.home}`}>
+        {[
+          ...Object.values(HOME_ENTRANCES).map((entry) => ({
+            ...entry,
+            id: entry.home,
+          })),
+          ...LOCAL_APPROACHES,
+        ].map((entrance) => (
+          <g key={`approach-${entrance.id}`}>
             <polyline
               points={entrance.points.map((p) => `${p.x},${p.y}`).join(' ')}
               fill="none"

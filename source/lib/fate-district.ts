@@ -142,7 +142,13 @@ export const DISTRICT_LANDMARKS = [
     kind: id === 'park' ? ('park' as const) : ('public' as const),
   })),
 ];
-export type DistrictLandmark = (typeof DISTRICT_LANDMARKS)[number];
+export type DistrictLandmark = {
+  id: string;
+  name: string;
+  x: number;
+  y: number;
+  kind: 'home' | 'park' | 'public';
+};
 
 export function streetLinksFrom(placeId: string) {
   return STREET_CLOSEUP_LINKS.flatMap((link) => {

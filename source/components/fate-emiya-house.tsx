@@ -199,7 +199,6 @@ export default function FateEmiyaHouse({
   onResidentSelect,
   residentRequest,
   actionRequest,
-  lifeLabel,
   suspended = false,
 }: {
   onExit: () => void;
@@ -209,7 +208,6 @@ export default function FateEmiyaHouse({
   onResidentSelect?: (id: PartnerId) => void;
   residentRequest?: { id: PartnerId; serial: number } | null;
   actionRequest?: { id: string; serial: number } | null;
-  lifeLabel?: string;
   suspended?: boolean;
 }) {
   const activities = life ? EMIYA_LIFE_ACTIVITIES : EMIYA_ACTIVITIES;
@@ -233,9 +231,7 @@ export default function FateEmiyaHouse({
       : 'loading';
   const [attempt, setAttempt] = useState(0);
   const artAttempt = useRef(0);
-  const [message, setMessage] = useState(
-    '从门前庭院出发。沿踏石进玄关；点房间、门或家具沿路过去，E 交互，Escape 停下。',
-  );
+  const [message, setMessage] = useState('');
   const surface = useRef<HTMLDivElement>(null),
     shell = useRef<HTMLDialogElement>(null);
   const initialFraming = useRef(false);
@@ -1107,11 +1103,6 @@ export default function FateEmiyaHouse({
           <h2>
             卫宫宅 <span>· {room.name}</span>
           </h2>
-          <p>
-            {life
-              ? (lifeLabel ?? '卫宫士郎 · 家庭生活试玩 · 独立记录')
-              : '日式家屋形制参考 · 连通布局创作 · 室内样板'}
-          </p>
           {lifeControls}
           {suspended && <output>正在确认正式进度，室内已暂停。</output>}
         </div>
@@ -1553,7 +1544,7 @@ export default function FateEmiyaHouse({
               '正在打开卫宫宅…'
             ) : (
               <>
-                <span>室内原画暂未载入。</span>
+                <span>场景未能载入。</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -1702,6 +1693,10 @@ export default function FateEmiyaHouse({
         </div>
         <div className={base.bottom}>
           <output aria-live="polite">{message}</output>
+          <details className={base.controlsHelp}>
+            <summary>操作</summary>
+            <p>点地面、门或家具沿路前往。WASD／方向键行走，E 交互，Esc 停步；滚轮或双指缩放。</p>
+          </details>
           <div className={base.dpad} aria-label="室内方向控制">
             {inputs.map(({ label, x, y, icon: Icon }) => (
               <button

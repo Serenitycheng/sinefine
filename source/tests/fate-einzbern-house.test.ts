@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import {
   EINZBERN_ROOMS,
   EINZBERN_ROOM_IDS,
@@ -28,6 +29,37 @@ import {
 import { homeOf, defaultHousing } from '../lib/fate-housing';
 
 const directions = ['down', 'up', 'left', 'right'] as const;
+void test('Kiritsugu crops exclude adjacent arms and shoes while preserving every body pixel and foot anchor', async () => {
+  const sharp = createRequire(require.resolve('next/package.json'))('sharp');
+  const { data, info } = (await sharp('public/fate/character-art/kiritsugu-house-soft-v1.png')
+    .ensureAlpha().raw().toBuffer({ resolveWithObject: true })) as {
+    data: Buffer; info: { width: number };
+  };
+  const cases = [
+    { direction: 'up', phase: 0, pixels: 41393, foot: 272.242598 },
+    { direction: 'left', phase: 0, pixels: 31950, foot: 451.404345 },
+    { direction: 'left', phase: 2, pixels: 28231, foot: 276.710781 },
+    { direction: 'left', phase: 3, pixels: 25624, foot: 439.906484 },
+    { direction: 'left', phase: 5, pixels: 27445, foot: 785.048307 },
+    { direction: 'left', phase: 6, pixels: 23366, foot: 949.664208 },
+  ] as const;
+  for (const item of cases) {
+    const sprite = einzbernSprite('kiritsugu', item.direction, item.phase);
+    let pixels = 0;
+    for (let y = 0; y < sprite.cellHeight; y++)
+      for (let x = 0; x < sprite.cellWidth; x++) {
+        // The only overlapping column is safely outside the body's lower leg.
+        if (sprite.clip && y >= 300 && x < 5) continue;
+        if (data[((sprite.cropY + y) * info.width + sprite.cropX + x) * 4 + 3] > 16) pixels++;
+      }
+    assert.equal(pixels, item.pixels, `${item.direction}:${item.phase}`);
+    assert.ok(Math.abs(sprite.cropX + sprite.anchorX - item.foot) < 0.001);
+    nativeCrop(sprite);
+  }
+  assert.ok(einzbernSprite('kiritsugu', 'left', 5).clip);
+  assert.deepEqual(einzbernSprite('kiritsugu', 'right', 5).clip,
+    einzbernSprite('kiritsugu', 'left', 5).clip);
+});
 void test('Fuyuki family home has six distinct areas and reuses its approved lounge', () => {
   assert.equal(EINZBERN_ROOM_IDS.length, 6);
   assert.equal(

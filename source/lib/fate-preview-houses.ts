@@ -26,12 +26,17 @@ import {
   type ChurchActorId,
 } from './fate-church-house';
 import { churchSprite } from './fate-church-sprites';
+import { SCHOOL_ROOMS, SCHOOL_CAST, type SchoolActorId } from './fate-school-house';
+import { schoolSprite } from './fate-school-sprites';
+import { CAFE_ROOMS, CAFE_CAST, type CafeActorId } from './fate-cafe-house';
+import { SHOP_PREVIEWS, type ShopBuildingId } from './fate-shops-house';
 import type { PreviewHouse } from './fate-preview-house';
 
 export const HOUSE_PREVIEWS: Record<
-  'tohsaka' | 'matou' | 'einzbern' | 'waver' | 'temple' | 'church',
+  'tohsaka' | 'matou' | 'einzbern' | 'waver' | 'temple' | 'church' | 'school' | 'cafe' | ShopBuildingId,
   PreviewHouse
 > = {
+  ...SHOP_PREVIEWS,
   tohsaka: {
     name: '远坂宅',
     rooms: TOHSAKA_ROOMS,
@@ -92,5 +97,21 @@ export const HOUSE_PREVIEWS: Record<
     routeSummary: '门厅 → 礼拜堂／祭衣间／绮礼生活间／地下资料室',
     sprite: (actor, direction, phase, pose) =>
       churchSprite(actor as ChurchActorId, direction, phase, pose),
+  },
+  school: {
+    name: '穗群原学园',
+    rooms: SCHOOL_ROOMS,
+    cast: SCHOOL_CAST,
+    routeSummary: '走廊 → 教室／弓道场／教员室／图书室',
+    sprite: (actor, direction, phase, pose) =>
+      schoolSprite(actor as SchoolActorId, direction, phase, pose),
+  },
+  cafe: {
+    name: '街角咖啡店',
+    rooms: CAFE_ROOMS,
+    cast: CAFE_CAST,
+    routeSummary: '大厅 → 窗边座席／备餐间',
+    sprite: (actor, direction, phase, pose) =>
+      schoolSprite(actor as CafeActorId, direction, phase, pose),
   },
 };

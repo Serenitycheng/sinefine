@@ -144,6 +144,7 @@
   box-shadow: 0 3px 10px #17271c50;
 }
 .zoom {
+  z-index: 6;
   position: absolute;
   right: 12px;
   top: 12px;
@@ -152,6 +153,63 @@
   background: #28392de8;
   padding: 5px;
   border-radius: 9px;
+}
+.doorGuides {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+.shell .doorGuide {
+  position: absolute;
+  height: 36px;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  padding: 6px 8px;
+  background: #344b3fdb;
+  border-color: #a3a78d99;
+  box-shadow: 0 3px 10px #17271c35;
+}
+.doorGuide span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doorGuide svg,
+.doorGuide kbd {
+  flex-shrink: 0;
+}
+.doorGuide[data-door-near='true'] {
+  border-color: #e4d897;
+}
+.doorGuide kbd {
+  font: inherit;
+  font-size: 10px;
+  color: #e4d897;
+}
+.shell .resident {
+  pointer-events: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.resident:focus-visible {
+  outline: 2px solid #c8c196;
+  outline-offset: 8px;
+}
+.resident .sprite,
+.resident .shadow {
+  pointer-events: none;
+}
+.formalLife {
+  display: grid;
+  gap: 7px;
+}
+.formalLife span,
+.formalLife output {
+  font-size: 12px;
+  color: #c6cbb9;
 }
 .loading {
   position: absolute;
@@ -165,6 +223,7 @@
   z-index: 2;
 }
 .footer {
+  position: relative;
   padding: 10px 18px;
   border-top: 1px solid #8e947e40;
   background: #2d3a32;
@@ -172,10 +231,29 @@
 /* Reserve the same controls area across rooms so text wrapping cannot change
    the camera scale or its maximum zoom during a door transition. */
 .shell[data-house-room] .footer {
-  flex: 0 0 176px;
+  flex: 0 0 144px;
   max-height: 40%;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+.shell[data-house-formal='true'] .footer {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  gap: 6px;
+}
+.shell[data-house-formal='true'] .footerActions {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.shell[data-house-formal='true'] .bottom {
+  flex-shrink: 0;
+}
+.shell[data-house-formal='true'] .bottom output {
+  max-height: 3.2em;
+  overflow-y: auto;
 }
 .shell[data-house-room] .surface {
   min-height: 0;
@@ -218,10 +296,30 @@
   gap: 12px;
 }
 .bottom output {
+  flex: 1;
   font-size: 12px;
   line-height: 1.6;
   color: #d7dbc9;
   max-width: 74%;
+}
+.controlsHelp {
+  font-size: 12px;
+  color: #d7dbc9;
+}
+.controlsHelp summary {
+  cursor: pointer;
+}
+.controlsHelp p {
+  position: absolute;
+  right: 12px;
+  bottom: 42px;
+  width: min(290px, 80%);
+  padding: 12px;
+  border: 1px solid #8e947e80;
+  border-radius: 7px;
+  background: #26362f;
+  line-height: 1.6;
+  z-index: 20;
 }
 .dpad {
   display: flex;
@@ -272,7 +370,7 @@
     padding: 8px 10px;
   }
   .shell[data-house-room] .footer {
-    flex-basis: 196px;
+    flex-basis: 176px;
   }
   .spots {
     gap: 4px;

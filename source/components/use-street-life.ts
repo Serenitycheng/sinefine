@@ -51,6 +51,17 @@ import {
 } from '@/lib/fate-emiya-game';
 import { teleportStreetActor } from '@/lib/fate-navigation';
 import {
+  HouseGameSession,
+  houseHomeForActor,
+  type HouseStreetReturn,
+  type HousePublicCommand,
+} from '@/lib/fate-house-game';
+import {
+  nearFormalEntrance,
+  isFormalSite,
+  type HouseSiteId,
+} from '@/lib/fate-formal-buildings';
+import {
   startPublicOuting,
   choosePublicOuting,
   interactPublicOuting,
@@ -86,6 +97,8 @@ export function useStreetLife(
   const initialized = useRef(false);
   const emiyaRef = useRef<EmiyaGameSession | null>(null);
   const [emiya, setEmiya] = useState<EmiyaGameSession | null>(null);
+  const houseRef = useRef<HouseGameSession | null>(null);
+  const [house, setHouse] = useState<HouseGameSession | null>(null);
   const [view, setView] = useState(createDailyLife);
   const [running, setRunning] = useState(false),
     [speed, setSpeed] = useState<FateClockSpeed>(1);
@@ -147,6 +160,14 @@ export function useStreetLife(
       sincePublish.current = 0;
       return;
     }
+    if (houseRef.current) {
+      const next = houseRef.current.gameSave();
+      life.current = houseRef.current.life;
+      setView(next.life);
+      ctx.current.saveHouse(next.life, next.house, engineRevision.current);
+      sincePublish.current = 0;
+      return;
+    }
     const next = snapshotLife(life.current, actors.current);
     setView(next);
     ctx.current.saveLife(next, engineRevision.current);
@@ -173,6 +194,18 @@ export function useStreetLife(
         session.walkPace = config.current.walkPace;
         emiyaRef.current = session;
         setEmiya(session);
+      }
+      const houseSave = ctx.current.save.house;
+      if (houseSave?.active) {
+        const session = new HouseGameSession(
+          life.current,
+          houseSave.street,
+          houseSave,
+        );
+        session.clockSpeed = config.current.speed;
+        session.walkPace = config.current.walkPace;
+        houseRef.current = session;
+        setHouse(session);
       }
       for (const actor of actors.current)
         Object.assign(actor, life.current.positions[actor.id], {
@@ -209,6 +242,16 @@ export function useStreetLife(
       );
       return;
     }
+    if (initialized.current && houseRef.current) {
+      const next = houseRef.current.gameSave();
+      ctx.current.saveHouse(
+        next.life,
+        next.house,
+        engineRevision.current,
+        true,
+      );
+      return;
+    }
     if (initialized.current)
       ctx.current.saveLife(
         snapshotLife(life.current, actors.current),
@@ -220,6 +263,7 @@ export function useStreetLife(
     const stop = () => {
       config.current.running = false;
       if (emiyaRef.current) emiyaRef.current.running = false;
+      if (houseRef.current) houseRef.current.running = false;
       setRunning(false);
       cancel();
       publish();
@@ -404,7 +448,7 @@ export function useStreetLife(
   const advance = useCallback(
     (dt: number) => {
       if (!initialized.current) return;
-      if (emiyaRef.current) {
+      if (emiyaRef.current || houseRef.current) {
         // The house owns movement and the daily clock. This loop only persists it.
         sincePublish.current += dt;
         if (sincePublish.current >= 1) publish();
@@ -501,7 +545,9 @@ export function useStreetLife(
   );
   const currentIndoor = useCallback(
     (): IndoorPosition | undefined =>
-      emiyaRef.current?.life.indoor ?? life.current.indoor,
+      emiyaRef.current?.life.indoor ??
+      houseRef.current?.life.indoor ??
+      life.current.indoor,
     [],
   );
   const enterEmiya = useCallback(
@@ -519,6 +565,7 @@ export function useStreetLife(
         !nearHomeEntrance(actor, 'emiya') ||
         life.current.indoor ||
         emiyaRef.current ||
+        houseRef.current ||
         ctx.current.storageBlocked ||
         engineRevision.current !== ctx.current.saveRevision
       )
@@ -560,6 +607,185 @@ export function useStreetLife(
     ctx.current.saveEmiya(next.life, next.emiya, engineRevision.current);
     return session.street;
   }, [actors]);
+  const enterHouse = useCallback(
+    (street: HouseStreetReturn, destination?: HouseSiteId) => {
+      const opt = opts.current;
+      const home = destination ?? houseHomeForActor(street.actor);
+      const actor = actors.current.find((a) => a.id === street.actor);
+      if (
+        !initialized.current ||
+        !opt.ready ||
+        opt.mode !== 'control' ||
+        opt.active !== street.actor ||
+        !home ||
+        !actor ||
+        !isFormalSite(home) ||
+        !nearFormalEntrance(actor, home) ||
+        actor.x !== street.point.x ||
+        actor.y !== street.point.y ||
+        life.current.indoor ||
+        emiyaRef.current ||
+        houseRef.current ||
+        ctx.current.storageBlocked ||
+        engineRevision.current !== ctx.current.saveRevision
+      )
+        return false;
+      const entering = snapshotLife(life.current, actors.current);
+      entering.people[street.actor].activity = null;
+      const session = new HouseGameSession(entering, street, undefined, home);
+      session.clockSpeed = config.current.speed;
+      session.walkPace = config.current.walkPace;
+      session.running = config.current.running;
+      const next = session.gameSave();
+      if (
+        !ctx.current.saveHouse(
+          next.life,
+          next.house,
+          engineRevision.current,
+          true,
+        )
+      )
+        return false;
+      cancel();
+      actor.path = [];
+      life.current = session.life;
+      houseRef.current = session;
+      setHouse(session);
+      setView(next.life);
+      return true;
+    },
+    [actors, cancel],
+  );
+  const leaveHouse = useCallback(() => {
+    const session = houseRef.current;
+    if (
+      !session ||
+      ctx.current.storageBlocked ||
+      engineRevision.current !== ctx.current.saveRevision
+    )
+      return null;
+    const running = session.running,
+      next = session.release();
+    if (
+      !ctx.current.saveHouse(
+        next.life,
+        next.house,
+        engineRevision.current,
+        true,
+      )
+    ) {
+      session.running = running;
+      return null;
+    }
+    life.current = next.life;
+    for (const actor of actors.current)
+      Object.assign(actor, next.life.positions[actor.id], {
+        path: [],
+        frame: 0,
+      });
+    config.current.running = running;
+    setRunning(running);
+    houseRef.current = null;
+    setHouse(null);
+    setView(next.life);
+    return session.street;
+  }, [actors]);
+  const talkHouse = useCallback((id: PartnerId) => {
+    const session = houseRef.current;
+    if (
+      !session ||
+      ctx.current.storageBlocked ||
+      engineRevision.current !== ctx.current.saveRevision
+    )
+      return { ok: false, message: '先处理存档提示，再继续交谈。' };
+    const result = session.conversation(id);
+    if (!result.ok || !('life' in result)) return result;
+    const previous = session.life;
+    session.life = result.life;
+    const next = session.gameSave();
+    if (
+      !ctx.current.saveHouse(
+        next.life,
+        next.house,
+        engineRevision.current,
+        true,
+        result.entry,
+      )
+    ) {
+      session.life = previous;
+      return { ok: false, message: '进度已改变，本次交谈未写入。' };
+    }
+    setView(next.life);
+    return { ok: true, message: result.message };
+  }, []);
+  const careHouse = useCallback((action: HomeCareAction) => {
+    const session = houseRef.current;
+    if (
+      !session ||
+      ctx.current.storageBlocked ||
+      engineRevision.current !== ctx.current.saveRevision
+    )
+      return { ok: false, message: '先处理存档提示，再继续日常。' };
+    const previous = session.gameSave();
+    const result = session.care(action);
+    if (result.ok) {
+      const next = session.gameSave();
+      if (
+        !ctx.current.saveHouse(
+          next.life,
+          next.house,
+          engineRevision.current,
+          true,
+        )
+      ) {
+        session.life = previous.life;
+        session.bodies = previous.house.residents.map((body) => ({
+          ...body,
+          walking: false,
+        }));
+        for (const actor of session.actors)
+          Object.assign(actor, previous.life.positions[actor.id], {
+            path: [],
+            frame: 0,
+          });
+        return { ok: false, message: '进度已改变，本次日常未写入。' };
+      }
+      setView(next.life);
+    }
+    return result;
+  }, []);
+  const publicHouse = useCallback((command: HousePublicCommand) => {
+    const session = houseRef.current;
+    if (
+      !session ||
+      ctx.current.storageBlocked ||
+      engineRevision.current !== ctx.current.saveRevision
+    )
+      return { ok: false, message: '先处理存档提示，再继续活动。' };
+    const previous = session.gameSave();
+    const result = session.publicAction(command);
+    if (result.ok) {
+      const next = session.gameSave();
+      if (
+        !ctx.current.saveHouse(
+          next.life,
+          next.house,
+          engineRevision.current,
+          true,
+        )
+      ) {
+        session.life = previous.life;
+        for (const actor of session.actors)
+          Object.assign(actor, previous.life.positions[actor.id], {
+            path: [],
+            frame: 0,
+          });
+        return { ok: false, message: '进度已改变，本次活动未写入。' };
+      }
+      setView(next.life);
+    }
+    return result;
+  }, []);
   const enterHome = useCallback(
     (home: HomeId) => {
       const opt = opts.current;
@@ -571,7 +797,9 @@ export function useStreetLife(
         !opt.ready ||
         opt.mode !== 'control' ||
         !actor ||
-        life.current.indoor
+        life.current.indoor ||
+        houseRef.current ||
+        emiyaRef.current
       )
         return false;
       if (!nearHomeEntrance(actor, home)) return false;
@@ -598,7 +826,7 @@ export function useStreetLife(
   }, [publish]);
   const moveInside = useCallback(
     (dt: number, input: Point) => {
-      if (emiyaRef.current) return;
+      if (emiyaRef.current || houseRef.current) return;
       const position = life.current.indoor;
       const opt = opts.current;
       if (
@@ -861,6 +1089,13 @@ export function useStreetLife(
   return {
     view,
     emiya,
+    house,
+    enterHouse,
+    leaveHouse,
+    talkHouse,
+    careHouse,
+    publicHouse,
+    saveHouse: publish,
     enterEmiya,
     leaveEmiya,
     saveEmiya: publish,

@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "building": "cafe",
+  "date": "2026-10-12",
+  "style": "Soft blended Japanese anime background; warm reflected light and cool foliage shadows; readable architecture.",
+  "setting": "Original project cafe; adjoining window bay and preparation room are authored layouts, not a canonical floor plan.",
+  "references": [
+    {
+      "file": "source/public/fate/interior-art/cafe-main-soft-v1.png",
+      "role": "approved main room, reused unchanged",
+      "review": "2d7753526318b79557c0f5e7582c65ae.jpg"
+    },
+    {
+      "file": "source/public/fate/art-sample/residential-cafe-v5.png",
+      "role": "existing exterior identity",
+      "review": "cd1d59a3525c4795ee0f51781863705b.jpg"
+    }
+  ],
+  "reusedCharacters": [
+    "shirou-school-soft-v1.png",
+    "rin-school-soft-v1.png",
+    "matou-seated-soft-v1.png",
+    "sakura-visit-soft-v1.png"
+  ],
+  "generator": "image_gen",
+  "prompts": [
+    {
+      "id": "window",
+      "role": "adjoining window-seat bay",
+      "version": "soft-v1",
+      "transparent_background": false,
+      "file": "source/public/fate/interior-art/cafe-window-soft-v1.png",
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-49ce4c3d-480f-48cf-ab5b-44be6b348d86.png",
+      "prompt": "Use case: game-asset. Asset: a new wide 16:9 2.5D painted interior for the same modest Japanese corner cafe as the references.\nReference 1 supplies the APPROVED main room's warm oak furniture, cream plaster, green chair cushions, ceramic cups, natural afternoon light and softly blended anime-background rendering. Reference 2 supplies the building identity: blue-grey awning, timber windows, quiet Japanese neighborhood and restrained coral geraniums. Create a NEW adjoining window-seat bay; do not modify or replicate the supplied views.\nOne coherent full-bleed painting, no people, no writing, no UI, no collage. Fixed eye-height camera, modest downward view that shows the floor and entire room, believable straight architecture and consistent perspective. Broad clear central wooden aisle across the lower half. At the rear CENTER around 50% width an open wide passage returns to the main cafe, its visible floor threshold around 52% image height, no stairs. Right wall has large oak-framed windows, gentle cream curtains; through them see cool green trees and a small hint of the blue-grey awning. A comfortable simple green-cushioned wooden chair on the LEFT near 24% width and 72% height faces right beside a small round table farther left. On the RIGHT near 76% width and 75% height, a matching empty chair faces left beside a small reading table farther right. Two actual visible usable chair seats, no chairs blocking the central passage. A low bookcase sits at back-left, a few books and cups, small flowers. Restrained domestic scale, no grand atrium, no elaborate cafe decor.\nSoft luminous hand-painted Japanese animation background. Warm reflected light, cool shaded foliage, subtle wood grain and brushwork. Rounded value transitions and calm highlights, visibly gentler than glossy photorealism; keep solid readable objects and natural colors. No harsh black outlines, no sharp HDR, no glare, no fog/blur/desaturation filter. Full opaque native canvas, preserve detail.",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2650750,
+        "sha256": "0acc427566b479b503164cdc47f0e54ce2f6609d3b4db02b93506da00a602f6e"
+      }
+    },
+    {
+      "id": "prep",
+      "role": "practical cafe preparation room",
+      "version": "soft-v1",
+      "transparent_background": false,
+      "file": "source/public/fate/interior-art/cafe-prep-soft-v1.png",
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-55411b34-7261-4a75-b022-d193989f594e.png",
+      "prompt": "Use case: game-asset. Asset: a new wide 16:9 2.5D painted cafe preparation room, belonging to the SAME modest Japanese corner cafe in the two references.\nReference 1 gives approved cream plaster, warm oak, coffee equipment, ceramics, wood floor, softly blended anime-background art and natural light. Reference 2 gives the cafe's blue-grey awning and quiet Japanese neighborhood identity. Create a NEW small practical back preparation area, not a replacement or duplicate of either reference.\nOne coherent full-bleed fixed-view interior painting. No people, text, logos, labels, UI, collage, floating objects. Eye-height camera with a modest downward view: floor, side counters, and rear doorway are visible. A clear broad CENTRAL wooden walking aisle fills the lower half, spanning roughly 32% to 68% image width. Rear CENTER at 50% width is an open timber-framed service doorway to the main cafe, with its floor threshold around 52% image height and a glimpse of the same timber counter; level floor, no steps, no door in the foreground. Leave all center-floor routes empty.\nLeft wall: shallow oak cabinets and a modest food-preparation counter, a small sink, clean ceramic plates and one covered pastry tray, all contained left of 27% width. Right wall: narrow shelves, a coffee grinder, kettle, white cups, a few plain unlabelled coffee jars, contained right of 74% width. A small shaded high side window supplies cool tree reflections; natural warm bounce light instead of bright industrial bulbs. No restaurant-scale industrial kitchen, no dining chairs, no stool in the central route, no giant appliances.\nSoft luminous hand-painted Japanese animation background, warm reflected light and cool quiet shadows, subtle practical materials and visible brushwork. Calm highlights and smoothly blended values with readable structure and natural colors. Avoid harsh black outlines, glossy photorealism, sharp HDR, glare, fog, blur and flat desaturation. Full opaque 16:9 native canvas.",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2490592,
+        "sha256": "05cf71a147d326c47b490c7109a0b9a71eb19b32f04df050e59d1551eabe7fe1"
+      }
+    }
+  ],
+  "registration": "Painted seats and local collision are registered in fate-cafe-house.ts; approved student sprite frames are reused without changing school or home adapters."
+}

@@ -111,7 +111,7 @@ export function LifeControls({
           ? '正在思考 · 日常暂歇'
           : life.running
             ? '日常正在继续'
-            : '点击开始，旁观他们的一天'}
+            : '日常已暂停'}
       </span>
       <button
         type="button"
@@ -515,7 +515,7 @@ export function LifePanel({
             </label>
             {!life.view.events.length && (
               <p className={styles.empty}>
-                点击「开始日常」，看看他们今天会做什么。
+                暂无记录
               </p>
             )}
             <ol>
@@ -583,19 +583,10 @@ export function LifePanel({
           </section>
         </>
       )}
-      <p className={styles.fine}>
-        {storageNotice ||
-          '时间、状态和最近 80 条日常记录自动保存在此浏览器。重新进入后点击开始继续，不计算离线时间。'}
-      </p>
+      {storageNotice && <p className={styles.fine}>{storageNotice}</p>}
       <Link href="/fate/saves" className={styles.backupLink}>
-        存档与备份 · 保留或恢复进度
+        存档与备份
       </Link>
-      {section === 'records' && (
-        <p className={styles.fine}>
-          当前为二十一人的自主日常。可从「住宅」查看屋内生活；购物完成后结算生活点，物品、账本和使用进度随存档保留。时蔬用于添配菜，基础餐食仍照常供应。普通修理与笔记不直接提升战斗能力。自然语言设定用于
-          AI，基础行为尚不解释任意文字规则。
-        </p>
-      )}
     </aside>
   );
 }

@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "building": "school",
+  "date": "2026-10-12",
+  "style": "柔和融合版，固定原画与本地投影的 2.5D",
+  "setting": "穗群原学园日常参考；五区域连接、家具和平面为项目创作，人物为士郎、凛、樱的学园服装预览",
+  "references": [
+    "https://www.fate-sn.com/sp/story-chara/chara.html",
+    "https://www.typemoon.com/products/hollowvita/character/",
+    "https://www.fate-sn.com/ubw/staff/"
+  ],
+  "reused": [
+    "source/public/fate/interior-art/school-main-soft-v1.png",
+    "source/public/fate/character-art/sakura-visit-soft-v1.png",
+    "source/public/fate/character-art/matou-seated-soft-v1.png"
+  ],
+  "generator": "Built-in image_gen",
+  "prompts": [
+    {
+      "id": "hall",
+      "role": "school-hall",
+      "prompt": "Use case: stylized-concept. Asset type: ONE complete 16:9 landscape background painting for a walkable 2.5D Japanese high-school interior in Sinefine, Fuyuki / Homurahara Academy. Primary request: the ground-floor entrance hall and connecting corridor, no people. Soft hand-painted Japanese animation background, delicate natural warm sunlight balanced by cool green garden shadows, soft material transitions, restrained highlights, readable architecture, no harsh black outlines, no hazy blur. Slightly elevated frontal camera, fixed 1600x900 authored composition. Clear wide wooden/linoleum floor across the lower 55 percent of the image, vanishing lines consistent, open foreground for a character. Back-wall threshold around 43 percent height. Four real room entrances: classroom sliding doorway on left around x20% y54%, staff-room door around x42% y50%, library doorway x68% y53%, open passage toward the wooden archery building at far right x91% y63%. All thresholds visible and walkable from the central open floor. Shoe lockers only at extreme left edge; a small umbrella stand and bulletin board by the wall; window light and green school grounds visible beyond the right passage. Calm ordinary school day, cream plaster, pale sage trim, aged warm wood. The exact connection layout is original game adaptation of the school setting, not an asserted canonical floor plan. No lettering, no UI, no labels, no vignette, no frame, no inset images, no grid, no human silhouettes. Render one coherent full room, all door thresholds and furniture grounded, gentle exposure, native PNG.",
+      "transparent_background": false,
+      "version": "soft-v1",
+      "file": "source/public/fate/interior-art/school-hall-soft-v1.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2122457,
+        "sha256": "f5dc147c4eba58e2976093d7e3e5f720fb4f710c9a26d7213b19845dd9ba98c9"
+      },
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-9577809b-134b-4f46-a12b-9de6ffacacdb.png"
+    },
+    {
+      "id": "archery",
+      "role": "school-archery",
+      "prompt": "Use case: stylized-concept. ONE complete 16:9 landscape 2.5D game room background in Fuyuki's Homurahara Academy, no people. Soft hand-painted Japanese animation art with gentle natural sunlight, neutral cream walls and honey wood, cool soft sage-green garden shadows, subtle painted edges, readable geometry, restrained highlights; no harsh outlines, no photorealistic gloss, no haze/blur overlay. Fixed frontal slightly elevated camera, authored 1600x900 composition, clear connected floor in the foreground and central half of the room, all furniture grounded, no UI, no writing, no text, no grid, no collage, native PNG. Architectural layout is the project's original playable adaptation. Show the indoor wooden archery practice hall, open on the far-right side toward an outdoor target range. Warm timber beams, calm long polished wooden floor, bows stored vertically along far-left wall, simple equipment cabinets left, quivers neatly stored, leafy courtyard and distant round paper targets beyond the right opening. No arrows flying, no combat, no bows in use. Main return doorway on rear wall at x50%, threshold y49%; do not put furniture in its approach. Low wooden bench only at left foreground x12-29%, y65-78%, clear floor around its front edge; cushions neatly folded on it. Closed cabinet at extreme left x0-10%, no central obstacles. Outdoor earth and practice range distinct from the playable wooden floor, with a low edge/rail along far-right x88-100%. Let the garden shadows blend softly onto the floor.",
+      "transparent_background": false,
+      "version": "soft-v1",
+      "file": "source/public/fate/interior-art/school-archery-soft-v1.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2189863,
+        "sha256": "2541f5fc60e238f8ee6ea2ea51371802ce767a33e659534f690b41d422356065"
+      },
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-c4833024-9433-4753-bb00-7acd18033959.png"
+    },
+    {
+      "id": "staffroom",
+      "role": "school-staffroom",
+      "prompt": "Use case: stylized-concept. ONE complete 16:9 landscape 2.5D game room background in Fuyuki's Homurahara Academy, no people. Soft hand-painted Japanese animation art with gentle natural sunlight, neutral cream walls and honey wood, cool soft sage-green garden shadows, subtle painted edges, readable geometry, restrained highlights; no harsh outlines, no photorealistic gloss, no haze/blur overlay. Fixed frontal slightly elevated camera, authored 1600x900 composition, clear connected floor in the foreground and central half of the room, all furniture grounded, no UI, no writing, no text, no grid, no collage, native PNG. Architectural layout is the project's original playable adaptation. Show a modest Japanese high-school teachers' staff room. Two workstations against left and right walls with paper folders, pens and neat book stacks; cream-green old metal cabinets along the rear-left wall; side windows with leafy green view. Main return doorway centered on back wall x50%, threshold y49%; wide clear straight central aisle, no desk blocking it. Right foreground wooden desk occupies x77-99%, y65-86%, with a simple wooden chair immediately to its left x65-76%, y62-77%; no drawn person on chair. Left foreground small round tea table x10-28%, y65-81%, with a second simple chair to its right x29-40%, y62-78%. Floor extends beyond bottom frame; center floor x42-62% fully clear. Understated everyday school detail, not luxury office.",
+      "transparent_background": false,
+      "version": "soft-v1",
+      "file": "source/public/fate/interior-art/school-staffroom-soft-v1.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2083989,
+        "sha256": "e137f0f582b084bbbfa6ea7fb69216d291dcf8cf09222c186b4bc13159965f3b"
+      },
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-2a8e21b3-6c7c-4f15-87e4-cc319c8f261c.png"
+    },
+    {
+      "id": "library",
+      "role": "school-library",
+      "prompt": "Use case: stylized-concept. ONE complete 16:9 landscape 2.5D game room background in Fuyuki's Homurahara Academy, no people. Soft hand-painted Japanese animation art with gentle natural sunlight, neutral cream walls and honey wood, cool soft sage-green garden shadows, subtle painted edges, readable geometry, restrained highlights; no harsh outlines, no photorealistic gloss, no haze/blur overlay. Fixed frontal slightly elevated camera, authored 1600x900 composition, clear connected floor in the foreground and central half of the room, all furniture grounded, no UI, no writing, no text, no grid, no collage, native PNG. Architectural layout is the project's original playable adaptation. Show a tranquil Japanese high-school library. Modest low and tall wooden bookcases at extreme left and right perimeter, simple lending counter in far-left corner. Side windows frame school garden trees; wide clear central aisle leads to return doorway centered on rear wall x50%, threshold y49%. Small rectangular reading table with books at right foreground x78-99%, y66-85%, one simple wooden chair immediately left x66-77%, y63-77%. A second empty reading chair at left foreground x18-32%, y62-78%, side table beyond its left at x3-16%, y69-81%. No schoolchildren, no floating books. Keep central floor x38-63% open and back doorway unobstructed; ordinary school scale, gently lit paper spines and warm timber, no lettering.",
+      "transparent_background": false,
+      "version": "soft-v1",
+      "file": "source/public/fate/interior-art/school-library-soft-v1.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2137410,
+        "sha256": "3c6387cfa51f06ceef1b3a0068eb07a9f90036d891dd88a88fed8434e7905d4c"
+      },
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-3c34a736-724e-4c59-a826-17b800787927.png"
+    },
+    {
+      "id": "shirou",
+      "role": "school-character-shirou",
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent PNG production sprite atlas for a 2.5D walking school character. Compose exactly SIX columns by FOUR rows, 24 separated evenly spaced full-body character drawings, wide canvas 1536x1024 proportion. Each cell 256x256 conceptually, no lines or dividers. Consistent head size, adult/teen natural 7-head anime proportions, same identity, feet near common baseline with generous 10% transparent margin on all sides. Soft Japanese anime illustration with subtle warm neutral light, softly colored outlines, natural fabric, understated detail; clean transparent alpha with no background, no ground, no shadow, no floor, no chair, no frame, no text or numbers, no duplicated neighbours overlapping. ROW ONE: front standing; back standing; left profile standing; right profile standing; seated on invisible chair facing RIGHT in relaxed correct chair-height posture knees bent 90 degrees feet down; same seated-right reading an open book. ROW TWO: six sequential LEFT profile natural walk-cycle phases: left-foot contact, left support, passing, right-foot contact, right support, passing. ROW THREE: six sequential FRONT walk phases with alternating feet and relaxed opposing arms. ROW FOUR: six sequential BACK walk phases, same stride sequence and shoulder width. Clear knee flexion and true alternating plant/push/pass/swing; no marching, no crossed/sliding feet, no skating, no rigid identical poses. Keep every drawing separate and all shoes fully visible. Character: Shirou Emiya from Fate/stay night, recognizable short tousled auburn red hair, amber-brown eyes, lean teenage male. Homurahara school uniform: closed black high-collar Japanese gakuran jacket with five small gold buttons, dark straight school trousers, plain dark brown shoes, no accessories, no weapons, no luggage. Maintain consistent jacket collar and trouser proportions in every view, dark charcoal cloth softly lit so the body's silhouette is readable.",
+      "transparent_background": true,
+      "version": "soft-v1",
+      "file": "source/public/fate/character-art/shirou-school-soft-v1.png",
+      "native": {
+        "width": 1536,
+        "height": 1024,
+        "bytes": 1626647,
+        "sha256": "4ee624d26ce143106694f57deca31dabef3a01d81ca2b1b6a620f1acd0a34e41"
+      },
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-88df3510-2566-443e-a998-df91aca098f7.png"
+    },
+    {
+      "id": "rin",
+      "role": "school-character-rin",
+      "prompt": "Use case: stylized-concept. Asset type: ONE transparent PNG production sprite atlas for a 2.5D walking school character. Compose exactly SIX columns by FOUR rows, 24 separated evenly spaced full-body character drawings, wide canvas 1536x1024 proportion. Each cell 256x256 conceptually, no lines or dividers. Consistent head size, adult/teen natural 7-head anime proportions, same identity, feet near common baseline with generous 10% transparent margin on all sides. Soft Japanese anime illustration with subtle warm neutral light, softly colored outlines, natural fabric, understated detail; clean transparent alpha with no background, no ground, no shadow, no floor, no chair, no frame, no text or numbers, no duplicated neighbours overlapping. ROW ONE: front standing; back standing; left profile standing; right profile standing; seated on invisible chair facing RIGHT in relaxed correct chair-height posture knees bent 90 degrees feet down; same seated-right reading an open book. ROW TWO: six sequential LEFT profile natural walk-cycle phases: left-foot contact, left support, passing, right-foot contact, right support, passing. ROW THREE: six sequential FRONT walk phases with alternating feet and relaxed opposing arms. ROW FOUR: six sequential BACK walk phases, same stride sequence and shoulder width. Clear knee flexion and true alternating plant/push/pass/swing; no marching, no crossed/sliding feet, no skating, no rigid identical poses. Keep every drawing separate and all shoes fully visible. Character: Rin Tohsaka from Fate/stay night, recognizable long dark brown hair in two high twin tails with black ribbons, blue eyes, lean teenage female. Homurahara school uniform like Sakura's school outfit: crisp off-white long-sleeved blouse, soft tan-brown fitted waistcoat, small dark red neck bow, black pleated school skirt, dark opaque thigh-high stockings, modest brown loafers. School uniform throughout, no red casual sweater, no weapons, no accessories except hair ribbons and reading book in final pose. Keep twin tails and skirt softly responsive to stepping, consistent hem length, no exaggerated motion.",
+      "transparent_background": true,
+      "version": "soft-v1",
+      "file": "source/public/fate/character-art/rin-school-soft-v1.png",
+      "native": {
+        "width": 1536,
+        "height": 1024,
+        "bytes": 1836884,
+        "sha256": "6022637765c53e07a4143da3395a6747cc415399bbba27f12736609f530e1e2f"
+      },
+      "original": "C:/Users/Tracy/.codex/generated_images/01a11e5b-3d76-7e30-802e-3b5477aeb6b2/exec-59b88b31-f02c-4948-9dbc-9c9bec8fa004.png"
+    }
+  ],
+  "registration": "按原生 alpha>16 的独立身体组件裁切并记录脚底锚点；士郎与凛各24帧，包含4向站立、坐/读、侧向及正背面各6步态相位；樱复用已配准原帧"
+}

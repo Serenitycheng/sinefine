@@ -725,10 +725,7 @@ export function FateInterior({
               ) : (
                 <div className={styles.emptyDetail}>
                   <Armchair size={38} />
-                  <h3>屋里很安静</h3>
-                  <p>
-                    有人回来时，会出现在对应的房间。也可以点选外出的人，看看他们正在做什么。
-                  </p>
+                  <h3>无人在屋内</h3>
                 </div>
               )}
             </aside>

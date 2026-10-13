@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { MapPin, Navigation, Users, X } from 'lucide-react';
+import { type DistrictLandmark } from '@/lib/fate-district';
 import {
-  DISTRICT_LANDMARKS,
-  districtSceneImage,
-  type DistrictLandmark,
-} from '@/lib/fate-district';
+  FORMAL_LANDMARKS as DISTRICT_LANDMARKS,
+  formalPlaceImage,
+} from '@/lib/fate-formal-buildings';
 import { FATE_HOMES, type HomeId } from '@/lib/fate-housing';
 import { fatePerson, STREET_PARTNERS, type PartnerId } from '@/lib/fate-cast';
 import {
@@ -129,6 +129,7 @@ export function DistrictPlaceCard({
   onTeleport,
   onVisit,
   onEnter,
+  onEnterBuilding,
   onPublicAction,
   activity,
   shopLabel,
@@ -144,6 +145,7 @@ export function DistrictPlaceCard({
   onTeleport: () => void;
   onVisit: (home: HomeId) => void;
   onEnter: (home: HomeId) => void;
+  onEnterBuilding?: () => void;
   onPublicAction: (action: PublicVisitAction, target?: PartnerId) => void;
   activity?: ReactNode;
   shopLabel: string | null;
@@ -174,7 +176,7 @@ export function DistrictPlaceCard({
       <h2>{place.name}</h2>
       <Image
         className={styles.placeIllustration}
-        src={districtSceneImage(place)}
+        src={formalPlaceImage(place)}
         alt={`${place.name}的近景插画`}
         width={600}
         height={338}
@@ -190,6 +192,11 @@ export function DistrictPlaceCard({
               : '居民会来这里用餐、阅读或购买日用品。'}
       </p>
       <div>
+        {onEnterBuilding && control && arrived && (
+          <button type="button" onClick={onEnterBuilding}>
+            进入{place.name}
+          </button>
+        )}
         {place.kind === 'home' && (
           <>
             <button type="button" onClick={() => onVisit(place.id as HomeId)}>

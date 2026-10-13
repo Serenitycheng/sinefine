@@ -8,7 +8,7 @@ import {
   type MouseEvent,
   type KeyboardEvent,
 } from 'react';
-import { Focus, Minus, Plus, Footprints, Flower2 } from 'lucide-react';
+import { Focus, Minus, Plus, Footprints } from 'lucide-react';
 import { CITY_SIZE, type CityPoint } from '@/lib/fate-city-layout';
 import {
   CITY_ART_ROADS,
@@ -443,7 +443,6 @@ export default function FateCityAtlas({
         <details className={styles.mapDirectory}>
           <summary>街道目录与预览</summary>
           <h3>{record.quarter.name}</h3>
-          <p>{record.quarter.character}</p>
           <label>
             选择街道
             <select
@@ -472,7 +471,6 @@ export default function FateCityAtlas({
           </p>
           {record.scenes.length ? (
             <>
-              <p>全段已绘制。虚线显示可走街道，选择沿路前往或直接预览。</p>
               {record.scenes.map((paintedScene) => (
                 <div key={paintedScene} className={styles.streetChoice}>
                   <button
@@ -496,14 +494,7 @@ export default function FateCityAtlas({
             </p>
           )}
         </details>
-        <p className={styles.note}>
-          <Flower2 size={13} />
-          花店、旧街书店与面包铺是新增的小地点。
-        </p>
       </aside>
-      <span className={styles.mapHint}>
-        点击地点或道路沿路前往 · 拖动浏览 · 滚轮缩放
-      </span>
     </div>
   );
 }

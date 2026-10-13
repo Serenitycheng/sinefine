@@ -75,7 +75,7 @@ export default function FateEmiyaLifePlaytest() {
             回到卫宫宅
           </button>
         )}
-        <Link href="/fate/city-art">回到街区预览</Link>
+        <Link href="/fate/city-art">返回街区</Link>
       </main>
     );
   return (
@@ -125,7 +125,6 @@ export function FateEmiyaLifeScene({
     <FateEmiyaHouse
       life={session}
       suspended={suspended}
-      lifeLabel={formal ? '卫宫士郎 · 家庭生活' : undefined}
       onResidentSelect={selectResident}
       residentRequest={residentRequest}
       actionRequest={actionRequest}
@@ -408,11 +407,6 @@ function EmiyaLifeControls({
         精力 {Math.round(person.energy)}
       </summary>
       <div className={styles.lifePanel}>
-        <p>
-          控制士郎。用餐 20 分钟、和室休息 20 分钟、小睡 60 分钟；阅读 35
-          分钟、笔记 40 分钟、备餐 45
-          分钟。到位并完成动作后才经过这段时间，其他居民同时继续日常。
-        </p>
         <div className={styles.lifeButtons}>
           <button
             type="button"
@@ -451,7 +445,6 @@ function EmiyaLifeControls({
         </ul>
         <output>
           {notice}
-          {formal ? '' : ' 原游戏记录保留。'}
         </output>
       </div>
     </details>

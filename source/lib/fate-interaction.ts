@@ -30,6 +30,11 @@ export type InteractionStatus = {
   place?: string;
   outcome?: ConversationOutcome;
 };
+export type LocalConversationSpace = {
+  speaker: Point;
+  target: Point;
+  place: string;
+};
 
 export function liveEncounter(life: DailyLife): LifeEvent | null {
   const event = life.events.findLast((item) => item.dialogue);
@@ -147,6 +152,7 @@ export function interactionStatus(
   actors: Positions,
   speaker: ActorId | null,
   target: PartnerId,
+  localSpace?: LocalConversationSpace,
 ): InteractionStatus {
   if (!speaker)
     return {
@@ -154,7 +160,23 @@ export function interactionStatus(
       message: '观察模式可查看近况；请先进入角色，再走近交谈。',
     };
   if (speaker === target) return { ok: false, message: '你正在控制这名人物。' };
-  const near = proximity(life, actors, speaker, target);
+  const near = localSpace
+    ? {
+        ok:
+          Number.isFinite(
+            localSpace.speaker.x +
+              localSpace.speaker.y +
+              localSpace.target.x +
+              localSpace.target.y,
+          ) &&
+          Math.hypot(
+            localSpace.speaker.x - localSpace.target.x,
+            localSpace.speaker.y - localSpace.target.y,
+          ) <= 85,
+        message: '先走到人物身边。',
+        place: localSpace.place,
+      }
+    : proximity(life, actors, speaker, target);
   if (!near.ok) return near;
   const activity = life.people[target].activity;
   if (activity?.phase === 'doing') {
@@ -204,6 +226,7 @@ export function recordOnsiteConversation(
   controlled: ActorId | null,
   entry: Exchange,
   effects?: unknown,
+  localSpace?: LocalConversationSpace,
 ): InteractionStatus {
   if (!isPartner(entry.target) || entry.speaker !== controlled)
     return { ok: false, message: '人物已切换，请重新靠近后交谈。' };
@@ -222,7 +245,13 @@ export function recordOnsiteConversation(
       (entry.waverStage ?? 'young') !== life.waverStage)
   )
     return { ok: false, message: '这次对话无效，请重新发起。' };
-  const status = interactionStatus(life, actors, controlled, entry.target);
+  const status = interactionStatus(
+    life,
+    actors,
+    controlled,
+    entry.target,
+    localSpace,
+  );
   if (!status.ok) return status;
   if (
     life.events.some(

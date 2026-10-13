@@ -21,6 +21,10 @@ export type PreviewAction = {
   mirror?: boolean;
   /** The drawn chair can have a different local perspective from the ground. */
   scale?: number;
+  /** Seat surface in the authored painting; registered sprites attach their hips here. */
+  seat?: CityPoint;
+  /** Furniture behind the seated body, independent of its safe walking approach. */
+  inFrontOf?: readonly string[];
 };
 export type PreviewRoom = {
   scene: CityInteriorScene;
@@ -42,6 +46,10 @@ export type PreviewSprite = {
   imageWidth: number;
   imageHeight: number;
   index: number;
+  /** Hip contact in local crop coordinates, independent of the walking foot anchor. */
+  seat?: CityPoint;
+  /** Local crop coordinates exclude neighbouring ink when rectangular cuts overlap. */
+  clip?: readonly (readonly number[])[];
 };
 export type PreviewHouse = {
   name: string;
@@ -70,6 +78,9 @@ export function mirrorPreviewSprite(sprite: PreviewSprite): PreviewSprite {
       ...sprite.bounds,
       x: sprite.cellWidth - sprite.bounds.x - sprite.bounds.width,
     },
+    ...(sprite.seat
+      ? { seat: { x: sprite.cellWidth - sprite.seat.x, y: sprite.seat.y } }
+      : {}),
   };
 }
 

@@ -393,7 +393,7 @@ EINZBERN_ROOMS.lounge.scene.spots = [
     '看看家庭餐桌',
     62,
     70,
-    '起居间餐桌保留一家三口的日常位置，预览不虚构人物的实际在场。',
+    '餐桌上放着花瓶，三把椅子收在桌边。',
   ),
 ];
 EINZBERN_ROOMS.kitchen.scene.spots = [

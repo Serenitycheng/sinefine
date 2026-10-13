@@ -1,5 +1,11 @@
 import { STREET_PARTNERS } from './fate-cast';
 import {
+  LOCAL_APPROACHES,
+  localApproachWalkable,
+  shareLocalApproach,
+  closestLocalApproach,
+} from './fate-local-entrances';
+import {
   districtAt,
   DISTRICT_HOMES,
   DISTRICT_PLACES,
@@ -84,10 +90,14 @@ export function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 export function isWalkable(p: Point) {
-  return cityWalkable(p) || homeApproachWalkable(p);
+  return cityWalkable(p) || homeApproachWalkable(p) || localApproachWalkable(p);
 }
 export function samePavement(a: Point, b: Point) {
-  return shareCityPavement(a, b) || shareHomeApproach(a, b);
+  return (
+    shareCityPavement(a, b) ||
+    shareHomeApproach(a, b) ||
+    shareLocalApproach(a, b)
+  );
 }
 export function wasWalkableInCity(p: Point) {
   return (
@@ -108,11 +118,10 @@ export function wasWalkableInDistrict(p: Point) {
 export function nearestWalkable(p: Point): Point {
   const city = closestCityPavement(p);
   if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) return city;
-  const entrance = closestHomeApproach(p);
-  return Math.hypot(p.x - entrance.x, p.y - entrance.y) <
-    Math.hypot(p.x - city.x, p.y - city.y)
-    ? entrance
-    : city;
+  return [city, closestHomeApproach(p), closestLocalApproach(p)].sort(
+    (a, b) =>
+      Math.hypot(p.x - a.x, p.y - a.y) - Math.hypot(p.x - b.x, p.y - b.y),
+  )[0];
 }
 export function migrateCityPoint(p: Point): Point {
   const oldPlaces = { ...LEGACY_CITY_HOMES, ...LEGACY_CITY_PLACES };
@@ -163,6 +172,7 @@ function straightPath(a: Point, b: Point) {
 const junctions: Point[] = [
   ...cityJunctions(),
   ...Object.values(HOME_ENTRANCES).flatMap((entry) => entry.points),
+  ...LOCAL_APPROACHES.flatMap((entry) => entry.points),
 ];
 const roads = junctions.map((a) =>
   junctions.map((b) =>

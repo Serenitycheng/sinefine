@@ -207,8 +207,8 @@ export function useBackgroundLife() {
     };
   }, [fate.cloudUsername, fate.loaded, refresh]);
   async function change(enabled: boolean, keepLocal = false) {
-    if (enabled && ctx.current.save.emiya?.active) {
-      setNotice('请先从卫宫宅走回街道，再开启后台日常。');
+    if (enabled && (ctx.current.save.emiya?.active || ctx.current.save.house?.active)) {
+      setNotice('请先走回街道，再开启后台日常。');
       return;
     }
     const stored = readBackgroundMarker();

@@ -3,7 +3,12 @@
     "file": "/fate/character-art/kiritsugu-house-soft-v1.png",
     "imageWidth": 1024,
     "imageHeight": 1536,
-    "cuts": [0, 524, 1024, 1536],
+    "cuts": [
+      0,
+      524,
+      1024,
+      1536
+    ],
     "frames": [
       {
         "cropX": 29,
@@ -20,31 +25,31 @@
         }
       },
       {
-        "cropX": 170,
+        "cropX": 201,
         "cropY": 42,
-        "cellWidth": 171,
+        "cellWidth": 140,
         "cellHeight": 482,
-        "anchorX": 102.24259752467492,
+        "anchorX": 71.24259752467492,
         "anchorY": 479,
         "bounds": {
-          "x": 0,
-          "y": 2,
-          "width": 171,
-          "height": 478
+          "x": 2,
+          "y": 1,
+          "width": 138,
+          "height": 480
         }
       },
       {
-        "cropX": 341,
+        "cropX": 396,
         "cropY": 42,
-        "cellWidth": 164,
+        "cellWidth": 109,
         "cellHeight": 482,
-        "anchorX": 110.40434469515122,
+        "anchorX": 55.404344695151224,
         "anchorY": 481,
         "bounds": {
-          "x": 0,
-          "y": 2,
-          "width": 162,
-          "height": 480
+          "x": 2,
+          "y": 1,
+          "width": 105,
+          "height": 481
         }
       },
       {
@@ -78,30 +83,30 @@
         }
       },
       {
-        "cropX": 170,
+        "cropX": 194,
         "cropY": 582,
-        "cellWidth": 171,
+        "cellWidth": 147,
         "cellHeight": 406,
-        "anchorX": 106.71078125000003,
+        "anchorX": 82.71078125000003,
         "anchorY": 403,
         "bounds": {
-          "x": 0,
-          "y": 2,
-          "width": 171,
-          "height": 402
+          "x": 2,
+          "y": 1,
+          "width": 145,
+          "height": 403
         }
       },
       {
-        "cropX": 341,
+        "cropX": 382,
         "cropY": 581,
-        "cellWidth": 168,
+        "cellWidth": 127,
         "cellHeight": 408,
-        "anchorX": 98.90648401826485,
+        "anchorX": 57.90648401826485,
         "anchorY": 405,
         "bounds": {
-          "x": 0,
+          "x": 2,
           "y": 2,
-          "width": 166,
+          "width": 123,
           "height": 404
         }
       },
@@ -120,31 +125,57 @@
         }
       },
       {
-        "cropX": 682,
+        "cropX": 708,
         "cropY": 581,
-        "cellWidth": 171,
+        "cellWidth": 145,
         "cellHeight": 407,
-        "anchorX": 103.04830668729585,
+        "anchorX": 77.04830668729585,
         "anchorY": 404,
         "bounds": {
-          "x": 0,
+          "x": 2,
           "y": 2,
-          "width": 171,
+          "width": 143,
           "height": 403
-        }
+        },
+        "clip": [
+          [
+            0,
+            0
+          ],
+          [
+            145,
+            0
+          ],
+          [
+            145,
+            407
+          ],
+          [
+            5,
+            407
+          ],
+          [
+            5,
+            300
+          ],
+          [
+            0,
+            300
+          ]
+        ]
       },
       {
-        "cropX": 853,
+        "cropX": 894,
         "cropY": 581,
-        "cellWidth": 144,
+        "cellWidth": 103,
         "cellHeight": 406,
-        "anchorX": 96.66420815406684,
+        "anchorX": 55.66420815406684,
         "anchorY": 403,
         "bounds": {
-          "x": 0,
+          "x": 2,
           "y": 2,
-          "width": 142,
-          "height": 402
+          "width": 99,
+          "height": 403
         }
       },
       {
@@ -243,7 +274,12 @@
     "file": "/fate/character-art/irisviel-house-soft-v1.png",
     "imageWidth": 1536,
     "imageHeight": 1024,
-    "cuts": [0, 341, 682, 1024],
+    "cuts": [
+      0,
+      341,
+      682,
+      1024
+    ],
     "frames": [
       {
         "cropX": 80,
@@ -483,7 +519,13 @@
     "file": "/fate/art-sample/illya-walk-v1.png",
     "imageWidth": 1536,
     "imageHeight": 1024,
-    "cuts": [0, 256, 512, 768, 1024],
+    "cuts": [
+      0,
+      256,
+      512,
+      768,
+      1024
+    ],
     "frames": [
       {
         "cropX": 85,

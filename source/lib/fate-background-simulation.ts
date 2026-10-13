@@ -22,6 +22,8 @@ export async function runBackgroundRound(
   now = new Date(),
 ): Promise<FateBackup> {
   const clean = parseFateBackup(backup);
+  if (clean.save.emiya?.active || clean.save.house?.active)
+    throw new Error('请先走回街道，再开启后台日常。');
   const save = structuredClone(clean.save);
   const life = save.life ?? createDailyLife();
   const actors = createStreetActors();

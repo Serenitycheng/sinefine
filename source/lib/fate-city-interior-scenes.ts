@@ -72,19 +72,19 @@ const householdSpots: CityInteriorScene['spots'] = [
     id: 'left',
     label: '看看起居角',
     point: { x: 150, y: 505 },
-    detail: '这里的陈设供室内美术预览；居民交谈将沿用正式游戏的生活机制。',
+    detail: '木家具靠墙摆放，桌边留着空位。',
   },
   {
     id: 'rear',
     label: '走到房间深处',
     point: { x: 500, y: 75 },
-    detail: '主要房间可以绕行；侧门、卧室与其他楼层仍待逐间制作。',
+    detail: '房间后侧安静一些。',
   },
   {
     id: 'right',
     label: '看看窗边',
     point: { x: 865, y: 520 },
-    detail: '窗光和庭院植物随建筑区别绘制。',
+    detail: '窗边有一盆绿植。',
   },
 ];
 const INPUTS: Record<CityInteriorId, SceneInput> = {

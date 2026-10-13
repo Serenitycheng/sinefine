@@ -110,7 +110,9 @@ export const CHARACTER_ART: readonly CharacterArt[] = STREET_CAST.map(
             ? ['日常', '黑樱（保留独立形象）']
             : actor.id === 'iskandar'
               ? ['步行', '骑马（分别验收）']
-              : ['日常'],
+              : ['shirou', 'rin'].includes(actor.id)
+                ? ['日常', '学园校服']
+                : ['日常'],
   }),
 );
 export function characterArt(id: ActorId) {

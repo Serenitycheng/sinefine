@@ -22,6 +22,7 @@ import {
 } from '@/lib/fate-life';
 import type { WaverStage } from '@/lib/fate-cast';
 import type { FateHousing } from '@/lib/fate-housing';
+import type { HouseGameSave } from '@/lib/fate-house-game';
 import { useDeepSeekConnection } from './use-deepseek-connection';
 import {
   checkpointFateLibrary,
@@ -76,6 +77,13 @@ type FateContextValue = ReturnType<typeof useDeepSeekConnection> & {
     revision: number,
     final?: boolean,
   ) => void;
+  saveHouse: (
+    life: DailyLife,
+    house: HouseGameSave,
+    revision: number,
+    final?: boolean,
+    entry?: Exchange,
+  ) => boolean;
   saveRevision: number;
   setWaverStage: (stage: WaverStage) => void;
   setHousing: (housing: FateHousing) => void;
@@ -419,7 +427,15 @@ export function FateProvider({ children }: { children: ReactNode }) {
           updateCurrent((previous) => ({ ...previous, life }), revision, final),
         saveEmiya: (life, emiya, revision, final) =>
           updateCurrent(
-            (previous) => ({ ...previous, version: 2, life, emiya }),
+            (previous) => ({ ...previous, version: previous.house ? 3 : 2, life, emiya }),
+            revision,
+            final,
+          ),
+        saveHouse: (life, house, revision, final, entry) =>
+          updateCurrent(
+            (previous) => ({ ...previous, version: 3, life, house,
+              ...(entry ? { history: [...previous.history.filter(e => e.id !== entry.id), entry].slice(-120) } : {}),
+            }),
             revision,
             final,
           ),

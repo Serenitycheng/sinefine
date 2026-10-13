@@ -330,6 +330,29 @@
   margin: 0 0 5px;
   font-size: 12px;
 }
+.footer[hidden] {
+  display: none;
+}
+.controlsHelp {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.controlsHelp summary {
+  cursor: pointer;
+}
+.controlsHelp[open] {
+  position: absolute;
+  right: 20px;
+  bottom: 12px;
+  max-width: min(340px, 85%);
+  padding: 12px;
+  border: 1px solid #8e947e80;
+  border-radius: 7px;
+  background: #26362f;
+  z-index: 30;
+}
 .footer span,
 .footer a {
   font-size: 11px;

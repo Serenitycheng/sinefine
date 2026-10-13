@@ -101,7 +101,6 @@ import {
 import { FateStreetScenery } from './fate-street-scenery';
 import { FateCityScenery } from './fate-city-scenery';
 import {
-  DISTRICT_LANDMARKS,
   nearestDistrictLandmark,
   STREET_SCENE_SCALE,
   streetScenePoint,
@@ -111,10 +110,23 @@ import interiorStyles from './fate-interior.module.css';
 import styles from './street-walk.module.css';
 import { STREET_CAST } from '@/lib/fate-street-cast';
 import type { EmiyaStreetReturn } from '@/lib/fate-emiya-game';
+import {
+  type HouseActorId,
+  type HouseStreetReturn,
+} from '@/lib/fate-house-game';
+import {
+  FORMAL_LANDMARKS as DISTRICT_LANDMARKS,
+  isFormalPublicSite,
+  isFormalSite,
+  nearFormalEntrance,
+  type HouseSiteId,
+} from '@/lib/fate-formal-buildings';
+import { FORMAL_HOUSE_PLANS } from '@/lib/fate-formal-house-plans';
 
 const FateEmiyaLifeScene = dynamic(() =>
   import('./fate-emiya-life').then((module) => module.FateEmiyaLifeScene),
 );
+const FateHouseGame = dynamic(() => import('./fate-house-game'));
 
 const BASE_CAST = STREET_CAST;
 
@@ -141,7 +153,12 @@ function nearbyStreetPlace(point: Point, previous?: DistrictLandmark) {
       (place) =>
         place.kind === 'home' &&
         nearHomeEntrance(point, place.id as keyof typeof FATE_HOMES),
-    ) ?? nearestDistrictLandmark(point, previous)
+    ) ??
+    DISTRICT_LANDMARKS.find(
+      (place) =>
+        isFormalPublicSite(place.id) && nearFormalEntrance(point, place.id),
+    ) ??
+    nearestDistrictLandmark(point, previous)
   );
 }
 
@@ -193,7 +210,9 @@ export default function StreetWalk({
   );
   const [dialog, setDialog] = useState<'settings' | PartnerId | null>(null);
   const [dialogSpeaker, setDialogSpeaker] = useState<ActorId>('admin');
-  const [interiorView, setInteriorView] = useState<InteriorView | null>(null);
+  const [interiorView, setInteriorView] = useState<
+    InteriorView | HouseSiteId | null
+  >(null);
   const [indoorMoving, setIndoorMoving] = useState(false);
   const interiorSurface = useRef<HTMLDivElement>(null);
   const indoorPath = useRef<Point[]>([]);
@@ -220,9 +239,7 @@ export default function StreetWalk({
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [location, setLocation] = useState('冬木市 · 商业街');
-  const [hint, setHint] = useState(
-    '点击「开始日常」旁观他们的一天；选择人物只跟随镜头',
-  );
+  const [hint, setHint] = useState('');
   const [padStatus, setPadStatus] = useState('连接手柄后，按任意按钮');
   const [padConnected, setPadConnected] = useState(false);
   const stage = useRef<HTMLDivElement>(null);
@@ -257,7 +274,7 @@ export default function StreetWalk({
   const outingPoint =
     outing && outing.kind !== 'cafe' ? publicOutingPoint(outing) : null;
   const dailyActions = useRef({
-    emiyaActive: !!daily.emiya,
+    emiyaActive: !!daily.emiya || !!daily.house,
     advance: daily.advance,
     walkPace: daily.walkPace,
     isInside: daily.isInside,
@@ -269,7 +286,7 @@ export default function StreetWalk({
   });
   useEffect(() => {
     dailyActions.current = {
-      emiyaActive: !!daily.emiya,
+      emiyaActive: !!daily.emiya || !!daily.house,
       advance: daily.advance,
       walkPace: daily.walkPace,
       isInside: daily.isInside,
@@ -281,6 +298,7 @@ export default function StreetWalk({
     };
   }, [
     daily.emiya,
+    daily.house,
     daily.advance,
     daily.walkPace,
     daily.isInside,
@@ -361,25 +379,28 @@ export default function StreetWalk({
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
   const period = lifePeriod(daily.view.minutes);
-  const restoreEmiyaCamera = useCallback((street: EmiyaStreetReturn) => {
-    setScene(street.scene);
-    setZoomLevels({ ...street.zoom });
-    camera.current = { ...street.camera };
-    cameraScene.current = street.scene;
-    manualCamera.current = street.manual ? { ...street.manual } : null;
-    freeView.current = { ...street.point };
-    following.current = street.manual ? null : 'shirou';
-    const place = nearbyStreetPlace(street.point);
-    if (place) {
-      scenePlaceRef.current = place;
-      setScenePlace(place);
-    }
-    settings.current = {
-      ...settings.current,
-      scene: street.scene,
-      zoom: street.zoom[street.scene],
-    };
-  }, []);
+  const restoreEmiyaCamera = useCallback(
+    (street: EmiyaStreetReturn | HouseStreetReturn) => {
+      setScene(street.scene);
+      setZoomLevels({ ...street.zoom });
+      camera.current = { ...street.camera };
+      cameraScene.current = street.scene;
+      manualCamera.current = street.manual ? { ...street.manual } : null;
+      freeView.current = { ...street.point };
+      following.current = street.manual ? null : street.actor;
+      const place = nearbyStreetPlace(street.point);
+      if (place) {
+        scenePlaceRef.current = place;
+        setScenePlace(place);
+      }
+      settings.current = {
+        ...settings.current,
+        scene: street.scene,
+        zoom: street.zoom[street.scene],
+      };
+    },
+    [],
+  );
   const restoredIndoor = useRef(false);
 
   useEffect(() => {
@@ -395,9 +416,17 @@ export default function StreetWalk({
   useEffect(() => {
     if (!fate.loaded || restoredIndoor.current) return;
     const house = fate.save.emiya;
-    const saved = house?.active
-      ? { actor: 'shirou' as const, home: 'emiya' as const }
-      : fate.save.life?.indoor;
+    const otherHouse = fate.save.house;
+    const activeScene = house?.active
+      ? house
+      : otherHouse?.active
+        ? otherHouse
+        : null;
+    const saved = otherHouse?.active
+      ? { actor: otherHouse.street.actor, home: otherHouse.home }
+      : house?.active
+        ? { actor: 'shirou' as const, home: 'emiya' as const }
+        : fate.save.life?.indoor;
     if (!saved) return;
     let alive = true;
     queueMicrotask(() => {
@@ -405,9 +434,9 @@ export default function StreetWalk({
       restoredIndoor.current = true;
       setActive(saved.actor);
       setMode('control');
-      const scene = house?.active ? house.street.scene : 'street';
+      const scene = activeScene?.street.scene ?? 'street';
       setScene(scene);
-      if (house?.active) restoreEmiyaCamera(house.street);
+      if (activeScene) restoreEmiyaCamera(activeScene.street);
       setInteriorView(saved.home);
       settings.current = {
         ...settings.current,
@@ -420,7 +449,13 @@ export default function StreetWalk({
     return () => {
       alive = false;
     };
-  }, [fate.loaded, fate.save.life, fate.save.emiya, restoreEmiyaCamera]);
+  }, [
+    fate.loaded,
+    fate.save.life,
+    fate.save.emiya,
+    fate.save.house,
+    restoreEmiyaCamera,
+  ]);
   useEffect(() => {
     if (interiorView) interiorSurface.current?.focus({ preventScroll: true });
     else stage.current?.focus({ preventScroll: true });
@@ -911,11 +946,7 @@ export default function StreetWalk({
     touchKeys.current.clear();
     setMode(next);
     settings.current = { ...settings.current, mode: next };
-    setHint(
-      next === 'observe'
-        ? '拖动画面或使用右摇杆；点击「开始日常」观察他们的生活'
-        : 'WASD / 方向键在街景中行走；地图可选择远处目的地，路线仍在街景中显示',
-    );
+    setHint('');
     stage.current?.focus({ preventScroll: true });
   }
   function recenter() {
@@ -972,6 +1003,45 @@ export default function StreetWalk({
   }
   function enterInterior(home: keyof typeof FATE_HOMES) {
     if (
+      isFormalSite(home) &&
+      !(home === 'emiya' && settings.current.active === 'shirou') &&
+      settings.current.mode === 'control'
+    ) {
+      const actor = actors.current.find(
+        (candidate) => candidate.id === settings.current.active,
+      )!;
+      if (
+        !daily.enterHouse(
+          {
+            actor: actor.id as HouseActorId,
+            point: { x: actor.x, y: actor.y },
+            scene,
+            zoom: { ...zoomLevels },
+            camera: { ...camera.current },
+            manual: manualCamera.current ? { ...manualCamera.current } : null,
+          },
+          home,
+        )
+      ) {
+        setHint(`请先走到${FATE_HOMES[home].name}门前。`);
+        return;
+      }
+      journey.current = null;
+      setJourneyLabel(null);
+      setRouteNotice('');
+      keys.current.clear();
+      touchKeys.current.clear();
+      indoorPath.current = [];
+      pointer.current = null;
+      setAtlasOpen(false);
+      setSelectedPlace(null);
+      setLifePanel(false);
+      dailyActions.current.emiyaActive = true;
+      settings.current = { ...settings.current, interior: true };
+      setInteriorView(home);
+      return;
+    }
+    if (
       home === 'emiya' &&
       settings.current.active === 'shirou' &&
       settings.current.mode === 'control'
@@ -1025,8 +1095,51 @@ export default function StreetWalk({
     setInteriorView(home);
     setHint(`已进入${FATE_HOMES[home].name}，可在室内沿走廊移动。`);
   }
+  function enterPublicInterior(site: HouseSiteId) {
+    const actor = actors.current.find(
+      (candidate) => candidate.id === settings.current.active,
+    );
+    if (
+      !actor ||
+      !isPartner(actor.id) ||
+      settings.current.mode !== 'control' ||
+      !isFormalPublicSite(site) ||
+      !daily.enterHouse(
+        {
+          actor: actor.id,
+          point: { x: actor.x, y: actor.y },
+          scene,
+          zoom: { ...zoomLevels },
+          camera: { ...camera.current },
+          manual: manualCamera.current ? { ...manualCamera.current } : null,
+        },
+        site,
+      )
+    ) {
+      setPublicNotice('先控制一位居民，沿街走到门口。');
+      return;
+    }
+    journey.current = null;
+    setJourneyLabel(null);
+    setRouteNotice('');
+    keys.current.clear();
+    touchKeys.current.clear();
+    indoorPath.current = [];
+    pointer.current = null;
+    setAtlasOpen(false);
+    setSelectedPlace(null);
+    setLifePanel(false);
+    dailyActions.current.emiyaActive = true;
+    settings.current = { ...settings.current, interior: true };
+    setInteriorView(site);
+  }
   function leaveInterior() {
-    if (daily.emiya) {
+    if (daily.house) {
+      const street = daily.leaveHouse();
+      if (!street) return;
+      restoreEmiyaCamera(street);
+      dailyActions.current.emiyaActive = false;
+    } else if (daily.emiya) {
       const street = daily.leaveEmiya();
       if (street) restoreEmiyaCamera(street);
       dailyActions.current.emiyaActive = false;
@@ -1071,6 +1184,14 @@ export default function StreetWalk({
       const home = nearbyHomeEntrance(actor);
       if (home) {
         enterInterior(home);
+        return;
+      }
+      const site = DISTRICT_LANDMARKS.find(
+        (place) =>
+          isFormalPublicSite(place.id) && nearFormalEntrance(actor, place.id),
+      );
+      if (site && isFormalPublicSite(site.id)) {
+        enterPublicInterior(site.id);
         return;
       }
     }
@@ -1370,7 +1491,7 @@ export default function StreetWalk({
   const encounter = liveEncounter(daily.view)?.dialogue;
   const speech = liveSpeech(daily.view);
   return (
-    <main className={styles.shell} inert={!!daily.emiya}>
+    <main className={styles.shell} inert={!!daily.emiya || !!daily.house}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="返回世界">
           <span className={styles.wordmark}>
@@ -1384,7 +1505,9 @@ export default function StreetWalk({
             {interiorView
               ? interiorView === 'directory'
                 ? '冬木 · 住宅'
-                : FATE_HOMES[interiorView].name
+                : isFormalSite(interiorView)
+                  ? FORMAL_HOUSE_PLANS[interiorView].name
+                  : FATE_HOMES[interiorView].name
               : location}
           </span>
           <small>{lifePeriod(daily.view.minutes)}</small>
@@ -1602,6 +1725,40 @@ export default function StreetWalk({
                   >
                     <House size={14} />
                     {FATE_HOMES[entrance.home].name.split(' · ')[0]}
+                    <small>入口</small>
+                  </button>
+                ))}
+              {ready &&
+                scene === 'street' &&
+                DISTRICT_LANDMARKS.filter((place) =>
+                  isFormalPublicSite(place.id),
+                ).map((place) => (
+                  <button
+                    key={`public-door-${place.id}`}
+                    type="button"
+                    className={styles.homeEntrance}
+                    style={{
+                      left: place.x * STREET_SCENE_SCALE,
+                      top: place.y * STREET_SCENE_SCALE,
+                    }}
+                    aria-label={`${place.name} · 入口`}
+                    data-building={place.id}
+                    onClick={() => {
+                      const actor = actors.current.find(
+                        (person) => person.id === settings.current.active,
+                      );
+                      if (
+                        actor &&
+                        settings.current.mode === 'control' &&
+                        isFormalPublicSite(place.id) &&
+                        nearFormalEntrance(actor, place.id)
+                      )
+                        enterPublicInterior(place.id);
+                      else selectPlace(place);
+                    }}
+                  >
+                    <MapPin size={14} />
+                    {place.name}
                     <small>入口</small>
                   </button>
                 ))}
@@ -1893,6 +2050,11 @@ export default function StreetWalk({
               onWalk={walkToPlace}
               onTeleport={teleportToPlace}
               onPublicAction={doPublicAction}
+              onEnterBuilding={
+                isFormalPublicSite(selectedPlace.id)
+                  ? () => enterPublicInterior(selectedPlace.id as HouseSiteId)
+                  : undefined
+              }
               activity={
                 selectedPlace.id === 'cafe' || selectedPlace.id === 'park' ? (
                   <StreetOutingPanel
@@ -1933,40 +2095,43 @@ export default function StreetWalk({
               onClose={() => setSelectedPlace(null)}
             />
           )}
-          {interiorView && !daily.emiya && (
-            <div
-              ref={interiorSurface}
-              className={interiorStyles.surface}
-              tabIndex={-1}
-            >
-              <FateInterior
-                view={interiorView}
-                life={daily.view}
-                controlled={mode === 'control' ? active : null}
-                running={daily.running}
-                onVisit={visitInterior}
-                onReturn={leaveInterior}
-                onTalk={talkInside}
-                onStreet={(id) => {
-                  leaveInterior();
-                  if (settings.current.mode === 'control') switchMode();
-                  choose(id);
-                }}
-                indoor={daily.view.indoor}
-                sprite={current}
-                moving={indoorMoving}
-                onWalkTo={walkInside}
-                onDirection={indoorDirection}
-                onCare={(action) => {
-                  keys.current.clear();
-                  touchKeys.current.clear();
-                  indoorPath.current = [];
-                  setIndoorMoving(false);
-                  return daily.homeCare(action);
-                }}
-              />
-            </div>
-          )}
+          {interiorView &&
+            !isFormalPublicSite(interiorView) &&
+            !daily.emiya &&
+            !daily.house && (
+              <div
+                ref={interiorSurface}
+                className={interiorStyles.surface}
+                tabIndex={-1}
+              >
+                <FateInterior
+                  view={interiorView}
+                  life={daily.view}
+                  controlled={mode === 'control' ? active : null}
+                  running={daily.running}
+                  onVisit={visitInterior}
+                  onReturn={leaveInterior}
+                  onTalk={talkInside}
+                  onStreet={(id) => {
+                    leaveInterior();
+                    if (settings.current.mode === 'control') switchMode();
+                    choose(id);
+                  }}
+                  indoor={daily.view.indoor}
+                  sprite={current}
+                  moving={indoorMoving}
+                  onWalkTo={walkInside}
+                  onDirection={indoorDirection}
+                  onCare={(action) => {
+                    keys.current.clear();
+                    touchKeys.current.clear();
+                    indoorPath.current = [];
+                    setIndoorMoving(false);
+                    return daily.homeCare(action);
+                  }}
+                />
+              </div>
+            )}
         </div>
         {atlasOpen && scene === 'map' && !interiorView ? (
           <DistrictAtlas
@@ -2081,35 +2246,17 @@ export default function StreetWalk({
                 操作说明
               </summary>
               <div>
-                <p>默认旁观自主生活，选择人物只跟随镜头</p>
-                <p>「地图」查看冬木市两岸道路；选地点后可沿桥和街道步行前往</p>
-                <p>选地点后可直接带当前人物前往；WASD / 方向键可随时改走向</p>
                 <p>
-                  街区是一张连续场景；镜头会跟随人物，经过路口和桥梁时不会切换画面
+                  进入角色后，用 WASD／方向键或点地面行走；地图可点选目的地。
                 </p>
                 <p>
-                  拖动画面可查看其他地区，控制人物时也能拖动；开始行走或点定位恢复跟随
+                  拖动查看，滚轮／双指缩放；定位按钮回到人物，倍率按钮恢复
+                  100%。
                 </p>
-                <p>
-                  右上角 ＋ /
-                  −、滚轮或双指：缩放；定位按钮只回到人物，倍率按钮恢复 100%
-                </p>
-                <p>
-                  街区可调 5%—1000%，地图可调 25%—2000%；两种视图分别保留倍率
-                </p>
-                <p className={styles.helpLabel}>手柄 · 连接后按任意按钮</p>
-                <p>左摇杆 / 十字键：走动</p>
-                <p>LB / RB（L1 / R1）：切换人物</p>
-                <p>Y（△）：切换自由观察</p>
-                <p>右摇杆：自由观察时移动镜头</p>
-                <p>Menu / Options：镜头回到人物</p>
-                <p>E / A（×）：与附近可交谈人物交谈；住宅门前可直接进屋</p>
-                <p>B（○）/ Esc：关闭当前面板；沿路行走时停止</p>
-                <p>
-                  点击「开始日常」观察二十一位 Fate 人物自主行动。连接 DeepSeek
-                  并开启「AI
-                  自主交谈」也会启动日常；相遇的两个人会自由接话，显示在旁听栏里。进入角色可主动干预。离开页面后日常暂停。
-                </p>
+                <p>E 交互，Esc 关闭面板或停步。</p>
+                <p className={styles.helpLabel}>手柄</p>
+                <p>左摇杆走动，右摇杆查看；LB/RB 切换人物，Y 切换观察。</p>
+                <p>A 交互，B 关闭或停步，Menu 回到人物。</p>
               </div>
             </details>
           </div>
@@ -2142,6 +2289,20 @@ export default function StreetWalk({
             }
             onSave={daily.saveEmiya}
             onExit={leaveInterior}
+          />,
+          document.body,
+        )}
+      {daily.house &&
+        createPortal(
+          <FateHouseGame
+            session={daily.house}
+            suspended={suspended || fate.storageBlocked}
+            notice={fate.storageNotice}
+            onSave={daily.saveHouse}
+            onExit={leaveInterior}
+            onTalk={daily.talkHouse}
+            onCare={daily.careHouse}
+            onPublic={daily.publicHouse}
           />,
           document.body,
         )}

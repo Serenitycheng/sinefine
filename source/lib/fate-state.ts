@@ -11,6 +11,7 @@ import { parseDailyLife, type DailyLife } from './fate-life';
 import { reviseSocial } from './fate-social';
 import { storedDialogueTurns, type DialogueTurn } from './fate-dialogue';
 import { parseEmiyaGameSave, type EmiyaGameSave } from './fate-emiya-game';
+import { parseHouseGameSave, type HouseGameSave } from './fate-house-game';
 export type Exchange = {
   turns?: DialogueTurn[];
   waverStage?: WaverStage;
@@ -23,10 +24,11 @@ export type Exchange = {
   createdAt: string;
 };
 export type FateSave = FateSettings & {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   history: Exchange[];
   life?: DailyLife;
   emiya?: EmiyaGameSave;
+  house?: HouseGameSave;
 };
 export const FATE_STORAGE_KEY = 'sine-fine-fate-v1';
 export function emptyFateSave(): FateSave {
@@ -42,9 +44,10 @@ export function parseFateSave(input: unknown): FateSave {
   if (!input || typeof input !== 'object') throw new Error('存档格式不正确');
   const x = input as Record<string, unknown>;
   if (
-    (x.version !== 1 && x.version !== 2) ||
-    (x.version === 1 && x.emiya !== undefined) ||
-    (x.version === 2 && (x.emiya === undefined || x.life === undefined)) ||
+    ![1, 2, 3].includes(x.version as number) ||
+    (x.version === 1 && (x.emiya !== undefined || x.house !== undefined)) ||
+    (x.version === 2 && (x.emiya === undefined || x.life === undefined || x.house !== undefined)) ||
+    (x.version === 3 && (x.house === undefined || x.life === undefined)) ||
     typeof x.worldNote !== 'string' ||
     x.worldNote.length > 2000 ||
     !Array.isArray(x.history) ||
@@ -89,14 +92,16 @@ export function parseFateSave(input: unknown): FateSave {
     };
   });
   const life = x.life === undefined ? undefined : parseDailyLife(x.life);
+  const emiya = x.emiya === undefined ? undefined : parseEmiyaGameSave(x.emiya, life!);
+  const house = x.house === undefined ? undefined : parseHouseGameSave(x.house, life!);
+  if (emiya?.active && house?.active) throw new Error('只能控制一处室内场景，原存档已保留。');
   return {
-    version: x.version as 1 | 2,
+    version: x.version as 1 | 2 | 3,
     ...parseFateSettings(x as FateSettings),
     history,
     ...(life ? { life } : {}),
-    ...(x.emiya === undefined
-      ? {}
-      : { emiya: parseEmiyaGameSave(x.emiya, life!) }),
+    ...(emiya ? { emiya } : {}),
+    ...(house ? { house } : {}),
   };
 }
 export function updateFateSettings(

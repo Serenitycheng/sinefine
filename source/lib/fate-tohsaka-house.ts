@@ -431,10 +431,11 @@ export function houseCamera(
 export function houseZoom(
   zoom: number,
   size: { width: number; height: number },
+  bodyHeight = 330,
 ) {
   const fit = Math.min(size.width / 1600, size.height / 900);
   return Math.max(
     1,
-    Math.min(zoom, 2.5, fit > 0 ? (size.height - 30) / (330 * fit) : 1),
+    Math.min(zoom, 2.5, fit > 0 ? (size.height - 30) / (Math.max(330, bodyHeight) * fit) : 1),
   );
 }

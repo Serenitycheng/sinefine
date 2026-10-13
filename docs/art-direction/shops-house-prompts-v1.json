@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "date": "2026-10-12",
+  "setting": "Six project-original/adapted neighborhood shops; no canonical floor-plan claim.",
+  "generator": "image_gen",
+  "prompts": [
+    {
+      "id": "shops",
+      "room": "备货与整理间",
+      "version": 1,
+      "file": "source/public/fate/interior-art/shops-stock-soft-v1.png",
+      "reference": "D:/projects/sinefine/source/.verification/art-review/4e48666a82d5d371a521cbc765172012.jpg",
+      "transparent_background": false,
+      "prompt": "Create ONE finished original wide 16:9 opaque 2.5D game background illustration, around 1672 x 941. The attached image is a STYLE AND MATERIAL reference of the approved existing main room, not an edit target; do not redraw or copy its entire layout. Soft hand-painted Japanese animation background with blended edges, gentle warm daylight balanced by cool foliage shadows, moderate contrast, no glaring highlights, no harsh orange lighting, no photographic crispness or heavy blur. Fixed human-eye-height exploration view, very gently looking down so the walkable floor and all chair legs are visible; calm perspective, no fisheye. Full-bleed landscape scene, no border, no UI, no text, no logos, NO PEOPLE. This is a project-original layout, not a claim to reproduce a Fate canon room. Furniture stays on the side walls, roughly within left 0–30% and right 68–100% of width; show a broad uninterrupted center floor corridor from the rear threshold around x=46%,y=44% to the entire foreground. The lowest 15% is uncluttered floor. The rear central doorway must be visibly open, have a wooden frame, a distinct walkable threshold, and a little of the existing shop beyond. Keep no central columns, no furniture blocking that door. Render clear chair seat surfaces, grounded chair feet and wall-side desks so a game character can later be locally registered. Preserve true drawable details and soft light, not a desaturated wash.\n\nAn adjacent tidy goods preparation room of the same small Miyama wooden grocery. Preserve the reference's walnut shelving, cream plaster, muted green enamel lamp and simple local groceries. Left-wall shelves and crates hold paper bags, baskets and everyday items. A narrow sorting desk is against the right wall. A real wood chair with a subdued sage cushion sits at about 72% width and 65% height, facing to the right toward that desk; its seat is clearly visible, ordinary chair height. A wide central rear opening shows a little of the original shop. Do not create piles in the central aisle.",
+      "status": "integrated-local",
+      "original": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-b2e17bc3-3650-456e-a350-b4240a55cf14.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2404457,
+        "sha256": "7db563efeafc283e2f5038735a8412d1fa62f7f639cb12c78c73a470fa3b0f68"
+      },
+      "reusedMainPainting": {
+        "file": "source/public/fate/interior-art/shops-main-soft-v1.png",
+        "width": 1672,
+        "height": 941,
+        "bytes": 2509066,
+        "sha256": "90108fbe2d64717acdf2b2513fba98e8eeedf6b4137b491eefeb39041e11bac0"
+      },
+      "referenceUse": "Compressed reference derived from this unchanged approved main painting; no historical screenshots imported."
+    },
+    {
+      "id": "miyama-florist",
+      "room": "花艺工作间",
+      "version": 1,
+      "file": "source/public/fate/interior-art/miyama-florist-work-soft-v1.png",
+      "reference": "D:/projects/sinefine/source/.verification/art-review/10f06e48699fddda4e46fe578147f5f3.jpg",
+      "transparent_background": false,
+      "prompt": "Create ONE finished original wide 16:9 opaque 2.5D game background illustration, around 1672 x 941. The attached image is a STYLE AND MATERIAL reference of the approved existing main room, not an edit target; do not redraw or copy its entire layout. Soft hand-painted Japanese animation background with blended edges, gentle warm daylight balanced by cool foliage shadows, moderate contrast, no glaring highlights, no harsh orange lighting, no photographic crispness or heavy blur. Fixed human-eye-height exploration view, very gently looking down so the walkable floor and all chair legs are visible; calm perspective, no fisheye. Full-bleed landscape scene, no border, no UI, no text, no logos, NO PEOPLE. This is a project-original layout, not a claim to reproduce a Fate canon room. Furniture stays on the side walls, roughly within left 0–30% and right 68–100% of width; show a broad uninterrupted center floor corridor from the rear threshold around x=46%,y=44% to the entire foreground. The lowest 15% is uncluttered floor. The rear central doorway must be visibly open, have a wooden frame, a distinct walkable threshold, and a little of the existing shop beyond. Keep no central columns, no furniture blocking that door. Render clear chair seat surfaces, grounded chair feet and wall-side desks so a game character can later be locally registered. Preserve true drawable details and soft light, not a desaturated wash.\n\nThe florist's adjoining floral workroom, matching the original's cream plaster, oak cabinetry, pale gardenias, blue hydrangeas, seasonal cut flowers and cooler green tree shadows. Potting workbench and a small sink along the left wall, neatly stored clay pots and kraft paper, a narrow ribbon-and-flower desk along the right wall. A plain green-cushioned wooden chair at about 72% width and 65% height faces right toward the small desk, with its seat clearly visible. Keep flowers botanically distinct; avoid neon saturated magenta or yellow. A broad rear central doorway connects to the existing flower shop.",
+      "status": "integrated-local",
+      "original": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-bc320b25-c758-4e8a-b6f1-0a557ebb02ee.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2690499,
+        "sha256": "7d567ac0c783d5f789098099f6aa89b03058c405d77863c35a9a03100071deec"
+      },
+      "reusedMainPainting": {
+        "file": "source/public/fate/interior-art/miyama-florist-main-soft-v1.png",
+        "width": 1672,
+        "height": 941,
+        "bytes": 2716320,
+        "sha256": "a2cca080acef18774a2e075bf5ed8f895f3ebea870fb1e43ef4b6512b914f0d1"
+      },
+      "referenceUse": "Compressed reference derived from this unchanged approved main painting; no historical screenshots imported."
+    },
+    {
+      "id": "old-bookshop",
+      "room": "阅读室",
+      "version": 1,
+      "file": "source/public/fate/interior-art/old-bookshop-reading-soft-v1.png",
+      "reference": "D:/projects/sinefine/source/.verification/art-review/d1bf2e8f3f5bb8a1dd30a5f330eb0d98.jpg",
+      "transparent_background": false,
+      "prompt": "Create ONE finished original wide 16:9 opaque 2.5D game background illustration, around 1672 x 941. The attached image is a STYLE AND MATERIAL reference of the approved existing main room, not an edit target; do not redraw or copy its entire layout. Soft hand-painted Japanese animation background with blended edges, gentle warm daylight balanced by cool foliage shadows, moderate contrast, no glaring highlights, no harsh orange lighting, no photographic crispness or heavy blur. Fixed human-eye-height exploration view, very gently looking down so the walkable floor and all chair legs are visible; calm perspective, no fisheye. Full-bleed landscape scene, no border, no UI, no text, no logos, NO PEOPLE. This is a project-original layout, not a claim to reproduce a Fate canon room. Furniture stays on the side walls, roughly within left 0–30% and right 68–100% of width; show a broad uninterrupted center floor corridor from the rear threshold around x=46%,y=44% to the entire foreground. The lowest 15% is uncluttered floor. The rear central doorway must be visibly open, have a wooden frame, a distinct walkable threshold, and a little of the existing shop beyond. Keep no central columns, no furniture blocking that door. Render clear chair seat surfaces, grounded chair feet and wall-side desks so a game character can later be locally registered. Preserve true drawable details and soft light, not a desaturated wash.\n\nAn adjoining small Japanese secondhand bookshop reading room. Match reference walnut bookcases, warm ivory plaster, muted green upholstery, brass task lamps, and softly lit zelkova foliage outside. Tall bookcases against side walls only; no center island. Two actual wood-framed muted green reading chairs: left chair seat at about 25% width and 64% height facing left toward a small table by the left window; right chair seat at 75% width and 65% height facing right toward a small table by the right window. Leave the entire middle aisle clear, including under the large rear central opening back to the shop. Open books only as unlettered shapes, no legible writing.",
+      "status": "integrated-local",
+      "original": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-758eb017-b90d-464d-ac4b-50bcd4134252.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2859182,
+        "sha256": "3e6c6e191333b0f96ba3f5fae996120264fbacdbd03531296cfad94d7365a5ca"
+      },
+      "reusedMainPainting": {
+        "file": "source/public/fate/interior-art/old-bookshop-main-soft-v1.png",
+        "width": 1672,
+        "height": 941,
+        "bytes": 2752215,
+        "sha256": "ccd525f1583d329df6e9ffe7d18acad541131dcb4887b94681ac0b7b120bc1b7"
+      },
+      "referenceUse": "Compressed reference derived from this unchanged approved main painting; no historical screenshots imported."
+    },
+    {
+      "id": "miyama-bakery",
+      "room": "烘焙准备间",
+      "version": 1,
+      "file": "source/public/fate/interior-art/miyama-bakery-prep-soft-v1.png",
+      "reference": "D:/projects/sinefine/source/.verification/art-review/355cfe84421b3ec7419d37fe0fd13bba.jpg",
+      "transparent_background": false,
+      "prompt": "Create ONE finished original wide 16:9 opaque 2.5D game background illustration, around 1672 x 941. The attached image is a STYLE AND MATERIAL reference of the approved existing main room, not an edit target; do not redraw or copy its entire layout. Soft hand-painted Japanese animation background with blended edges, gentle warm daylight balanced by cool foliage shadows, moderate contrast, no glaring highlights, no harsh orange lighting, no photographic crispness or heavy blur. Fixed human-eye-height exploration view, very gently looking down so the walkable floor and all chair legs are visible; calm perspective, no fisheye. Full-bleed landscape scene, no border, no UI, no text, no logos, NO PEOPLE. This is a project-original layout, not a claim to reproduce a Fate canon room. Furniture stays on the side walls, roughly within left 0–30% and right 68–100% of width; show a broad uninterrupted center floor corridor from the rear threshold around x=46%,y=44% to the entire foreground. The lowest 15% is uncluttered floor. The rear central doorway must be visibly open, have a wooden frame, a distinct walkable threshold, and a little of the existing shop beyond. Keep no central columns, no furniture blocking that door. Render clear chair seat surfaces, grounded chair feet and wall-side desks so a game character can later be locally registered. Preserve true drawable details and soft light, not a desaturated wash.\n\nThe bakery's adjoining bread preparation room, same oak joinery, cream tiled wall, soft flour-white surfaces, brass/warm wood accents. Oven and trays along far left wall, a narrow kneading counter with mixing bowls along the left side. Right-wall shelves hold baskets and covered clean baking trays, with a small preparation desk and a simple wood chair, pale beige cushion, visible seat at 72% width and 65% height facing right. A broad rear central doorway leads back to the bread shop. No hot appliance or table in the walking aisle. Flour dust is subtle and the room is clean and believable.",
+      "status": "integrated-local",
+      "original": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-7710958d-e048-4c64-9a27-27f3157b634e.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2350830,
+        "sha256": "6a4b45257978e889e59a37480f7ab6fe0b3e94242cd0037f87d3f7071bcedf5d"
+      },
+      "reusedMainPainting": {
+        "file": "source/public/fate/interior-art/miyama-bakery-main-soft-v1.png",
+        "width": 1672,
+        "height": 941,
+        "bytes": 2305135,
+        "sha256": "0f655b032257c0f40118c8fe3742bd96a1588011823c7d6c6f5d3596653f409f"
+      },
+      "referenceUse": "Compressed reference derived from this unchanged approved main painting; no historical screenshots imported."
+    },
+    {
+      "id": "old-repair",
+      "room": "维修工作间",
+      "version": 1,
+      "file": "source/public/fate/interior-art/old-repair-work-soft-v1.png",
+      "reference": "D:/projects/sinefine/source/.verification/art-review/747f399732943da4698172c226b2180e.jpg",
+      "transparent_background": false,
+      "prompt": "Create ONE finished original wide 16:9 opaque 2.5D game background illustration, around 1672 x 941. The attached image is a STYLE AND MATERIAL reference of the approved existing main room, not an edit target; do not redraw or copy its entire layout. Soft hand-painted Japanese animation background with blended edges, gentle warm daylight balanced by cool foliage shadows, moderate contrast, no glaring highlights, no harsh orange lighting, no photographic crispness or heavy blur. Fixed human-eye-height exploration view, very gently looking down so the walkable floor and all chair legs are visible; calm perspective, no fisheye. Full-bleed landscape scene, no border, no UI, no text, no logos, NO PEOPLE. This is a project-original layout, not a claim to reproduce a Fate canon room. Furniture stays on the side walls, roughly within left 0–30% and right 68–100% of width; show a broad uninterrupted center floor corridor from the rear threshold around x=46%,y=44% to the entire foreground. The lowest 15% is uncluttered floor. The rear central doorway must be visibly open, have a wooden frame, a distinct walkable threshold, and a little of the existing shop beyond. Keep no central columns, no furniture blocking that door. Render clear chair seat surfaces, grounded chair feet and wall-side desks so a game character can later be locally registered. Preserve true drawable details and soft light, not a desaturated wash.\n\nAn adjoining nostalgic neighborhood repair workroom. Preserve reference olive-green metal drawers, dark warm wood, cream wall, old radios, small electric fans, copper wire and carefully arranged tools. Narrow tool workbench down the left wall; right-side cabinet and a small desk with one open repair manual, no readable text. A plain wood chair with subdued olive cushion has its visible seat at 72% width and 65% height and faces right toward the small desk. A broad central rear opening connects to the original repair shop. Avoid machinery or junk in the middle walking path; tools are safe, inactive and on shelves.",
+      "status": "integrated-local",
+      "original": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-a0a01250-5ec7-4840-b37f-e177edbcc199.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2713327,
+        "sha256": "f5764a7156446e5acb9efbfa51614b6e76091e9021390b416ae9130b3b95675e"
+      },
+      "reusedMainPainting": {
+        "file": "source/public/fate/interior-art/old-repair-main-soft-v1.png",
+        "width": 1672,
+        "height": 941,
+        "bytes": 2633867,
+        "sha256": "ef4bfb50501d2509892dc76851342ab63d0a1ebbd515d5e4c6f8de4c54685e6b"
+      },
+      "referenceUse": "Compressed reference derived from this unchanged approved main painting; no historical screenshots imported."
+    },
+    {
+      "id": "shinto-convenience",
+      "room": "店内休息间",
+      "version": 1,
+      "file": "source/public/fate/interior-art/shinto-convenience-rest-soft-v1.png",
+      "reference": "D:/projects/sinefine/source/.verification/art-review/8c22ff3231ed2b3068c356b60eaf2269.jpg",
+      "transparent_background": false,
+      "prompt": "Create ONE finished original wide 16:9 opaque 2.5D game background illustration, around 1672 x 941. The attached image is a STYLE AND MATERIAL reference of the approved existing main room, not an edit target; do not redraw or copy its entire layout. Soft hand-painted Japanese animation background with blended edges, gentle warm daylight balanced by cool foliage shadows, moderate contrast, no glaring highlights, no harsh orange lighting, no photographic crispness or heavy blur. Fixed human-eye-height exploration view, very gently looking down so the walkable floor and all chair legs are visible; calm perspective, no fisheye. Full-bleed landscape scene, no border, no UI, no text, no logos, NO PEOPLE. This is a project-original layout, not a claim to reproduce a Fate canon room. Furniture stays on the side walls, roughly within left 0–30% and right 68–100% of width; show a broad uninterrupted center floor corridor from the rear threshold around x=46%,y=44% to the entire foreground. The lowest 15% is uncluttered floor. The rear central doorway must be visibly open, have a wooden frame, a distinct walkable threshold, and a little of the existing shop beyond. Keep no central columns, no furniture blocking that door. Render clear chair seat surfaces, grounded chair feet and wall-side desks so a game character can later be locally registered. Preserve true drawable details and soft light, not a desaturated wash.\n\nAn adjoining compact rest room of the Japanese convenience store. Carry over original cool cream wall, pale gray tiled floor, understated light wood, muted sage trim, filtered daylight and cool tree shadows; avoid changing it into a dark antique cafe. Low shelves and a kettle counter along the left wall, a small right-window eating/reading table with a basic wood chair and muted sage seat at 72% width and 65% height facing right toward the table, ordinary chair height. Broad rear central doorway visually connects to the convenience-store sales floor. One cup, a plain paper lunch bag and an unlettered magazine, no real brand labels or legible signs.",
+      "status": "integrated-local",
+      "original": "C:\\Users\\Tracy\\.codex\\generated_images\\01a11e5b-3d76-7e30-802e-3b5477aeb6b2\\exec-021cb9c1-f2c5-4585-bba8-5fe4bb50328c.png",
+      "native": {
+        "width": 1672,
+        "height": 941,
+        "bytes": 2042843,
+        "sha256": "bf3a4673411433407d795ddfd4d62eca3070680ec416a2224616504433d85bd9"
+      },
+      "reusedMainPainting": {
+        "file": "source/public/fate/interior-art/shinto-convenience-main-soft-v1.png",
+        "width": 1672,
+        "height": 941,
+        "bytes": 2420991,
+        "sha256": "f033e7e6427cac8c21702e57d928e95a7e2cb404ad1dc8c3c809ec060419d47c"
+      },
+      "referenceUse": "Compressed reference derived from this unchanged approved main painting; no historical screenshots imported."
+    }
+  ],
+  "reusedCharacterFiles": [
+    {
+      "file": "source/public/fate/character-art/shirou-school-soft-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1626647,
+      "sha256": "4ee624d26ce143106694f57deca31dabef3a01d81ca2b1b6a620f1acd0a34e41"
+    },
+    {
+      "file": "source/public/fate/character-art/rin-school-soft-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1836884,
+      "sha256": "6022637765c53e07a4143da3395a6747cc415399bbba27f12736609f530e1e2f"
+    },
+    {
+      "file": "source/public/fate/character-art/sakura-visit-soft-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1961957,
+      "sha256": "df7c55ad9c1e71eb8e930f014d0e3ba0ab6e105e69eb31c3d9f13c9c560ae1ca"
+    },
+    {
+      "file": "source/public/fate/character-art/matou-seated-soft-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1899835,
+      "sha256": "37a5691bbc2a4c409de8f0d49f5665f1c4e55c231a6245d2bf13093f5b3b27cb"
+    },
+    {
+      "file": "source/public/fate/character-art/waver-adult-house-soft-v1.png",
+      "width": 1774,
+      "height": 887,
+      "bytes": 754362,
+      "sha256": "4a3d4bd9e963aa562bd59684fbdd19915f52217bb8b812a0b1552bf0243b5f43"
+    },
+    {
+      "file": "source/public/fate/character-art/waver-seated-soft-v1.png",
+      "width": 1254,
+      "height": 1254,
+      "bytes": 998894,
+      "sha256": "5f4c9e912cb8a48bf8d6a2dc3270138abc35dbb1cb34585323ec3ec7ac9b82a8"
+    },
+    {
+      "file": "source/public/fate/character-art/kiritsugu-house-soft-v1.png",
+      "width": 1024,
+      "height": 1536,
+      "bytes": 1792979,
+      "sha256": "20faed821ad25f435a7ee9240084a58fc5e3a522d083610ff948d9d15b0e79b3"
+    },
+    {
+      "file": "source/public/fate/character-art/einzbern-seated-soft-v1.png",
+      "width": 1536,
+      "height": 1024,
+      "bytes": 1847596,
+      "sha256": "b8635a9b6c444db68be33738c858fb94be8c9cb3b73246c77fa1edbb5e9ffd91"
+    }
+  ],
+  "scope": {
+    "buildings": 6,
+    "areas": 12,
+    "interactions": 54,
+    "seatedActions": 9,
+    "visitorIdentities": [
+      "shirou",
+      "rin",
+      "sakura",
+      "waver",
+      "kiritsugu"
+    ],
+    "canonicalFloorPlan": false,
+    "newCharacterIdentity": false
+  },
+  "calibration": "Furniture-safe approach points, painted hip registration, actor-specific native crops and action-specific furniture depth. Preview only; precise foot locking and hand contact remain for later animation work."
+}

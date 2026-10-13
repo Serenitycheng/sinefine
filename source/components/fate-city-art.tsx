@@ -65,7 +65,7 @@ import {
   cityArtMapJourney,
   type CityArtDestinationRequest,
 } from '@/lib/fate-city-art-destinations';
-import { CHARACTER_ART, CHARACTER_ART_ACTIONS } from '@/lib/fate-character-art';
+import { CHARACTER_ART } from '@/lib/fate-character-art';
 import {
   CITY_INTERIOR_IDS,
   CITY_INTERIOR_SCENES,
@@ -157,7 +157,7 @@ export default function FateCityArt() {
     [size, setSize] = useState({ width: 1000, height: 650 }),
     [pan, setPan] = useState({ x: 0, y: 0 });
   const [following, setFollowing] = useState(true),
-    [message, setMessage] = useState('选择门口沿路前往，也可以直接行走。');
+    [message, setMessage] = useState('');
   const [browsing, setBrowsing] = useState(false);
   const [opened, setOpened] = useState<ArtPlace | null>(null);
   const [interior, setInterior] = useState<CityInteriorScene | null>(null);
@@ -368,11 +368,7 @@ export default function FateCityArt() {
     setView({ point, direction: nextDirection, frame: view.frame });
     setMode(next);
     setScene(nextScene);
-    setMessage(
-      nextScene === scene
-        ? `切到「${nextCamera.label}」，人物位置与路线保持。`
-        : `已走进${CITY_ART_SCENES[nextScene].name}，保留取景和站位。`,
-    );
+    setMessage('');
     const duration = window.matchMedia('(prefers-reduced-motion: reduce)')
       .matches
       ? 1
@@ -620,7 +616,7 @@ export default function FateCityArt() {
     setOpened(null);
     setTab('street');
     setRequestedScene(nextScene);
-    setMessage(`预览${CITY_ART_SCENES[nextScene].name}，不改变游戏存档。`);
+    setMessage('');
   };
   useEffect(() => {
     const element = surface.current;
@@ -1018,7 +1014,7 @@ export default function FateCityArt() {
     stop();
     setInterior(null);
     setOpened(null);
-    setMessage('已回到原来的门口，可以继续沿街行走。');
+    setMessage('');
     requestAnimationFrame(() =>
       surface.current?.focus({ preventScroll: true }),
     );
@@ -1371,26 +1367,17 @@ export default function FateCityArt() {
           />
         ) : tab === 'catalog' ? (
           <section className={styles.catalog}>
-            <div>
-              <span className={styles.eyebrow}>
-                三个制作部分 · 共用融合版画风
-              </span>
-              <h2>人物、街区与室内一起成形</h2>
-              <p>
-                全城街道已按地图扩展；人物和室内继续分别制作。已有生活、记忆和存档继续保留。
-              </p>
-            </div>
+            <h2>人物与地点</h2>
             <section>
-              <h3>全角色 · 2.5D 形象与动作</h3>
-              <p>{CHARACTER_ART_ACTIONS.join(' · ')}</p>
+              <h3>人物</h3>
               <div className={styles.cast}>
                 {CHARACTER_ART.map((actor) => (
                   <article key={actor.id}>
                     <strong>{actor.name}</strong>
                     <span>
                       {actor.stage === 'study-ready'
-                        ? '四方向动作样板已接入'
-                        : '形象与动作待精修'}
+                        ? '可用'
+                        : '制作中'}
                     </span>
                     {actor.variants.length > 1 && (
                       <small>{actor.variants.join(' / ')}</small>
@@ -1400,18 +1387,13 @@ export default function FateCityArt() {
               </div>
             </section>
             <section>
-              <h3>建筑主室内 · 逐处绘制</h3>
-              <p>
-                点击目的地，先沿街走到真实门口再进屋。每处主要房间已绘制；其他房间与居民日常继续制作。
-              </p>
+              <h3>地点</h3>
               <div className={styles.interiors}>
                 {CITY_INTERIOR_IDS.map((id) => CITY_INTERIOR_SCENES[id]).map(
                   (home) => (
                     <article key={home.id}>
                       <h4>{home.name}</h4>
-                      <p>{home.description}</p>
                       <span>{home.room}</span>
-                      <small>{home.basis}</small>
                       <button
                         type="button"
                         className={styles.primary}
@@ -1425,9 +1407,6 @@ export default function FateCityArt() {
                   ),
                 )}
               </div>
-              <p className={styles.note}>
-                河岸公园保留室外。原作未明确的室内布局、改编居所与原创店铺均有标注。
-              </p>
             </section>
           </section>
         ) : (
@@ -1656,12 +1635,10 @@ export default function FateCityArt() {
               >
                 <X size={21} />
               </button>
-              <span className={styles.eyebrow}>已走到门前</span>
               <h2>{opened.name}</h2>
-              <p>{opened.note}</p>
+              {opened.id === 'park' && <p>{opened.note}</p>}
               {cityInteriorScene(opened.id) && (
                 <>
-                  <p>{cityInteriorScene(opened.id)!.description}</p>
                   <button
                     data-enter-interior
                     type="button"
@@ -1682,7 +1659,7 @@ export default function FateCityArt() {
           </div>
         )}
       </div>
-      <footer className={styles.footer} inert={Boolean(opened)}>
+      <footer className={styles.footer} hidden={Boolean(opened)}>
         {tab === 'street' && (
           <div className={styles.quickPlaces}>
             {places.map((place) => (
@@ -1768,16 +1745,15 @@ export default function FateCityArt() {
                 ? message
                 : tab === 'map'
                   ? mapMessage
-                  : '制作覆盖所有角色、住宅与店面。'}
+                  : ''}
             </output>
           </p>
-          <span>
-            {tab === 'street'
-              ? `WASD 行走 · 点入口交互 · 滚轮／双指缩放 · Q/R 换取景 · E 交互 · Esc 停止 · M 地图${junctionChoices.length ? ' · 路口 1–4 选支路' : ''}`
-              : '美术预览不改变游戏进度'}
-          </span>
         </div>
-        <Link href="/fate/art-sample">原融合版样板</Link>
+        <details className={styles.controlsHelp}>
+          <summary>操作</summary>
+          <p>点道路或建筑沿路前往；WASD 行走，E 交互，Esc 停步。</p>
+          <p>拖动查看，滚轮或双指缩放；Q/R 换取景，F 跟随，M 地图。</p>
+        </details>
       </footer>
     </main>
   );

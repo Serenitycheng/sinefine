@@ -110,8 +110,8 @@ export async function configureBackground(request: Request) {
     )
       throw new CloudError('请先读取后台进度再操作。', 400);
     const backup = body.enabled ? parseFateBackup(body.backup) : null;
-    if (backup?.save.emiya?.active)
-      throw new CloudError('请先从卫宫宅走回街道，再开启后台日常。', 400);
+    if (backup?.save.emiya?.active || backup?.save.house?.active)
+      throw new CloudError('请先走回街道，再开启后台日常。', 400);
     if (backup && !databaseStrings(backup))
       throw new CloudError('存档含无效文字字符，请先修复后再开启后台。', 400);
     if (body.enabled) {

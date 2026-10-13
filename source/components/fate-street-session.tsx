@@ -38,13 +38,13 @@ export default function FateStreetSession() {
                 ? '云端代管中 · 每 30 分钟推进'
                 : background.suspended
                   ? '正在确认后台进度 · 本地暂歇'
-                  : '本地日常 · 离开页面后暂停'}
+                  : '本地日常'}
         </output>
         <button
-          disabled={save.emiya?.active}
+          disabled={save.emiya?.active || save.house?.active}
           title={
-            save.emiya?.active
-              ? '请先从庭院走回街道，再设置后台日常。'
+            save.emiya?.active || save.house?.active
+              ? '请先走回街道，再设置后台日常。'
               : undefined
           }
           onClick={() => setBackgroundOpen(true)}
