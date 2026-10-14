@@ -2,6 +2,7 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex, jsx-a11y/click-events-have-key-events -- The room surface provides keyboard walking and accessible alternatives for every destination. */
 
 import Image from 'next/image';
+import { runtimeArt } from '@/lib/fate-runtime-art';
 import Link from 'next/link';
 import {
   useEffect,
@@ -37,10 +38,9 @@ import {
 import { ART_SPRITE_FRAMES } from '@/lib/fate-art-sprite';
 import { ILLYA_ART_SPRITE } from '@/lib/fate-character-art';
 import {
-  EMIYA_REQUIRED_ART,
   EMIYA_LIFE_SPRITES,
   SHIROU_LIFE_SPRITES,
-  SHIROU_REQUIRED_ART,
+  emiyaRoomRequiredArt,
   emiyaActivityPose,
   emiyaHasPaperWindow,
   emiyaActorContact,
@@ -223,7 +223,14 @@ export default function FateEmiyaHouse({
   const [artStatus, setArtStatus] = useState<Record<string, 'ready' | 'error'>>(
     {},
   );
-  const requiredArt = life ? SHIROU_REQUIRED_ART : EMIYA_REQUIRED_ART;
+  const requiredArt = emiyaRoomRequiredArt(
+    view.player.room,
+    Boolean(life),
+    view.residentVisible && view.resident.room === view.player.room,
+    view.inhabitants
+      .filter((body) => body.room === view.player.room)
+      .map((body) => body.id),
+  );
   const load = requiredArt.some((url) => artStatus[url] === 'error')
     ? 'error'
     : requiredArt.every((url) => artStatus[url] === 'ready')
@@ -1280,12 +1287,13 @@ export default function FateEmiyaHouse({
         {requiredArt.map((url) => (
           <Image
             key={`${attempt}:${url}`}
-            src={url}
+            src={runtimeArt(url)}
             width={1}
             height={1}
             alt=""
             unoptimized
             loading="eager"
+            fetchPriority="high"
             aria-hidden="true"
             className={styles.preload}
             data-house-art={url}
@@ -1399,7 +1407,7 @@ export default function FateEmiyaHouse({
                     style={{
                       width: pose.frame.width * poseScale,
                       height: pose.frame.height * poseScale,
-                      backgroundImage: `url(${playerSheet.path})`,
+                      backgroundImage: `url(${runtimeArt(playerSheet.path)})`,
                       backgroundSize: `${playerSheet.width * poseScale}px ${playerSheet.height * poseScale}px`,
                       backgroundPosition: `${-pose.frame.x * poseScale}px ${-pose.frame.y * poseScale}px`,
                       transform: `translate(${-pose.frame.anchorX * poseScale}px,${-pose.frame.anchorY * poseScale}px)`,
@@ -1411,7 +1419,7 @@ export default function FateEmiyaHouse({
                     style={{
                       width: (playerFrame?.width ?? 256) * bodyScale,
                       height: (playerFrame?.height ?? 256) * bodyScale,
-                      backgroundImage: `url(${playerWalk ? playerWalk.sheet.path : ILLYA_ART_SPRITE})`,
+                      backgroundImage: `url(${runtimeArt(playerWalk ? playerWalk.sheet.path : ILLYA_ART_SPRITE)})`,
                       backgroundSize: playerFrame
                         ? `${playerWalk!.sheet.width * bodyScale}px ${playerWalk!.sheet.height * bodyScale}px`
                         : undefined,
@@ -1446,7 +1454,7 @@ export default function FateEmiyaHouse({
                       width: residentFrame.width * residentScale,
                       height: residentFrame.height * residentScale,
                       transform: `translate(${-residentWalk.anchorX * residentScale}px,${-residentFrame.anchorY * residentScale}px)${residentWalk.mirror ? ' scaleX(-1)' : ''}`,
-                      backgroundImage: `url(${residentWalk.sheet.path})`,
+                      backgroundImage: `url(${runtimeArt(residentWalk.sheet.path)})`,
                       backgroundSize: `${residentWalk.sheet.width * residentScale}px ${residentWalk.sheet.height * residentScale}px`,
                       backgroundPosition: `${-residentFrame.x * residentScale}px ${-residentFrame.y * residentScale}px`,
                     }}
@@ -1695,7 +1703,10 @@ export default function FateEmiyaHouse({
           <output aria-live="polite">{message}</output>
           <details className={base.controlsHelp}>
             <summary>操作</summary>
-            <p>点地面、门或家具沿路前往。WASD／方向键行走，E 交互，Esc 停步；滚轮或双指缩放。</p>
+            <p>
+              点地面、门或家具沿路前往。WASD／方向键行走，E 交互，Esc
+              停步；滚轮或双指缩放。
+            </p>
           </details>
           <div className={base.dpad} aria-label="室内方向控制">
             {inputs.map(({ label, x, y, icon: Icon }) => (

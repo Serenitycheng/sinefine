@@ -7,8 +7,8 @@
   },
   "scripts": {
     "test": "node scripts/run-tests.mjs",
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/build-runtime-art.mjs && next dev",
+    "build": "node scripts/build-runtime-art.mjs && next build",
     "start": "next start",
     "lint": "oxlint",
     "typecheck": "tsc --noEmit",

@@ -1,4 +1,5 @@
 import { fatePerson, type PartnerId } from '@/lib/fate-cast';
+import { runtimeArt } from '@/lib/fate-runtime-art';
 import { STREET_CAST } from '@/lib/fate-street-cast';
 import {
   interiorDepth,
@@ -38,7 +39,7 @@ export default function FateEmiyaResident({
         width: frame.width * scale,
         height: frame.height * scale,
         transform: `translate(${-(presentation?.mirror ? frame.width - frame.anchorX : frame.anchorX) * scale}px,${-frame.anchorY * scale}px)${presentation?.mirror ? ' scaleX(-1)' : ''}`,
-        backgroundImage: `url(${sheet!.path})`,
+        backgroundImage: `url(${runtimeArt(sheet!.path)})`,
         backgroundSize: `${sheet!.width * scale}px ${sheet!.height * scale}px`,
         backgroundPosition: `${-frame.x * scale}px ${-frame.y * scale}px`,
       }

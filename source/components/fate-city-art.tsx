@@ -65,7 +65,8 @@ import {
   cityArtMapJourney,
   type CityArtDestinationRequest,
 } from '@/lib/fate-city-art-destinations';
-import { CHARACTER_ART } from '@/lib/fate-character-art';
+import { CHARACTER_ART, ILLYA_ART_SPRITE } from '@/lib/fate-character-art';
+import { loadArtImages } from '@/lib/fate-art-loader';
 import {
   CITY_INTERIOR_IDS,
   CITY_INTERIOR_SCENES,
@@ -128,7 +129,7 @@ export default function FateCityArt() {
   const [requestedScene, setRequestedScene] = useState<CityArtScene | null>(
     null,
   );
-  const loadingImages = useRef(new Map<string, HTMLImageElement>());
+  const loadingImages = useRef(new Map<string, Promise<void>>());
   const mounted = useRef(true);
   const [outgoing, setOutgoing] = useState<{
     mode: CityArtMode;
@@ -232,8 +233,7 @@ export default function FateCityArt() {
     browsingRef.current = browsing;
   });
   useEffect(() => {
-    // Only decode this street's three views and neighboring street fronts.
-    // Loading every city painting at startup would use hundreds of MB.
+    let cancelled = false;
     const views = [
       ...CITY_ART_MODES.map((mode) => ({ scene, mode })),
       ...cityArtExits(scene).map((exit) => ({ scene: exit.scene, mode })),
@@ -241,11 +241,22 @@ export default function FateCityArt() {
         ? CITY_ART_MODES.map((mode) => ({ scene: requestedScene, mode }))
         : []),
     ];
-    for (const { scene: cameraScene, mode: cameraMode } of views) {
+    const loadView = (
+      cameraScene: CityArtScene,
+      cameraMode: CityArtMode,
+      priority: 'high' | 'low',
+    ) => {
       const key = viewKey(cameraScene, cameraMode);
-      if (ready.current[key] || loadingImages.current.has(key)) continue;
-      const image = new window.Image();
-      loadingImages.current.set(key, image);
+      if (ready.current[key]) return Promise.resolve();
+      const pending = loadingImages.current.get(key);
+      if (pending) {
+        if (priority === 'high')
+          void loadArtImages([
+            cityArtCamera(cameraMode, cameraScene).painting,
+            ILLYA_ART_SPRITE,
+          ]).catch(() => {});
+        return pending;
+      }
       setLoad((old) => ({ ...old, [key]: 'pending' }));
       const finish = (status: 'ready' | 'failed') => {
         loadingImages.current.delete(key);
@@ -253,25 +264,36 @@ export default function FateCityArt() {
         ready.current[key] = status === 'ready';
         setLoad((old) => ({ ...old, [key]: status }));
       };
-      image.onload = () => {
-        void image
-          .decode()
-          .then(() => finish('ready'))
-          .catch(() => finish('failed'));
-      };
-      image.onerror = () => finish('failed');
-      image.src = cityArtCamera(cameraMode, cameraScene).painting;
-    }
+      const promise = loadArtImages(
+        [cityArtCamera(cameraMode, cameraScene).painting, ILLYA_ART_SPRITE],
+        priority,
+      ).then(
+        () => finish('ready'),
+        () => finish('failed'),
+      );
+      loadingImages.current.set(key, promise);
+      return promise;
+    };
+    // Current view and destination take precedence; other paintings share one warm-up lane.
+    void Promise.all([
+      loadView(scene, mode, 'high'),
+      ...(requestedScene ? [loadView(requestedScene, mode, 'high')] : []),
+    ]).then(async () => {
+      if (!ready.current[viewKey(scene, mode)]) return;
+      for (const view of views) {
+        if (cancelled) return;
+        await loadView(view.scene, view.mode, 'low');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [scene, mode, retry, requestedScene]);
   useEffect(() => {
     mounted.current = true;
     const images = loadingImages.current;
     return () => {
       mounted.current = false;
-      for (const image of images.values()) {
-        image.onload = null;
-        image.onerror = null;
-      }
       images.clear();
     };
   }, []);
@@ -1375,9 +1397,7 @@ export default function FateCityArt() {
                   <article key={actor.id}>
                     <strong>{actor.name}</strong>
                     <span>
-                      {actor.stage === 'study-ready'
-                        ? '可用'
-                        : '制作中'}
+                      {actor.stage === 'study-ready' ? '可用' : '制作中'}
                     </span>
                     {actor.variants.length > 1 && (
                       <small>{actor.variants.join(' / ')}</small>
@@ -1419,6 +1439,7 @@ export default function FateCityArt() {
               origin={origin}
               scale={scale}
               actorScale={actorScale}
+              actorReady={load[viewKey(scene, mode)] === 'ready'}
               arriving={Boolean(outgoing)}
               inert={
                 Boolean(opened) ||
@@ -1741,11 +1762,7 @@ export default function FateCityArt() {
         <div>
           <p>
             <output>
-              {tab === 'street'
-                ? message
-                : tab === 'map'
-                  ? mapMessage
-                  : ''}
+              {tab === 'street' ? message : tab === 'map' ? mapMessage : ''}
             </output>
           </p>
         </div>

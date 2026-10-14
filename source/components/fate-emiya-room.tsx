@@ -1,5 +1,6 @@
 /* oxlint-disable jsx-a11y/prefer-tag-over-role -- An SVG scene uses the accessible img role without creating an extra raster image. */
 import { memo } from 'react';
+import { runtimeArt } from '@/lib/fate-runtime-art';
 import {
   EMIYA_ROOMS,
   EMIYA_ROOM_IDS,
@@ -54,7 +55,8 @@ export const FateEmiyaRoomBackdrop = memo(function FateEmiyaRoomBackdrop({
       {/* The native PNG stays intact; only its viewport is scaled. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={data.scene.painting}
+        src={runtimeArt(data.scene.painting)}
+        fetchPriority="high"
         width={1600}
         height={900}
         className={styles.painting}
@@ -175,7 +177,7 @@ export const FateEmiyaFurniture = memo(function FateEmiyaFurniture({
           patternUnits="userSpaceOnUse"
         >
           <image
-            href="/fate/interior-art/emiya-materials-soft-v1.png"
+            href={runtimeArt('/fate/interior-art/emiya-materials-soft-v1.png')}
             width="360"
             height="360"
             x={-(material % 2) * 180}
@@ -189,7 +191,7 @@ export const FateEmiyaFurniture = memo(function FateEmiyaFurniture({
           patternUnits="userSpaceOnUse"
         >
           <image
-            href="/fate/interior-art/emiya-materials-soft-v1.png"
+            href={runtimeArt('/fate/interior-art/emiya-materials-soft-v1.png')}
             width="360"
             height="360"
           />

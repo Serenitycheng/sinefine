@@ -8,6 +8,9 @@ coverage/
 *.tsbuildinfo
 *.log
 
+# Lossless runtime copies are rebuilt locally and by Vercel from original PNGs.
+source/public/fate/runtime/
+
 # Local service configuration
 .env
 .env.*

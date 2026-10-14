@@ -3,6 +3,9 @@ import shirouLife from './fate-shirou-life-data.json';
 import saberData from './fate-saber-sprite-data.json';
 import { SHIROU_SIDE_GAIT, EMIYA_VISITOR_SPRITES } from './fate-emiya-walk';
 import { EMIYA_LIFE_ACTIVITIES } from './fate-emiya-household';
+import { ILLYA_ART_SPRITE } from './fate-character-art';
+import { STREET_CAST } from './fate-street-cast';
+import type { PartnerId } from './fate-cast';
 import {
   EMIYA_ROOMS,
   type EmiyaActivity,
@@ -44,6 +47,34 @@ export const SHIROU_REQUIRED_ART = [
   SABER_LIFE_SPRITES.path,
   ...Object.values(EMIYA_VISITOR_SPRITES).map((sheet) => sheet.path),
 ];
+
+/** Enter one room without downloading the entire house. Include every visible body. */
+export function emiyaRoomRequiredArt(
+  room: EmiyaRoomId,
+  shirou: boolean,
+  resident: boolean,
+  guests: readonly PartnerId[],
+) {
+  const files = [
+    EMIYA_ROOMS[room].scene.painting,
+    EMIYA_MATERIAL_ATLAS,
+    shirou ? SHIROU_LIFE_SPRITES.path : EMIYA_LIFE_SPRITES.path,
+  ];
+  if (!shirou) files.push(ILLYA_ART_SPRITE);
+  if (shirou || resident)
+    files.push(SHIROU_WALK_SPRITES.path, SHIROU_SIDE_GAIT.path);
+  for (const id of guests) {
+    if (id === 'saber')
+      files.push(SABER_WALK_SPRITES.path, SABER_LIFE_SPRITES.path);
+    else if (id === 'sakura' || id === 'taiga')
+      files.push(EMIYA_VISITOR_SPRITES[id].path);
+    else {
+      const actor = STREET_CAST.find((a) => a.id === id);
+      if (actor) files.push(actor.image);
+    }
+  }
+  return [...new Set(files)];
+}
 
 /** Activity presentation has its own contact on the furniture. The safe floor
  * approach is retained so cancelling can immediately resume normal walking. */

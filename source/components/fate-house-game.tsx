@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState } from 'react';
+import { runtimeArt } from '@/lib/fate-runtime-art';
 import { FateHouseScene, type HouseSession } from './fate-city-interior';
 import { FORMAL_HOUSE_PLANS } from '@/lib/fate-formal-house-plans';
 import { previewPresentation } from '@/lib/fate-preview-presentation';
@@ -84,7 +85,7 @@ function ResidentBody({
           top: p.foot.y - p.body.y,
           width: sprite.cellWidth * scale,
           height: sprite.cellHeight * scale,
-          backgroundImage: `url(${sprite.file})`,
+          backgroundImage: `url(${runtimeArt(sprite.file)})`,
           backgroundSize: `${sprite.imageWidth * scale}px ${sprite.imageHeight * scale}px`,
           backgroundPosition: `${-sprite.cropX * scale}px ${-sprite.cropY * scale}px`,
           clipPath: sprite.clip
@@ -200,6 +201,23 @@ export default function FateHouseGame({
               disabled={suspended}
             />
           )),
+      art: () =>
+        session.bodies
+          .filter((body) => body.room === currentRoom)
+          .flatMap((body) =>
+            (['down', 'left', 'right', 'up'] as const)
+              .map(
+                (direction) =>
+                  houseResidentSprite(
+                    body.id,
+                    direction,
+                    1,
+                    session.life.waverStage,
+                    session.home,
+                  )?.file,
+              )
+              .filter((file): file is string => Boolean(file)),
+          ),
       controls: ({ walkTo, stop, say }) => (
         <div className={styles.formalLife}>
           <div className={styles.spots}>

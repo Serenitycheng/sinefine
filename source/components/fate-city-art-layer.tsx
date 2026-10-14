@@ -7,6 +7,7 @@ import { cityPilotPaint } from '@/lib/fate-city-art';
 import { cityArtDepth } from '@/lib/fate-city-art-registration';
 import { ART_SPRITE_FRAMES } from '@/lib/fate-art-sprite';
 import { ILLYA_ART_SPRITE } from '@/lib/fate-character-art';
+import { runtimeArt } from '@/lib/fate-runtime-art';
 import type { CityPoint } from '@/lib/fate-city-layout';
 import styles from './fate-city-art.module.css';
 
@@ -28,6 +29,7 @@ export default function FateCityArtLayer({
   departing = false,
   arriving = false,
   inert = false,
+  actorReady = true,
 }: {
   mode: CityArtMode;
   scene?: CityArtScene;
@@ -38,6 +40,7 @@ export default function FateCityArtLayer({
   departing?: boolean;
   arriving?: boolean;
   inert?: boolean;
+  actorReady?: boolean;
 }) {
   const camera = cityArtCamera(mode, scene);
   const player = cityPilotPaint(view.point, mode, scene);
@@ -58,11 +61,12 @@ export default function FateCityArtLayer({
       data-painting-scene={scene}
     >
       <Image
-        src={camera.painting}
+        src={runtimeArt(camera.painting)}
         width={camera.width}
         height={camera.height}
         unoptimized
         loading="eager"
+        fetchPriority="high"
         alt={
           departing
             ? ''
@@ -73,7 +77,7 @@ export default function FateCityArtLayer({
       />
       <div
         className={styles.actor}
-        hidden={departing}
+        hidden={departing || !actorReady}
         style={{ left: player.x, top: player.y }}
         aria-label={departing ? undefined : '伊莉雅的当前站位'}
         data-foot-x={player.x.toFixed(3)}
@@ -90,7 +94,7 @@ export default function FateCityArtLayer({
           style={{
             width: 256 * spriteScale,
             height: 256 * spriteScale,
-            backgroundImage: `url(${ILLYA_ART_SPRITE})`,
+            backgroundImage: `url(${runtimeArt(ILLYA_ART_SPRITE)})`,
             backgroundPosition: `${(view.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.direction) / 3) * 100}%`,
             transform: `translate(${-anchor.x * spriteScale}px,${-anchor.y * spriteScale}px)`,
           }}

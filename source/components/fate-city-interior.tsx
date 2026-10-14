@@ -2,6 +2,8 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex, jsx-a11y/click-events-have-key-events -- This floor application supports keyboard walking through the modal's key listener and accessible destination buttons. */
 
 import Image from 'next/image';
+import { runtimeArt } from '@/lib/fate-runtime-art';
+import { useArtAssets } from './use-art-assets';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ArrowDown,
@@ -127,6 +129,7 @@ export type HouseSession = {
     bodies: (
       walkTo: (point: CityPoint, id?: string | null) => void,
     ) => ReactNode;
+    art?: () => string[];
     controls: (actions: {
       walkTo: (point: CityPoint, id?: string | null) => void;
       stop: () => void;
@@ -242,13 +245,20 @@ function SingleRoomInterior({
   const [attempt, setAttempt] = useState(0);
   const modelActor = house?.actor;
   const modelPlan = house?.plan;
-  const modelKey = modelActor ? `${modelActor}:${attempt}` : 'legacy';
-  const [modelStatus, setModelStatus] = useState<{
-    key: string;
-    status: 'ready' | 'error';
-  }>({ key: 'legacy', status: 'ready' });
-  const modelLoad =
-    modelStatus.key === modelKey ? modelStatus.status : 'loading';
+  const modelLoad = useArtAssets(
+    [
+      ...(modelActor && modelPlan
+        ? [
+            modelPlan.sprite(modelActor, 'down', 0).file,
+            modelPlan.sprite(modelActor, 'left', 1).file,
+            modelPlan.sprite(modelActor, 'down', 0, 'sit').file,
+            modelPlan.sprite(modelActor, 'down', 0, 'read').file,
+          ]
+        : [ILLYA_ART_SPRITE]),
+      ...(house?.formal?.art?.() ?? []),
+    ],
+    attempt,
+  );
   const initialPose = house?.formal?.action
     ? (house.plan.rooms[house.room].actions.find(
         (a) => a.id === house.formal?.action,
@@ -302,7 +312,9 @@ function SingleRoomInterior({
         },
       ];
   const returnDoor = house
-    ? (doors.find((d) => d.id === (house.room === 'hall' ? 'street' : 'hall')) ??
+    ? (doors.find(
+        (d) => d.id === (house.room === 'hall' ? 'street' : 'hall'),
+      ) ??
       doors.find((d) => d.to === null) ??
       doors.find((d) => d.to === 'hall') ??
       doors[0])
@@ -424,39 +436,6 @@ function SingleRoomInterior({
     element.addEventListener('wheel', wheel, { passive: false });
     return () => element.removeEventListener('wheel', wheel);
   }, [isHouse]);
-  useEffect(() => {
-    if (!modelActor || !modelPlan) return;
-    let cancelled = false;
-    const files = [
-      ...new Set([
-        modelPlan.sprite(modelActor, 'down', 0).file,
-        modelPlan.sprite(modelActor, 'left', 1).file,
-        modelPlan.sprite(modelActor, 'down', 0, 'sit').file,
-        modelPlan.sprite(modelActor, 'down', 0, 'read').file,
-      ]),
-    ];
-    Promise.all(
-      files.map(
-        (file) =>
-          new Promise<void>((resolve, reject) => {
-            const image = new window.Image();
-            image.onload = () => resolve();
-            image.onerror = () => reject(new Error('Model image unavailable'));
-            image.src = file;
-          }),
-      ),
-    ).then(
-      () => {
-        if (!cancelled) setModelStatus({ key: modelKey, status: 'ready' });
-      },
-      () => {
-        if (!cancelled) setModelStatus({ key: modelKey, status: 'error' });
-      },
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [modelActor, modelKey, modelPlan]);
   useEffect(() => {
     const element = surface.current;
     if (!element) return;
@@ -869,12 +848,13 @@ function SingleRoomInterior({
         >
           <Image
             key={attempt}
-            src={scene.painting}
+            src={runtimeArt(scene.painting)}
             width={1600}
             height={900}
             alt={`${scene.name}的${scene.room}：${scene.description}`}
             unoptimized
             loading="eager"
+            fetchPriority="high"
             draggable={false}
             className={styles.painting}
             onLoad={() => setLoad('ready')}
@@ -906,7 +886,7 @@ function SingleRoomInterior({
                   style={{
                     width: (model?.cellWidth ?? 256) * spriteScale,
                     height: (model?.cellHeight ?? 256) * spriteScale,
-                    backgroundImage: `url(${model?.file ?? ILLYA_ART_SPRITE})`,
+                    backgroundImage: `url(${runtimeArt(model?.file ?? ILLYA_ART_SPRITE)})`,
                     backgroundSize: model
                       ? `${model.imageWidth * spriteScale}px ${model.imageHeight * spriteScale}px`
                       : undefined,
@@ -928,7 +908,7 @@ function SingleRoomInterior({
                     className={styles.occluder}
                     aria-hidden="true"
                     style={{
-                      backgroundImage: `url(${scene.painting})`,
+                      backgroundImage: `url(${runtimeArt(scene.painting)})`,
                       zIndex:
                         Math.round(f.footprint.y + f.footprint.height) + 10,
                       clipPath: `polygon(${f.silhouette!.map((p) => `${p.x / 16}% ${p.y / 9}%`).join(',')})`,
