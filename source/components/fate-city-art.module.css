@@ -6,6 +6,137 @@
   color: #e9e8d8;
   font-family: var(--font-sans), sans-serif;
 }
+.paper {
+  height: 100dvh;
+  background: #f7f5ed;
+  color: #3b4939;
+  --house-bg: #f5f2e8;
+  --house-panel: #f5f2e8;
+  --house-ink: #40503b;
+  --house-muted: #687462;
+  --house-button: #e7ecdf;
+}
+.paper .header {
+  background: #f8f6ee;
+  border-color: #e1e5d7;
+  min-height: 56px;
+  padding: 9px 18px;
+  gap: 14px;
+}
+.paper .brand {
+  font-size: 0;
+  letter-spacing: 0;
+  gap: 0;
+  flex-shrink: 0;
+}
+.paper .brand h1 {
+  font-family: 'SimSun', serif;
+  color: #4d6245;
+  font-size: 17px;
+  letter-spacing: 3px;
+  white-space: nowrap;
+}
+.paper .header nav {
+  margin-left: 20px;
+  width: auto;
+  order: 0;
+  flex-shrink: 0;
+}
+.paper .header button,
+.paper .header a,
+.paper .footer button {
+  border-color: transparent;
+  color: #637458;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 11px;
+}
+.paper .header > a {
+  margin-left: auto;
+}
+.paper .header button[aria-pressed='true'] {
+  background: #e4ebdb;
+  color: #4f6943;
+}
+.paper .header button:hover,
+.paper .footer button:hover {
+  background: #e8eddf;
+}
+.paper .stage {
+  background: #dbe1d1;
+}
+.paper .footer {
+  background: #f7f5ed;
+  border-color: #e1e5d7;
+  min-height: 65px;
+  padding: 9px 14px;
+  gap: 15px;
+}
+.paper .quickPlaces {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.paper .quickPlaces button {
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: #edf0e5;
+}
+.paper .footer p,
+.paper .footer span,
+.paper .footer a {
+  color: #687462;
+}
+.paper .controlsHelp {
+  color: #687462;
+}
+.paper .controlsHelp[open] {
+  background: #f6f4eb;
+  border-color: #cbd5c1;
+}
+@media (max-width: 650px) {
+  .paper .header {
+    min-height: 48px;
+    padding: 8px 11px;
+    gap: 5px;
+    flex-wrap: nowrap;
+  }
+  .paper .header nav {
+    margin-left: auto;
+    gap: 0;
+  }
+  .paper .header button {
+    padding: 7px 8px;
+    font-size: 10px;
+    gap: 4px;
+  }
+  .paper .header > a {
+    display: inline-flex;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 0;
+    justify-content: center;
+    padding: 8px;
+  }
+  .paper .header .brand h1 {
+    font-size: 14px;
+  }
+  .paper .header nav svg {
+    display: none;
+  }
+  .paper .footer {
+    padding: 8px;
+    min-height: 60px;
+    gap: 5px;
+  }
+  .paper .footer button {
+    padding: 7px 9px;
+    font-size: 10px;
+  }
+  .paper .footer > div:not(.quickPlaces) {
+    display: none;
+  }
+}
 .shell button,
 .shell a,
 .shell select {

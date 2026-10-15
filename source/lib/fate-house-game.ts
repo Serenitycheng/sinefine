@@ -222,7 +222,12 @@ const HOUSE_RULES: Record<HouseSiteId, HouseRules> = {
         (id) => !['kiritsugu', 'irisviel', 'illya', 'shirou'].includes(id),
       ),
     ],
-    restRooms: { kiritsugu: 'parents', irisviel: 'parents', illya: 'illya' },
+    restRooms: {
+      kiritsugu: 'parents',
+      irisviel: 'parents',
+      illya: 'illya',
+      natalia: 'study',
+    },
   },
   waver: {
     name: '韦伯的住处',
@@ -270,7 +275,7 @@ export function houseHomeForActor(actor: string): HouseHomeId | null {
     ? 'tohsaka'
     : ['sakura', 'kariya', 'medusa'].includes(actor)
       ? 'matou'
-      : ['kiritsugu', 'irisviel', 'illya'].includes(actor)
+      : ['kiritsugu', 'irisviel', 'illya', 'natalia'].includes(actor)
         ? 'einzbern'
         : ['waver', 'iskandar'].includes(actor)
           ? 'waver'

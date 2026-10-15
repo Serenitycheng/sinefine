@@ -382,9 +382,7 @@ export function FateInterior({
         </button>
         <div className={styles.heading}>
           <span>FUYUKI · AT HOME</span>
-          <h2>
-            {view === 'directory' ? '灯光里的日常' : FATE_HOMES[view].name}
-          </h2>
+          <h2>{view === 'directory' ? '住宅' : FATE_HOMES[view].name}</h2>
         </div>
         <span className={styles.clock}>
           {night ? <Moon size={15} /> : <Sun size={15} />}
@@ -395,9 +393,7 @@ export function FateInterior({
 
       {view === 'directory' ? (
         <div className={styles.directory}>
-          <p className={styles.intro}>
-            选一处住宅，看看他们此刻的生活。住在一起，也有各自外出的一天。
-          </p>
+          <p className={styles.intro}>查看住宅、在场居民与外出去向。</p>
           <div className={styles.homes}>
             {homes.map(([id, home], index) => {
               const people = interiorResidents(life, id, controlled);

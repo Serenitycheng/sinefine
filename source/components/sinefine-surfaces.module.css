@@ -1,0 +1,51 @@
+.paper {
+  --sf-paper: #f6f3eb;
+  --sf-card: #efeee5;
+  --sf-raised: #fcfaf4;
+  --sf-ink: #344137;
+  --sf-muted: #687462;
+  --sf-line: #dfe2d5;
+  --sf-border: #c0ceb3;
+  --sf-accent: #526b48;
+  --sf-selected: #dfe8d3;
+  --sf-primary: #687f5d;
+  --sf-primary-ink: #fffdf1;
+  --sf-error: #9a493b;
+  --sf-warning: #836527;
+  --sf-success: #426c40;
+  --sf-focus: #768d6f;
+  --background: var(--sf-paper);
+  --foreground: var(--sf-ink);
+  --popover: var(--sf-paper);
+  --popover-foreground: var(--sf-ink);
+  --muted: var(--sf-card);
+  --muted-foreground: var(--sf-muted);
+  --accent: var(--sf-selected);
+  --accent-foreground: var(--sf-ink);
+  --border: var(--sf-line);
+  --ring: var(--sf-focus);
+  color: var(--sf-ink);
+  color-scheme: light;
+}
+.paper :is(button, input, select, textarea, a, summary):focus-visible {
+  outline: 2px solid var(--sf-focus);
+  outline-offset: 3px;
+}
+.paper :is(input, textarea)::placeholder {
+  color: var(--sf-muted);
+  opacity: 1;
+}
+.paper [data-slot='dialog-description'] {
+  color: var(--sf-muted);
+  line-height: 1.8;
+  font-size: 12px;
+}
+.paper [data-slot='dialog-close'] {
+  color: var(--sf-muted);
+  min-width: 40px;
+  min-height: 40px;
+}
+.paper [data-slot='dialog-close']:hover {
+  background: var(--sf-selected);
+  color: var(--sf-ink);
+}

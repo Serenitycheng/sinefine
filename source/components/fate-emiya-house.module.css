@@ -14,12 +14,16 @@
 .lifeDetails {
   position: relative;
   max-width: 560px;
-  color: #c9d6c6;
+  color: var(--sf-ink, #344137);
   font-size: 12px;
+  flex-shrink: 0;
 }
 .lifeDetails summary {
   cursor: pointer;
-  padding: 4px 0;
+  padding: 9px 10px;
+  border: 1px solid var(--sf-border, #c0ceb3);
+  border-radius: 8px;
+  white-space: nowrap;
 }
 .lifePanel {
   position: absolute;
@@ -32,7 +36,8 @@
   padding: 14px;
   border: 1px solid #758575;
   border-radius: 9px;
-  background: #38483ff5;
+  background: var(--sf-raised, #fcfaf4);
+  color: var(--sf-ink, #344137);
   box-shadow: 0 8px 24px #24352b26;
 }
 .lifePanel p {
@@ -184,7 +189,7 @@
 .household {
   position: relative;
   width: 100%;
-  color: #d8dfcc;
+  color: var(--sf-ink, #344137);
   font-size: 12px;
 }
 .householdBody {
@@ -199,7 +204,7 @@
   padding: 12px;
   border: 1px solid #758575;
   border-radius: 9px;
-  background: #38483ff5;
+  background: var(--sf-raised, #fcfaf4);
   box-shadow: 0 8px 24px #24352b26;
 }
 .household summary {
@@ -221,7 +226,7 @@
   margin: 5px 0;
   border-left: 2px solid #98b79d;
   padding-left: 9px;
-  color: #d8dfc5;
+  color: var(--sf-muted, #687462);
 }
 .householdOptions {
   position: relative;
@@ -232,7 +237,7 @@
   padding: 12px;
   border: 1px solid #758575;
   border-radius: 9px;
-  background: #38483ff5;
+  background: var(--sf-raised, #fcfaf4);
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -289,6 +294,7 @@
   grid-template-columns: 1fr auto;
   gap: 8px;
   background: #304e3fe8;
+  color: #f0eedc;
   border: 1px solid #bdc6a180;
   border-radius: 9px;
   font-size: 12px;
@@ -311,7 +317,7 @@
   margin-bottom: 8px;
 }
 .options span {
-  color: #b9c9b2;
+  color: var(--sf-muted, #687462);
   font-size: 11px;
 }
 .activityGlow {

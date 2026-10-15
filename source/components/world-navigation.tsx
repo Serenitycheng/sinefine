@@ -1,63 +1,82 @@
 import Link from 'next/link';
-import { ArrowUpRight, SlidersHorizontal } from 'lucide-react';
+import {
+  ArrowUpRight,
+  BookOpen,
+  Compass,
+  Leaf,
+  MapPin,
+  SlidersHorizontal,
+} from 'lucide-react';
 import styles from './world-entry.module.css';
-export function WorldHeader({ active }: { active: 'home' | 'worlds' }) {
+
+export function WorldHeader({
+  active,
+}: {
+  active: 'home' | 'worlds' | 'saves';
+}) {
   return (
-    <header className={styles.header}>
-      <Link
-        className={styles.brand}
-        href="/"
-        aria-label="SINE FINE 无终之庭，世界入口"
-      >
-        <span className={styles.brandMark}>
-          S<span>/</span>F
-        </span>
-        <span className={styles.brandText}>
-          无终之庭<small>SINE FINE</small>
-        </span>
-      </Link>
-      <nav className={styles.nav} aria-label="主要导航">
-        <Link href="/" aria-current={active === 'home' ? 'page' : undefined}>
-          世界入口
+    <>
+      <aside className={styles.rail}>
+        <Link className={styles.mark} href="/" aria-label="SINE FINE 世界入口">
+          <Leaf size={22} strokeWidth={1.3} />
         </Link>
+        <nav aria-label="主要导航">
+          <Link
+            href="/"
+            aria-current={
+              active === 'home' || active === 'worlds' ? 'page' : undefined
+            }
+          >
+            <Compass size={20} strokeWidth={1.4} />
+            <span>世界</span>
+          </Link>
+          <Link href="/fate/street">
+            <MapPin size={20} strokeWidth={1.4} />
+            <span>冬木</span>
+          </Link>
+          <Link
+            href="/fate/saves"
+            aria-current={active === 'saves' ? 'page' : undefined}
+          >
+            <BookOpen size={20} strokeWidth={1.4} />
+            <span>存档</span>
+          </Link>
+        </nav>
         <Link
-          href="/worlds"
-          aria-current={active === 'worlds' ? 'page' : undefined}
-        >
-          人类社会
-        </Link>
-      </nav>
-      <div className={styles.headerLinks}>
-        <Link
-          className={styles.settingsLink}
+          className={styles.railSettings}
           href="/fate/connect"
           aria-label="AI 设置"
         >
-          <SlidersHorizontal size={15} />
-          <span>AI 设置</span>
+          <SlidersHorizontal size={20} strokeWidth={1.4} />
+          <span>设置</span>
         </Link>
+      </aside>
+      <header className={styles.header}>
         <Link
-          className={styles.quickEntry}
-          href="/fate/street"
-          aria-label="进入冬木街道"
+          className={styles.brand}
+          href="/"
+          aria-label="SINE FINE 无终之庭，世界入口"
         >
+          SINE FINE <span>无终之庭</span>
+        </Link>
+        <Link className={styles.quickEntry} href="/fate/street">
           进入冬木 <ArrowUpRight size={15} />
         </Link>
-      </div>
-    </header>
+      </header>
+    </>
   );
 }
+
 export function WorldFooter() {
   return (
     <footer className={styles.footer}>
-      <div>
-        <span>SINE FINE</span>
-        <p>故事未定，日常继续。</p>
-      </div>
-      <Link href="/prototype">
-        早期街区原型 <ArrowUpRight size={13} />
+      <span>SINE FINE · 无终之庭</span>
+      <Link href="/worlds">
+        人类社会 <ArrowUpRight size={13} />
       </Link>
-      <small>无终之庭 · 持续制作中</small>
+      <Link href="/nature">
+        自然界 <ArrowUpRight size={13} />
+      </Link>
     </footer>
   );
 }

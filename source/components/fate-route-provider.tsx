@@ -13,6 +13,7 @@ export function FateRouteProvider({ children }: { children: ReactNode }) {
     pathname === '/fate/art-sample' ||
     pathname === '/fate/art-sample-3d' ||
     pathname === '/fate/city-art' ||
+    pathname === '/fate/design' ||
     pathname === '/fate/emiya-life'
   )
     return children;

@@ -27,7 +27,7 @@ export const HUMAN_HOMES: Record<string, HomeId> = {
   waver: 'waver',
   kirei: 'church',
   taiga: 'fujimura',
-  natalia: 'natalia',
+  natalia: 'einzbern',
   kayneth: 'kayneth',
 };
 export type FateHousing = {
@@ -86,7 +86,7 @@ export function housingContext(
         ),
       }))
       .filter((home) => home.居民.length),
-    生活来往: '切嗣与爱丽丝菲尔、伊莉雅一起住，士郎在卫宫宅生活。切嗣偶尔回卫宫宅探望养子；同住不代表时时刻刻都在家，是否在场看当前行动。同住或入住不自动消除原有心结，也不自动改变恋爱关系。',
+    生活来往: '切嗣与爱丽丝菲尔、伊莉雅、娜塔莉亚一起住，士郎在卫宫宅生活。切嗣偶尔回卫宫宅探望养子；同住不代表时时刻刻都在家，是否在场看当前行动。同住或入住不自动消除原有心结，也不自动改变恋爱关系。',
     从者居住关联: Object.entries(housing.masters).map(
       ([servant, master]) =>
         `${fatePerson(servant, stage)!.name}随${fatePerson(master, stage)?.name ?? '肯尼斯'}居住`,

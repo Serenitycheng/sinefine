@@ -237,6 +237,10 @@ export default function FateEmiyaHouse({
       ? 'ready'
       : 'loading';
   const [attempt, setAttempt] = useState(0);
+  const inputReady = useRef(load === 'ready');
+  useLayoutEffect(() => {
+    inputReady.current = load === 'ready';
+  }, [load]);
   const artAttempt = useRef(0);
   const [message, setMessage] = useState('');
   const surface = useRef<HTMLDivElement>(null),
@@ -542,6 +546,7 @@ export default function FateEmiyaHouse({
   useEffect(() => {
     if (load === 'ready') surface.current?.focus({ preventScroll: true });
   }, [load]);
+  // Loading a room pauses movement without discarding the remaining route.
   useEffect(() => {
     const clear = () => {
       commands.current.stop(true);
@@ -598,7 +603,7 @@ export default function FateEmiyaHouse({
         );
         return;
       }
-      if (load !== 'ready') return;
+      if (!inputReady.current) return;
       if (key === 'e') {
         event.preventDefault();
         if (!event.repeat) commands.current.interact();
@@ -634,7 +639,7 @@ export default function FateEmiyaHouse({
       window.removeEventListener('focus', focus);
       document.removeEventListener('visibilitychange', hidden);
     };
-  }, [load]);
+  }, []);
   useEffect(() => {
     const element = surface.current;
     if (!element) return;

@@ -3,8 +3,8 @@
   min-height: 620px;
   display: flex;
   flex-direction: column;
-  background: #182221;
-  color: #ebe8d5;
+  background: #f6f3eb;
+  color: #344137;
 }
 .game {
   flex: 1;
@@ -17,9 +17,9 @@
   justify-content: space-between;
   gap: 8px;
   padding: 4px 24px;
-  border-bottom: 1px solid #c6b48233;
+  border-bottom: 1px solid #dfe2d5;
   font-size: 11px;
-  color: #b9c8bd;
+  color: #687462;
 }
 .statusBar button,
 .dialogHeading button {
@@ -31,22 +31,40 @@
   background: #c6b4820c;
   cursor: pointer;
 }
+.statusBar button {
+  color: #526747;
+  border-color: #cbd3c0;
+  background: #e7ecdf;
+}
 .statusBar button:focus-visible,
 .dialogHeading button:focus-visible {
   outline: 2px solid #e2d3a8;
   outline-offset: 2px;
 }
+.statusBar button:focus-visible {
+  outline-color: #768d6f;
+}
 .backgroundDialog {
+  composes: paper from './sinefine-surfaces.module.css';
   width: min(640px, calc(100vw - 24px));
   max-width: min(640px, calc(100vw - 24px)) !important;
   max-height: calc(100dvh - 24px);
   overflow-y: auto;
-  background: #202e2a;
-  color: #ebe8d5;
-  border: 1px solid #c6b48277;
+  background: var(--sf-paper);
+  color: var(--sf-ink);
+  border: 1px solid var(--sf-line);
+  border-radius: 16px;
+  box-shadow: 0 18px 70px #34413726;
+  scrollbar-width: thin;
 }
 .backgroundDialog > p {
-  color: #becbc3;
+  color: var(--sf-muted);
+}
+.backgroundDialog .dialogHeading button {
+  min-height: 40px;
+  border-color: var(--sf-border);
+  color: var(--sf-accent);
+  background: transparent;
 }
 .dialogHeading {
   display: flex;

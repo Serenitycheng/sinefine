@@ -104,7 +104,11 @@ const face = (a: CityPoint, b: CityPoint): Direction =>
 const clamp = (value: number, min: number, max: number) =>
   Math.max(min, Math.min(max, value));
 
-export default function FateCityArt() {
+export default function FateCityArt({
+  appearance = 'classic',
+}: {
+  appearance?: 'classic' | 'paper';
+}) {
   const [scene, setScene] = useState<CityArtScene>('residential');
   const activeScene = useRef<CityArtScene>('residential');
   const places = registeredPlaces[scene];
@@ -1090,10 +1094,13 @@ export default function FateCityArt() {
   const junctionChoices = cityPilotJunctionChoices(view.point, scene);
 
   return (
-    <main className={styles.shell}>
+    <main
+      className={`${styles.shell} ${appearance === 'paper' ? styles.paper : ''}`}
+    >
       <header className={styles.header} inert={Boolean(opened)}>
         <div className={styles.brand}>
-          SINE FINE <h1>冬木 2.5D 街区</h1>
+          SINE FINE{' '}
+          <h1>{appearance === 'paper' ? '冬木市' : '冬木 2.5D 街区'}</h1>
         </div>
         <nav aria-label="冬木场景视图">
           <button
@@ -1102,7 +1109,7 @@ export default function FateCityArt() {
             onClick={() => switchTab('map')}
           >
             <MapIcon size={16} />
-            2D 冬木总览
+            {appearance === 'paper' ? '地图' : '2D 冬木总览'}
           </button>
           <button
             type="button"
@@ -1110,7 +1117,7 @@ export default function FateCityArt() {
             onClick={() => switchTab('street')}
           >
             <Footprints size={16} />
-            2.5D 街区
+            {appearance === 'paper' ? '漫游' : '2.5D 街区'}
           </button>
           <button
             type="button"
@@ -1118,7 +1125,7 @@ export default function FateCityArt() {
             onClick={() => switchTab('catalog')}
           >
             <Palette size={16} />
-            人物与室内
+            {appearance === 'paper' ? '人物与住宅' : '人物与室内'}
           </button>
         </nav>
         <Link href="/fate/street">

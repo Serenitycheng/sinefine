@@ -24,15 +24,9 @@ export default function FateWorldPage() {
         <div className={styles.intro}>
           <div>
             <p className={entry.eyebrow}>F U Y U K I / WORLD NOTES</p>
-            <h1>
-              过去仍在，
-              <br />
-              <em>明天未定。</em>
-            </h1>
+            <h1>世界与人物设定</h1>
             <p className={styles.lead}>
-              熟悉的他们，在这里继续生活。
-              <br />
-              由你留下最初的设定，也为变化留出余地。
+              调整人物与日常规则，保留现有角色关系。
             </p>
           </div>
           <div className={styles.summary}>

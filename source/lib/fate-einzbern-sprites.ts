@@ -1,5 +1,6 @@
 import data from './fate-einzbern-sprite-data.json';
 import poses from './fate-einzbern-pose-data.json';
+import { kiritsuguRig } from './fate-kiritsugu-rig';
 import { ART_SPRITE_FRAMES } from './fate-art-sprite';
 import type { EinzbernActorId } from './fate-einzbern-house';
 import {
@@ -40,6 +41,9 @@ export function einzbernSprite(
     };
   }
   const moving = phase > 0;
+  if (actor === 'kiritsugu' && moving) {
+    return kiritsuguRig(direction, phase);
+  }
   if (actor === 'illya') {
     const col = moving ? (phase - 1) % 6 : 0;
     const row = ['down', 'left', 'right', 'up'].indexOf(direction);

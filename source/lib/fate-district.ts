@@ -36,7 +36,7 @@ export const DISTRICT_HOMES = {
   church: { ...LEGACY_CITY_HOMES.church },
   kayneth: { name: '肯尼斯的住处', x: 2450, y: 1160 },
   fujimura: { name: '藤村家', x: 1180, y: 680 },
-  natalia: { name: '娜塔莉亚的住处', x: 310, y: 1100 },
+  natalia: { name: '娜塔莉亚的旧居', x: 310, y: 1100 },
 } as const;
 export const DISTRICT_PLACES = {
   school: { ...LEGACY_CITY_PLACES.school },

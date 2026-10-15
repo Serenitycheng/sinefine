@@ -16,6 +16,8 @@ import {
 import { houseCamera, houseZoom } from '../lib/fate-tohsaka-house';
 import { ART_SPRITE_FRAMES } from '../lib/fate-art-sprite';
 import originalIllya from '../lib/fate-emiya-sprite-data.json';
+import { kiritsuguRig } from '../lib/fate-kiritsugu-rig';
+import { houseWalkPhase, houseWalkSpeed } from '../lib/fate-house-walk';
 import {
   interiorProject,
   interiorDepth,
@@ -29,36 +31,87 @@ import {
 import { homeOf, defaultHousing } from '../lib/fate-housing';
 
 const directions = ['down', 'up', 'left', 'right'] as const;
-void test('Kiritsugu crops exclude adjacent arms and shoes while preserving every body pixel and foot anchor', async () => {
+void test('Kiritsugu keeps the approved idle crops and original foot anchors', async () => {
   const sharp = createRequire(require.resolve('next/package.json'))('sharp');
-  const { data, info } = (await sharp('public/fate/character-art/kiritsugu-house-soft-v1.png')
-    .ensureAlpha().raw().toBuffer({ resolveWithObject: true })) as {
-    data: Buffer; info: { width: number };
+  const { data, info } = (await sharp(
+    'public/fate/character-art/kiritsugu-house-soft-v1.png',
+  )
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })) as {
+    data: Buffer;
+    info: { width: number };
   };
   const cases = [
     { direction: 'up', phase: 0, pixels: 41393, foot: 272.242598 },
     { direction: 'left', phase: 0, pixels: 31950, foot: 451.404345 },
-    { direction: 'left', phase: 2, pixels: 28231, foot: 276.710781 },
-    { direction: 'left', phase: 3, pixels: 25624, foot: 439.906484 },
-    { direction: 'left', phase: 5, pixels: 27445, foot: 785.048307 },
-    { direction: 'left', phase: 6, pixels: 23366, foot: 949.664208 },
   ] as const;
   for (const item of cases) {
     const sprite = einzbernSprite('kiritsugu', item.direction, item.phase);
     let pixels = 0;
     for (let y = 0; y < sprite.cellHeight; y++)
       for (let x = 0; x < sprite.cellWidth; x++) {
-        // The only overlapping column is safely outside the body's lower leg.
-        if (sprite.clip && y >= 300 && x < 5) continue;
-        if (data[((sprite.cropY + y) * info.width + sprite.cropX + x) * 4 + 3] > 16) pixels++;
+        if (
+          data[((sprite.cropY + y) * info.width + sprite.cropX + x) * 4 + 3] >
+          16
+        )
+          pixels++;
       }
     assert.equal(pixels, item.pixels, `${item.direction}:${item.phase}`);
     assert.ok(Math.abs(sprite.cropX + sprite.anchorX - item.foot) < 0.001);
     nativeCrop(sprite);
   }
-  assert.ok(einzbernSprite('kiritsugu', 'left', 5).clip);
-  assert.deepEqual(einzbernSprite('kiritsugu', 'right', 5).clip,
-    einzbernSprite('kiritsugu', 'left', 5).clip);
+});
+void test('Kiritsugu relaxed gait has one six-phase cycle in every direction and stops with actual movement', () => {
+  const speed = houseWalkSpeed('kiritsugu');
+  assert.ok(speed >= 125 && speed <= 145);
+  assert.ok(speed < houseWalkSpeed('irisviel') * 0.8);
+  const phases = Array.from({ length: 157 }, (_, travelled) =>
+    Math.floor(houseWalkPhase('kiritsugu', travelled, true)),
+  );
+  const changes = phases.filter(
+    (phase, i) => i === 0 || phase !== phases[i - 1],
+  );
+  assert.deepEqual(changes, [1, 2, 3, 4, 5, 6, 1]);
+  assert.ok(156 / speed > 1 && 156 / speed < 1.3);
+  assert.equal(houseWalkPhase('kiritsugu', 125, false), 0);
+  assert.equal(houseWalkPhase('irisviel', 132, true), 1);
+  assert.equal(houseWalkPhase(undefined, 110, true, 5), 1);
+});
+void test('Kiritsugu alternates independent leg support, bends the opposite knee and keeps soles grounded', () => {
+  for (const direction of directions) {
+    const first = kiritsuguRig(direction, 2).rig!;
+    const second = kiritsuguRig(direction, 5).rig!;
+    assert.ok(Math.abs(first.legs[0].bend) < 1e-10);
+    assert.ok(Math.abs(first.legs[1].bend) > 0.08);
+    assert.ok(Math.abs(second.legs[0].bend) > 0.08);
+    assert.ok(Math.abs(second.legs[1].bend) < 1e-10);
+    for (let phase = 1; phase < 7; phase += 0.125) {
+      const sprite = kiritsuguRig(direction, phase),
+        rig = sprite.rig!;
+      assert.equal(rig.layers.length, 7);
+      assert.ok(
+        rig.layers.every((layer) => layer.matrix.every(Number.isFinite)),
+      );
+      const feet = rig.layers.filter((layer) => layer.part.endsWith('-foot'));
+      const soles = feet.map((layer) => 482 + layer.matrix[5]);
+      assert.ok(Math.abs(Math.max(...soles) - sprite.anchorY) < 1e-7);
+      assert.ok(Math.abs(soles[0] - soles[1]) < 65);
+      // Only small horizontal turns in front/back; side feet keep pointing left.
+      assert.ok(
+        feet.every((layer) => layer.matrix[0] === 1 && layer.matrix[1] === 0),
+      );
+      assert.ok(sprite.bounds.height * sprite.scale < 315);
+    }
+    const a = kiritsuguRig(direction, 1.1).rig!.layers[0].matrix;
+    const b = kiritsuguRig(direction, 1.2).rig!.layers[0].matrix;
+    assert.notDeepEqual(a, b);
+    assert.equal(einzbernSprite('kiritsugu', direction, 0).rig, undefined);
+    assert.equal(
+      einzbernSprite('kiritsugu', direction, 1, 'sit').rig,
+      undefined,
+    );
+  }
 });
 void test('Fuyuki family home has six distinct areas and reuses its approved lounge', () => {
   assert.equal(EINZBERN_ROOM_IDS.length, 6);
@@ -177,10 +230,12 @@ function nativeCrop(sprite: PreviewSprite) {
       sprite.cropY + sprite.cellHeight <= sprite.imageHeight,
   );
   assert.ok(
-    sprite.bounds.x >= 0 &&
-      sprite.bounds.y >= 0 &&
-      sprite.bounds.x + sprite.bounds.width <= sprite.cellWidth &&
-      sprite.bounds.y + sprite.bounds.height <= sprite.cellHeight,
+    (sprite.rig || sprite.bounds.x >= 0) &&
+      (sprite.rig || sprite.bounds.y >= 0) &&
+      (sprite.rig ||
+        sprite.bounds.x + sprite.bounds.width <= sprite.cellWidth) &&
+      (sprite.rig ||
+        sprite.bounds.y + sprite.bounds.height <= sprite.cellHeight),
   );
 }
 void test('Illya retains all twenty-four native gait cells and her original direction anchors, without redrawing', () => {
@@ -219,7 +274,9 @@ void test('Adult gaits use actual native cells, stable row scales, six side phas
       assert.equal(new Set(moving.map((s) => s.scale)).size, 1);
       assert.equal(
         new Set(moving.map((s) => s.index)).size,
-        direction === 'left' || direction === 'right' ? 6 : 3,
+        actor === 'kiritsugu' || direction === 'left' || direction === 'right'
+          ? 6
+          : 3,
       );
       for (const sprite of moving)
         assert.ok(

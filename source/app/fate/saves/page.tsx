@@ -13,18 +13,18 @@ export const metadata: Metadata = {
 export default function FateSavesPage() {
   return (
     <div className={entry.shell}>
-      <WorldHeader active="worlds" />
+      <WorldHeader active="saves" />
       <main className={styles.main}>
         <Link href="/fate/world" className={entry.breadcrumb}>
           <ArrowLeft size={14} /> Fate / 世界设定
         </Link>
         <div className={styles.intro}>
           <p className={entry.eyebrow}>F U Y U K I / SAVED DAYS</p>
-          <h1>让日常，有处可寻。</h1>
+          <h1>存档与备份</h1>
           <p>
-            留下一份此刻的冬木，
+            保存当前进度，
             <br />
-            也为下一次回来，保存故事的起点。
+            或导入、恢复已有存档。
           </p>
         </div>
         <FateSaveManager />

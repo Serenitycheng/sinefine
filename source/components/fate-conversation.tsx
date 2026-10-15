@@ -281,7 +281,7 @@ export function FateConversation({
           <span>{person.english}</span>
         </div>
         <div className={styles.panel}>
-          <div className={styles.kicker}>F U Y U K I · 日常交谈</div>
+          <div className={styles.kicker}>日常交谈</div>
           <DialogTitle className={styles.title}>{person.name}</DialogTitle>
           <DialogDescription>
             {ctx.save.characterNotes[target]
@@ -316,7 +316,7 @@ export function FateConversation({
           <div className={styles.messages} aria-label="近期对话记录">
             {!history.length && (
               <p className={styles.empty}>
-                在街角停下脚步，聊点什么吧。
+                选择一个话题开始交谈。
                 <br />
                 <small>
                   {channel === 'preset'

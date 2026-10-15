@@ -42,6 +42,41 @@ import type { PartnerId } from '../lib/fate-cast';
 import type { Point } from '../lib/street';
 
 const CAST = ['kiritsugu', 'irisviel', 'illya'] as const;
+void test('Natalia shares Kiritsugu home, retains her identity and restores exact formal room and street position', () => {
+  const life = createDailyLife();
+  const point = { ...HOME_ENTRANCES.einzbern.door };
+  assert.equal(homeOf('natalia', life.housing), 'einzbern');
+  assert.equal(houseHomeForActor('natalia'), 'einzbern');
+  assert.equal(homeOf('irisviel', life.housing), 'einzbern');
+  assert.equal(homeOf('illya', life.housing), 'einzbern');
+  assert.equal(homeOf('shirou', life.housing), 'emiya');
+  life.positions.natalia = { ...point };
+  const session = new HouseGameSession(life, {
+    actor: 'natalia',
+    point,
+    scene: 'map',
+    zoom: { street: 1, map: 1 },
+    camera: { x: 0, y: 0, scale: 1 },
+    manual: null,
+  });
+  assert.equal(session.home, 'einzbern');
+  assert.equal(session.careRoom('nap'), 'study');
+  room(session, 'study', { x: 500, y: 500 });
+  const save = parseFateSave(JSON.parse(JSON.stringify(formal(session))));
+  const restored = new HouseGameSession(
+    save.life!,
+    save.house!.street,
+    save.house,
+  );
+  assert.equal(restored.controlled, 'natalia');
+  assert.deepEqual(restored.location, session.location);
+  assert.deepEqual(restored.street.point, point);
+  assert.equal(restored.personInside('natalia'), true);
+  const beforeNap = restored.life.minutes;
+  assert.equal(restored.care('nap').ok, true);
+  assert.equal(restored.life.minutes - beforeNap, 60);
+  assert.equal(restored.location.room, 'study');
+});
 const gap = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
 function atHome(life: DailyLife, id: PartnerId, kind: LifeAction = 'visit') {
   life.people[id].activity = {

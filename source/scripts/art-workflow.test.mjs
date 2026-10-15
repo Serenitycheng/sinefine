@@ -4,6 +4,7 @@ import { promises as fs } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { execFileSync } from 'node:child_process';
 import { createReview, inventoryAssets, loadSharp } from './art-workflow.mjs';
 
 const parent = resolve(dirname(fileURLToPath(import.meta.url)), '../.verification');
@@ -21,6 +22,43 @@ async function fixture(t) {
   });
   return root;
 }
+
+test('deployment filtering keeps the runtime build and its helper executable', async (t) => {
+  const root = await fixture(t);
+  const source = resolve(parent, '..');
+  const ignore = await fs.readFile(join(source, '.vercelignore'), 'utf8');
+  await fs.writeFile(join(root, '.gitignore'), ignore);
+  execFileSync('git', ['init', '--quiet', root]);
+  const candidates = [
+    'scripts/build-runtime-art.mjs',
+    'scripts/art-workflow.mjs',
+    'scripts/run-tests.mjs',
+    '.env.local',
+    '.verification/db-migration/credentials.env',
+    'tests/fate-art-loading.test.ts',
+  ];
+  const ignored = new Set(execFileSync('git', ['-C', root, 'check-ignore', '--no-index', '--stdin'], {
+    input: candidates.join('\n') + '\n', encoding: 'utf8',
+  }).trim().split(/\r?\n/));
+  assert.deepEqual(candidates.filter(file => !ignored.has(file)), candidates.slice(0, 2));
+  await fs.mkdir(join(root, 'scripts'), { recursive: true });
+  for (const file of candidates.slice(0, 2)) {
+    if (!ignored.has(file)) await fs.copyFile(join(source, file), join(root, file));
+  }
+  await fs.copyFile(join(source, 'package.json'), join(root, 'package.json'));
+  for (const dir of ['lib', 'public/fate/art-sample', 'public/fate/city-art', 'public/fate/interior-art', 'public/fate/character-art'])
+    await fs.mkdir(join(root, dir), { recursive: true });
+  const original = await loadSharp()({ create: { width: 16, height: 16, channels: 4, background: '#8f9b87' } }).png().toBuffer();
+  const input = join(root, 'public/fate/art-sample/illya-walk-v1.png');
+  await fs.writeFile(input, original);
+  const result = JSON.parse(execFileSync(process.execPath, ['scripts/build-runtime-art.mjs'], { cwd: root, encoding: 'utf8' }));
+  assert.equal(result.assets, 1);
+  assert.equal(result.created, 1);
+  assert.equal(result.visiblePixelDifferences, 0);
+  const manifest = JSON.parse(await fs.readFile(join(root, 'lib/fate-runtime-art-data.json'), 'utf8'));
+  await fs.access(join(root, 'public', manifest['/fate/art-sample/illya-walk-v1.png']));
+  assert.equal(hash(await fs.readFile(input)), hash(original));
+});
 
 test('review preserves the original, bounds dimensions and reuses identical content', async (t) => {
   const root = await fixture(t);

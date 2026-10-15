@@ -33,6 +33,16 @@ export type PreviewRoom = {
 };
 /** Real crop coordinates support both reused irregular sheets and new atlases. */
 export type PreviewSprite = {
+  rig?: {
+    phase: number;
+    layers: {
+      part: string;
+      clip: readonly (readonly number[])[];
+      matrix: readonly number[];
+      shade?: number;
+    }[];
+    legs: { hip: CityPoint; knee: CityPoint; ankle: CityPoint; bend: number }[];
+  };
   file: string;
   cellWidth: number;
   cellHeight: number;

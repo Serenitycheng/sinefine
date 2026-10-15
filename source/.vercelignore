@@ -6,8 +6,13 @@
 .env.*
 node_modules
 .next
+.verification
+.local-tools
 *.tsbuildinfo
 tests
-scripts
+# Runtime art must be generated before Next builds; other local tools stay out.
+scripts/*
+!scripts/build-runtime-art.mjs
+!scripts/art-workflow.mjs
 ASSETS.md
 README.md

@@ -402,11 +402,14 @@ function EmiyaLifeControls({
   const person = session.life.people.shirou;
   return (
     <details className={styles.lifeDetails}>
-      <summary data-life-minute={session.life.minutes}>
-        {lifeTime(session.life.minutes)} · 饥饿 {Math.round(person.hunger)} ·
-        精力 {Math.round(person.energy)}
+      <summary aria-label="日常与保存" data-life-minute={session.life.minutes}>
+        {lifeTime(session.life.minutes).split(' · ')[1]} · 日常与保存
       </summary>
       <div className={styles.lifePanel}>
+        <p>
+          {lifeTime(session.life.minutes)} · 饥饿 {Math.round(person.hunger)} ·
+          精力 {Math.round(person.energy)}
+        </p>
         <div className={styles.lifeButtons}>
           <button
             type="button"
@@ -443,9 +446,7 @@ function EmiyaLifeControls({
             </li>
           ))}
         </ul>
-        <output>
-          {notice}
-        </output>
+        <output>{notice}</output>
       </div>
     </details>
   );

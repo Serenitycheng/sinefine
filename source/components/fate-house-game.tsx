@@ -21,6 +21,8 @@ import type {
 import type { CityPoint } from '@/lib/fate-city-layout';
 import { houseResidentSprite, formalHousePlan } from '@/lib/fate-house-sprites';
 import styles from './fate-city-interior.module.css';
+import { houseWalkPhase } from '@/lib/fate-house-walk';
+import { FateArtRig } from './fate-art-rig';
 
 function ResidentBody({
   body,
@@ -33,10 +35,11 @@ function ResidentBody({
   walkTo: (point: CityPoint, id?: string | null) => void;
   disabled: boolean;
 }) {
+  const phase = houseWalkPhase(body.id, body.travelled, body.walking);
   const sprite = houseResidentSprite(
     body.id,
     body.direction,
-    body.walking ? 1 + (Math.floor(body.travelled / 22) % 6) : 0,
+    phase,
     session.life.waverStage,
     session.home,
   );
@@ -55,9 +58,7 @@ function ResidentBody({
       data-house-resident={body.id}
       data-resident-x={body.point.x}
       data-resident-y={body.point.y}
-      data-resident-frame={
-        body.walking ? 1 + (Math.floor(body.travelled / 22) % 6) : 0
-      }
+      data-resident-frame={phase}
       style={{
         left: p.body.x,
         top: p.body.y,
@@ -78,22 +79,31 @@ function ResidentBody({
           transform: `scale(${p.spriteScale / sprite.scale})`,
         }}
       />
-      <span
-        className={styles.sprite}
-        style={{
-          left: p.foot.x - p.body.x,
-          top: p.foot.y - p.body.y,
-          width: sprite.cellWidth * scale,
-          height: sprite.cellHeight * scale,
-          backgroundImage: `url(${runtimeArt(sprite.file)})`,
-          backgroundSize: `${sprite.imageWidth * scale}px ${sprite.imageHeight * scale}px`,
-          backgroundPosition: `${-sprite.cropX * scale}px ${-sprite.cropY * scale}px`,
-          clipPath: sprite.clip
-            ? `polygon(${sprite.clip.map(([x, y]) => `${(x / sprite.cellWidth) * 100}% ${(y / sprite.cellHeight) * 100}%`).join(',')})`
-            : undefined,
-          transform: `translate(${-sprite.anchorX * scale}px,${-sprite.anchorY * scale}px)${sprite.mirror ? ' scaleX(-1)' : ''}`,
-        }}
-      />
+      {sprite.rig ? (
+        <FateArtRig
+          sprite={sprite}
+          scale={scale}
+          left={p.foot.x - p.body.x}
+          top={p.foot.y - p.body.y}
+        />
+      ) : (
+        <span
+          className={styles.sprite}
+          style={{
+            left: p.foot.x - p.body.x,
+            top: p.foot.y - p.body.y,
+            width: sprite.cellWidth * scale,
+            height: sprite.cellHeight * scale,
+            backgroundImage: `url(${runtimeArt(sprite.file)})`,
+            backgroundSize: `${sprite.imageWidth * scale}px ${sprite.imageHeight * scale}px`,
+            backgroundPosition: `${-sprite.cropX * scale}px ${-sprite.cropY * scale}px`,
+            clipPath: sprite.clip
+              ? `polygon(${sprite.clip.map(([x, y]) => `${(x / sprite.cellWidth) * 100}% ${(y / sprite.cellHeight) * 100}%`).join(',')})`
+              : undefined,
+            transform: `translate(${-sprite.anchorX * scale}px,${-sprite.anchorY * scale}px)${sprite.mirror ? ' scaleX(-1)' : ''}`,
+          }}
+        />
+      )}
     </button>
   );
 }

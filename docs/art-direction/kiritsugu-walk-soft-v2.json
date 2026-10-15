@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "date": "2026-10-15",
+  "mode": "built-in image_gen",
+  "purpose": "Upright relaxed Kiritsugu walking; existing idle/sit/read unchanged",
+  "reference": "/fate/character-art/kiritsugu-house-soft-v1.png",
+  "file": "source/.verification/kiritsugu-walk-v3-20261015/rejected-v2.png",
+  "width": 1024,
+  "height": 1536,
+  "bytes": 1922016,
+  "sha256": "eace46d5167d7c2e85ad461a9932822c88b63329d4e40193ecdb0cd5dbcabe49",
+  "prompt": "kiritsugu-walk-soft-v2-prompt.txt",
+  "registration": "source/lib/fate-kiritsugu-walk-data.json",
+  "directions": "left, down, up; right uses horizontal mirroring",
+  "phases": 6,
+  "registrationMethod": "18 alpha-connected subjects; native crops; padded scanline outline clips exclude neighbours without cutting body pixels; hip centre x and lowest grounded shoe y; constant row scales",
+  "status": "Rejected after user walking review: repeated same leg, no full alternating cycle. Not selected or deployed."
+}

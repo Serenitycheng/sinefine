@@ -53,9 +53,9 @@ export function FateAISettings({ onClose }: { onClose: () => void }) {
     >
       <DialogContent className={styles.settings} style={{ maxWidth: 540 }}>
         <div className={styles.kicker}>
-          <KeyRound size={17} /> DEEPSEEK / CONNECTION
+          <KeyRound size={17} /> 账号与连接
         </div>
-        <DialogTitle className={styles.title}>让连接随你同行</DialogTitle>
+        <DialogTitle className={styles.title}>对话设置</DialogTitle>
         <DialogDescription>
           {ctx.cloudConfigured === false
             ? '填写 DeepSeek 密钥，在本浏览器中与人物交谈。'

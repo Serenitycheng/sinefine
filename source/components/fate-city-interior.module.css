@@ -1,4 +1,10 @@
 .shell {
+  composes: paper from './sinefine-surfaces.module.css';
+  --house-bg: var(--sf-paper);
+  --house-panel: var(--sf-paper);
+  --house-ink: var(--sf-ink);
+  --house-muted: var(--sf-muted);
+  --house-button: var(--sf-card);
   margin: 0;
   padding: 0;
   border: 0;
@@ -11,8 +17,8 @@
   z-index: 90;
   display: flex;
   flex-direction: column;
-  background: #202c28;
-  color: #f0eedc;
+  background: var(--house-bg, #202c28);
+  color: var(--house-ink, #f0eedc);
 }
 .header {
   display: flex;
@@ -20,7 +26,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 14px 22px;
-  background: #2d3a32;
+  background: var(--house-panel, #2d3a32);
   border-bottom: 1px solid #8e947e40;
 }
 .header h2 {
@@ -30,13 +36,13 @@
 }
 .header h2 span {
   font-size: 16px;
-  color: #d5d5bf;
+  color: var(--house-muted, #d5d5bf);
 }
 .header p {
   font-size: 11px;
   letter-spacing: 0.05em;
   margin: 0;
-  color: #b7bdaa;
+  color: var(--house-muted, #b7bdaa);
 }
 .shell[data-house-room] .header > div {
   flex: 1;
@@ -65,8 +71,8 @@
   gap: 6px;
   border: 1px solid #a3a78d66;
   border-radius: 7px;
-  background: #424e3d;
-  color: #f0eedc;
+  background: var(--house-button, #424e3d);
+  color: var(--house-ink, #f0eedc);
   padding: 7px 10px;
   cursor: pointer;
   font-size: 12px;
@@ -139,6 +145,7 @@
   padding: 8px 12px;
   font-size: 18px;
   background: #344b3fdb;
+  color: #f0eedc;
   border-color: #e4d897;
   border-radius: 8px;
   box-shadow: 0 3px 10px #17271c50;
@@ -150,7 +157,7 @@
   top: 12px;
   display: flex;
   gap: 4px;
-  background: #28392de8;
+  background: var(--sf-paper);
   padding: 5px;
   border-radius: 9px;
 }
@@ -167,6 +174,7 @@
   pointer-events: auto;
   padding: 6px 8px;
   background: #344b3fdb;
+  color: #f0eedc;
   border-color: #a3a78d99;
   box-shadow: 0 3px 10px #17271c35;
 }
@@ -209,7 +217,7 @@
 .formalLife span,
 .formalLife output {
   font-size: 12px;
-  color: #c6cbb9;
+  color: var(--sf-muted);
 }
 .loading {
   position: absolute;
@@ -220,13 +228,14 @@
   flex-wrap: wrap;
   gap: 12px;
   background: #263a2ce3;
+  color: #f0eedc;
   z-index: 2;
 }
 .footer {
   position: relative;
   padding: 10px 18px;
   border-top: 1px solid #8e947e40;
-  background: #2d3a32;
+  background: var(--house-panel, #2d3a32);
 }
 /* Reserve the same controls area across rooms so text wrapping cannot change
    the camera scale or its maximum zoom during a door transition. */
@@ -264,7 +273,7 @@
   align-items: center;
   gap: 8px 16px;
   font-size: 11px;
-  color: #bebda1;
+  color: var(--sf-muted);
 }
 .houseTools label {
   display: flex;
@@ -272,9 +281,9 @@
   gap: 7px;
 }
 .houseTools select {
-  background: #26362f;
-  color: #e0dec7;
-  border: 1px solid #6c715d;
+  background: var(--sf-raised);
+  color: var(--sf-ink);
+  border: 1px solid var(--sf-border);
   border-radius: 7px;
   padding: 4px 7px;
   min-height: 32px;
@@ -299,12 +308,12 @@
   flex: 1;
   font-size: 12px;
   line-height: 1.6;
-  color: #d7dbc9;
+  color: var(--sf-muted);
   max-width: 74%;
 }
 .controlsHelp {
   font-size: 12px;
-  color: #d7dbc9;
+  color: var(--sf-muted);
 }
 .controlsHelp summary {
   cursor: pointer;
@@ -317,7 +326,8 @@
   padding: 12px;
   border: 1px solid #8e947e80;
   border-radius: 7px;
-  background: #26362f;
+  background: var(--sf-raised);
+  color: var(--sf-ink);
   line-height: 1.6;
   z-index: 20;
 }

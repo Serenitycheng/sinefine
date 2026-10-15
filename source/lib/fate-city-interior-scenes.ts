@@ -145,7 +145,7 @@ const INPUTS: Record<CityInteriorId, SceneInput> = {
     description: '暖木、榻榻米、家庭厨房和宽饭桌，枫与杜鹃庭院映入缘侧。',
   },
   natalia: {
-    name: '娜塔莉亚的住处',
+    name: '娜塔莉亚的旧居',
     room: '实用工作起居间',
     basis: '角色气质参考 · 原创冬木住所',
     description: '耐用木地板、工具桌、旅行物品和实用收纳，窗台有蕨与香草。',

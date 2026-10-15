@@ -182,7 +182,6 @@ export function LifePanel({
     >
       <div className={styles.heading}>
         <div>
-          <span>AN ORDINARY DAY</span>
           <h2>日常手账</h2>
         </div>
         <button onClick={onClose} aria-label="收起日常面板">
@@ -514,9 +513,7 @@ export function LifePanel({
               也显示普通行动过程
             </label>
             {!life.view.events.length && (
-              <p className={styles.empty}>
-                暂无记录
-              </p>
+              <p className={styles.empty}>暂无记录</p>
             )}
             <ol>
               {life.view.events

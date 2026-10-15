@@ -31,12 +31,10 @@ export function StreetObserver({
     >
       <div className={styles.heading}>
         <div>
-          <span>LIFE, IN THEIR OWN WORDS</span>
           <h2>街头旁听</h2>
         </div>
         <small>{selected === null ? '随日常更新' : '回看记录'}</small>
       </div>
-      <p className={styles.intro}>他们的交谈会出现在这里，你可以静静旁听。</p>
       {dialogue && event ? (
         <>
           <div className={styles.listenNames}>
@@ -90,9 +88,7 @@ export function StreetObserver({
           </nav>
         </>
       ) : (
-        <p className={styles.empty}>
-          点击「开始日常」，不用扮演任何人，也不用替他们输入台词。第一次相遇会出现在这里。
-        </p>
+        <p className={styles.empty}>开始日常后，这里会显示居民的交谈。</p>
       )}
       {isPartner(watched) && (
         <div className={styles.personPeek}>
@@ -103,8 +99,7 @@ export function StreetObserver({
       )}
       {!life.auto && (
         <p className={styles.fine}>
-          目前使用本地相遇台词。连接 DeepSeek 并开启上方「AI
-          自主交谈」，他们会根据双方关系和经历自由接话。
+          当前使用本地台词。居民自主交谈需连接 DeepSeek，并开启「AI 自主交谈」。
         </p>
       )}
       {life.auto && life.used >= life.limit && (

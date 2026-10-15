@@ -1494,9 +1494,7 @@ export default function StreetWalk({
     <main className={styles.shell} inert={!!daily.emiya || !!daily.house}>
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="返回世界">
-          <span className={styles.wordmark}>
-            SINE<span> / </span>FINE
-          </span>
+          <span className={styles.wordmark}>SINE FINE</span>
           <span className={styles.brandChinese}>无终之庭</span>
         </Link>
         <div className={styles.location}>
@@ -1560,7 +1558,7 @@ export default function StreetWalk({
             onClick={() => openDialog('settings')}
           >
             <Settings2 size={16} />
-            <span>{fate.verified ? 'DeepSeek 已连接' : '连接 DeepSeek'}</span>
+            <span>对话设置</span>
           </button>
           <Link href="/" className={styles.back} aria-label="返回世界">
             <ArrowLeft size={16} />

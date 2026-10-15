@@ -1,10 +1,11 @@
 .ledger {
+  composes: paper from './sinefine-surfaces.module.css';
   margin: 20px 0;
   padding: 16px 14px;
-  border: 1px solid #c4b27a38;
+  border: 1px solid var(--sf-line, #dfe2d5);
   border-radius: 8px;
-  background: #202f2c;
-  color: #ced5c6;
+  background: var(--sf-card, #efeee5);
+  color: var(--sf-ink, #344137);
   font-size: 11px;
   line-height: 1.8;
 }
@@ -12,7 +13,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  color: #e0d4a5;
+  color: var(--sf-ink, #344137);
   font-size: 14px;
   margin: 0 0 12px;
 }
@@ -22,15 +23,15 @@
 }
 .ledger select {
   width: 100%;
-  border: 1px solid #738471;
+  border: 1px solid var(--sf-line, #dfe2d5);
   border-radius: 5px;
   padding: 8px 10px;
-  color: #edf0e0;
-  background: #172622;
+  color: var(--sf-ink, #344137);
+  background: var(--sf-raised, #fcfaf4);
 }
 .ledger select:focus-visible,
 .ledger summary:focus-visible {
-  outline: 2px solid #e0d4a5;
+  outline: 2px solid var(--sf-focus, #768d6f);
   outline-offset: 3px;
 }
 .balance {
@@ -43,7 +44,7 @@
 }
 .balance strong {
   font-size: 26px;
-  color: #f0dfac;
+  color: var(--sf-ink, #344137);
   font-variant-numeric: tabular-nums;
 }
 .balance small {
@@ -57,7 +58,7 @@
   margin: 12px 0;
 }
 .ledger summary {
-  color: #e0d4a5;
+  color: var(--sf-ink, #344137);
   cursor: pointer;
 }
 .prices {
@@ -89,7 +90,7 @@
 }
 .entries li {
   padding: 9px 2px;
-  border-top: 1px solid #c4b27a20;
+  border-top: 1px solid var(--sf-line, #dfe2d5);
 }
 .entries b {
   font-weight: 500;
@@ -97,12 +98,12 @@
 }
 .entries small,
 .note {
-  color: #a0b29e;
+  color: var(--sf-muted, #687462);
   font-size: 10px;
 }
 .income {
-  color: #bcd9a3;
+  color: var(--sf-success, #426c40);
 }
 .expense {
-  color: #e6c49b;
+  color: var(--sf-warning, #836527);
 }

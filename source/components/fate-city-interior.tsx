@@ -48,6 +48,8 @@ import {
   type PreviewAction,
 } from '@/lib/fate-preview-house';
 import type { ActorId } from '@/lib/street';
+import { houseWalkPhase, houseWalkSpeed } from '@/lib/fate-house-walk';
+import { FateArtRig } from './fate-art-rig';
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 const INPUTS = [
@@ -591,7 +593,8 @@ function SingleRoomInterior({
         held.current.y +
         Number(input.has('arrowdown') || input.has('s')) -
         Number(input.has('arrowup') || input.has('w'));
-      const step = 185 * dt * (formal?.walkPace ?? 1);
+      const step =
+        houseWalkSpeed(session.current?.actor) * dt * (formal?.walkPace ?? 1);
       const tickStart = position.current;
       let moving = false;
       if (dx || dy) {
@@ -694,9 +697,12 @@ function SingleRoomInterior({
       if (now - published > (session.current ? 16 : 45) || !moving) {
         published = now;
         const point = { ...position.current };
-        const frame = moving
-          ? 1 + (Math.floor(walked.current / 22) % (session.current ? 6 : 5))
-          : 0;
+        const frame = houseWalkPhase(
+          session.current?.actor,
+          walked.current,
+          moving,
+          session.current ? 6 : 5,
+        );
         setView((old) =>
           distance(old.point, point) > 0.001 ||
           old.frame !== frame ||
@@ -881,24 +887,28 @@ function SingleRoomInterior({
                     transform: `scale(${interiorDepth(view.point, scene.floor)})`,
                   }}
                 />
-                <span
-                  className={styles.sprite}
-                  style={{
-                    width: (model?.cellWidth ?? 256) * spriteScale,
-                    height: (model?.cellHeight ?? 256) * spriteScale,
-                    backgroundImage: `url(${runtimeArt(model?.file ?? ILLYA_ART_SPRITE)})`,
-                    backgroundSize: model
-                      ? `${model.imageWidth * spriteScale}px ${model.imageHeight * spriteScale}px`
-                      : undefined,
-                    backgroundPosition: model
-                      ? `${-model.cropX * spriteScale}px ${-model.cropY * spriteScale}px`
-                      : `${(view.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.direction) / 3) * 100}%`,
-                    clipPath: model?.clip
-                      ? `polygon(${model.clip.map(([x, y]) => `${(x / model.cellWidth) * 100}% ${(y / model.cellHeight) * 100}%`).join(',')})`
-                      : undefined,
-                    transform: `translate(${-anchor.x * spriteScale}px,${-anchor.y * spriteScale}px)${model?.mirror ? ' scaleX(-1)' : ''}`,
-                  }}
-                />
+                {model?.rig ? (
+                  <FateArtRig sprite={model} scale={spriteScale} />
+                ) : (
+                  <span
+                    className={styles.sprite}
+                    style={{
+                      width: (model?.cellWidth ?? 256) * spriteScale,
+                      height: (model?.cellHeight ?? 256) * spriteScale,
+                      backgroundImage: `url(${runtimeArt(model?.file ?? ILLYA_ART_SPRITE)})`,
+                      backgroundSize: model
+                        ? `${model.imageWidth * spriteScale}px ${model.imageHeight * spriteScale}px`
+                        : undefined,
+                      backgroundPosition: model
+                        ? `${-model.cropX * spriteScale}px ${-model.cropY * spriteScale}px`
+                        : `${(view.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.direction) / 3) * 100}%`,
+                      clipPath: model?.clip
+                        ? `polygon(${model.clip.map(([x, y]) => `${(x / model.cellWidth) * 100}% ${(y / model.cellHeight) * 100}%`).join(',')})`
+                        : undefined,
+                      transform: `translate(${-anchor.x * spriteScale}px,${-anchor.y * spriteScale}px)${model?.mirror ? ' scaleX(-1)' : ''}`,
+                    }}
+                  />
+                )}
               </div>
               {scene.furniture
                 .filter((f) => f.silhouette)
