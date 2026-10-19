@@ -72,7 +72,7 @@ void test('all 21 configured residents have individual daily states, belongings 
     FATE_CAST.map((p) => p.id).sort(),
   );
   assert.equal(life.version, 16);
-  assert.equal(actors.length, 22);
+  assert.equal(actors.length, 21);
   assert.deepEqual(
     Object.keys(life.people).sort(),
     [...STREET_PARTNERS].sort(),

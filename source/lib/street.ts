@@ -28,9 +28,10 @@ import {
 } from './fate-home-entrances';
 export type Point = { x: number; y: number };
 export type Rect = { left: number; right: number; top: number; bottom: number };
-export const ACTOR_IDS = ['admin', ...STREET_PARTNERS] as const;
-export type ActorId = (typeof ACTOR_IDS)[number];
-export function isActorId(id: unknown): id is ActorId {
+export const ACTOR_IDS = [...STREET_PARTNERS] as const;
+// Old saved conversations may reference the retired visitor; it is never spawned or selectable.
+export type ActorId = (typeof ACTOR_IDS)[number] | 'admin';
+export function isActorId(id: unknown): id is (typeof ACTOR_IDS)[number] {
   return typeof id === 'string' && ACTOR_IDS.some((actor) => actor === id);
 }
 export type Actor = Point & {
@@ -279,8 +280,7 @@ export function pointAlongRoute(route: Point[], progress: number): Point {
 export function createStreetActors(): Actor[] {
   const h = DISTRICT_HOMES,
     p = DISTRICT_PLACES;
-  const starts: Record<ActorId, Point> = {
-    admin: { x: 1160, y: 840 },
+  const starts: Record<(typeof ACTOR_IDS)[number], Point> = {
     saber: p.park,
     rin: h.tohsaka,
     shirou: { x: h.emiya.x + 35, y: h.emiya.y },

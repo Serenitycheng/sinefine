@@ -46,7 +46,10 @@ export function parseFateSave(input: unknown): FateSave {
   if (
     ![1, 2, 3].includes(x.version as number) ||
     (x.version === 1 && (x.emiya !== undefined || x.house !== undefined)) ||
-    (x.version === 2 && (x.emiya === undefined || x.life === undefined || x.house !== undefined)) ||
+    (x.version === 2 &&
+      (x.emiya === undefined ||
+        x.life === undefined ||
+        x.house !== undefined)) ||
     (x.version === 3 && (x.house === undefined || x.life === undefined)) ||
     typeof x.worldNote !== 'string' ||
     x.worldNote.length > 2000 ||
@@ -61,7 +64,7 @@ export function parseFateSave(input: unknown): FateSave {
       typeof e.id !== 'string' ||
       e.id.length > 80 ||
       !isPartner(e.target) ||
-      !isActorId(e.speaker) ||
+      (!isActorId(e.speaker) && e.speaker !== 'admin') ||
       e.speaker === e.target ||
       typeof e.message !== 'string' ||
       e.message.length > 1200 ||
@@ -92,9 +95,12 @@ export function parseFateSave(input: unknown): FateSave {
     };
   });
   const life = x.life === undefined ? undefined : parseDailyLife(x.life);
-  const emiya = x.emiya === undefined ? undefined : parseEmiyaGameSave(x.emiya, life!);
-  const house = x.house === undefined ? undefined : parseHouseGameSave(x.house, life!);
-  if (emiya?.active && house?.active) throw new Error('只能控制一处室内场景，原存档已保留。');
+  const emiya =
+    x.emiya === undefined ? undefined : parseEmiyaGameSave(x.emiya, life!);
+  const house =
+    x.house === undefined ? undefined : parseHouseGameSave(x.house, life!);
+  if (emiya?.active && house?.active)
+    throw new Error('只能控制一处室内场景，原存档已保留。');
   return {
     version: x.version as 1 | 2 | 3,
     ...parseFateSettings(x as FateSettings),

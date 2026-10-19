@@ -89,7 +89,7 @@ void test('raw v1 saves and the original two-resident daily life migrate without
       encounters: 1,
       people: { saber: baseline.people.saber, rin: baseline.people.rin },
       positions: {
-        admin: legacyDistrictPoint(baseline.positions.admin),
+        admin: legacyDistrictPoint({ x: 1160, y: 840 }),
         saber: legacyDistrictPoint(baseline.positions.saber),
         rin: legacyDistrictPoint(baseline.positions.rin),
       },

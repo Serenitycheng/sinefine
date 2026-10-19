@@ -87,7 +87,10 @@ void test('relationship prompts cover all residents without inventing intimacy f
   }
   const unfamiliar = relationshipContext('natalia', 'kuzuki');
   assert.match(unfamiliar.关系, /未明确的亲密、仇恨或秘密不自行添加/);
-  assert.match(relationshipContext('admin', 'medusa').关系, /观察者/);
+  assert.match(
+    relationshipContext('natalia', 'medusa').关系,
+    /未明确的亲密、仇恨或秘密不自行添加/,
+  );
 });
 
 void test('important restored relationships retain family roles, distance and independent identities', () => {

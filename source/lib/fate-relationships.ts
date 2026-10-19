@@ -290,9 +290,7 @@ export function relationshipContext(
   return {
     关系:
       pair?.bond ??
-      (speaker === 'admin'
-        ? '来访的观察者，未设定原有亲密关系。'
-        : '参考双方档案的原有关系；未明确的亲密、仇恨或秘密不自行添加。'),
+      '参考双方档案的原有关系；未明确的亲密、仇恨或秘密不自行添加。',
     发起者对回应者: pair
       ? pair.a === speaker
         ? pair.aToB

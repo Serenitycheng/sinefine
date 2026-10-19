@@ -48,7 +48,12 @@ export function legacyDistrictPositions<T extends object>(positions: T): T {
   return Object.fromEntries(
     Object.entries(positions).map(([id, point]) => [
       id,
-      legacyDistrictPoint(point as Point),
+      // Historical fixtures still contain the visitor, although new worlds do not spawn it.
+      legacyDistrictPoint(
+        (id === 'admin' && point === undefined
+          ? { x: 1160, y: 840 }
+          : point) as Point,
+      ),
     ]),
   ) as T;
 }

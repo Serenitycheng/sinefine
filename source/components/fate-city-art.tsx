@@ -88,6 +88,8 @@ import {
 import styles from './fate-city-art.module.css';
 import { cityPreviewVisit } from '@/lib/fate-city-preview-visit';
 import { houseWalkingArt } from '@/lib/fate-interior-loading';
+import { formalCityScene, type FormalCityBridge } from '@/lib/fate-formal-city';
+import { isPartner, type PartnerId } from '@/lib/fate-cast';
 
 type Direction = 'down' | 'left' | 'right' | 'up';
 type ArtPlace = CityArtPlace;
@@ -113,9 +115,22 @@ const clamp = (value: number, min: number, max: number) =>
 
 export default function FateCityArt({
   appearance = 'classic',
+  formal,
 }: {
   appearance?: 'classic' | 'paper';
+  formal?: FormalCityBridge;
 }) {
+  const formalRef = useRef(formal);
+  useLayoutEffect(() => {
+    formalRef.current = formal;
+  });
+  const syncedActor = useRef('');
+  const [positionActor, setPositionActor] = useState('');
+  const syncedPoint = useRef<CityPoint | null>(null);
+  const residentHistory = useRef(new Map<string, CityArtActorView>());
+  const [residents, setResidents] = useState<
+    (CityArtActorView & { id: PartnerId })[]
+  >([]);
   const [scene, setScene] = useState<CityArtScene>('residential');
   const activeScene = useRef<CityArtScene>('residential');
   const places = registeredPlaces[scene];
@@ -137,6 +152,11 @@ export default function FateCityArt({
     ),
   );
   const [retry, setRetry] = useState(0);
+  const displayReady = load[viewKey(scene, mode)] === 'ready';
+  const formalLoaded = formal?.loaded;
+  useEffect(() => {
+    formalLoaded?.(displayReady);
+  }, [formalLoaded, displayReady]);
   const [requestedScene, setRequestedScene] = useState<CityArtScene | null>(
     null,
   );
@@ -171,6 +191,63 @@ export default function FateCityArt({
   const [following, setFollowing] = useState(true),
     [message, setMessage] = useState('');
   const [browsing, setBrowsing] = useState(false);
+  const [cameraOwner, setCameraOwner] = useState<string | null>(null);
+  useEffect(() => {
+    if (!formal?.active) return;
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem(`sinefine-city-camera:${formal.active}`) ??
+            'null',
+        );
+        const selected = formalRef.current?.actors.current.find(
+          (person) => person.id === formal.active,
+        );
+        if (
+          selected &&
+          CITY_ART_SCENE_IDS.includes(saved?.scene) &&
+          cityPilotWalkable(selected, 1, saved.scene)
+        ) {
+          activeScene.current = saved.scene;
+          setScene(saved.scene);
+        }
+        const nextMode = CITY_ART_MODES.includes(saved?.mode)
+          ? (saved.mode as CityArtMode)
+          : 'overview';
+        activeMode.current = nextMode;
+        setMode(nextMode);
+        setZoom(Number.isFinite(saved?.zoom) ? clamp(saved.zoom, 0.5, 8) : 1);
+        setPan(
+          Number.isFinite(saved?.pan?.x) && Number.isFinite(saved?.pan?.y)
+            ? saved.pan
+            : { x: 0, y: 0 },
+        );
+        setFollowing(saved?.following !== false);
+      } catch {
+        /* Camera preferences do not migrate world coordinates. */
+      }
+      setCameraOwner(formal.active);
+    });
+    return () => {
+      active = false;
+    };
+  }, [formal?.active]);
+  useEffect(() => {
+    if (!formal || cameraOwner !== formal.active) return;
+    const timer = setTimeout(() => {
+      try {
+        localStorage.setItem(
+          `sinefine-city-camera:${formal.active}`,
+          JSON.stringify({ mode, zoom, pan, following, scene }),
+        );
+      } catch {
+        /* Camera storage is optional. */
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [formal, cameraOwner, mode, zoom, pan, following, scene]);
   const [opened, setOpened] = useState<ArtPlace | null>(null);
   const [interior, setInterior] = useState<CityInteriorScene | null>(null);
   useEffect(() => {
@@ -178,7 +255,12 @@ export default function FateCityArt({
     const scene = cityInteriorScene(opened.id);
     if (!scene) return;
     let active = true;
-    const visit = cityPreviewVisit(scene, 'illya');
+    const visitor = formalRef.current?.active;
+    const visit = cityPreviewVisit(
+      scene,
+      isPartner(visitor) ? visitor : 'illya',
+      formalRef.current?.stage,
+    );
     warmArtImages(
       [
         visit.plan.rooms[visit.room].scene.painting,
@@ -552,6 +634,11 @@ export default function FateCityArt({
     setTab(next);
   };
   const inspect = () => {
+    if (formalRef.current) {
+      stop();
+      formalRef.current.interact();
+      return;
+    }
     const nearest = cityArtNearbyPlace(
       position.current,
       activeScene.current,
@@ -646,6 +733,10 @@ export default function FateCityArt({
     walkConnectionRef.current = walkConnection;
   });
   const previewScene = (nextScene: CityArtScene) => {
+    if (formalRef.current) {
+      walkConnection(nextScene);
+      return;
+    }
     stop();
     const point = { ...CITY_ART_SCENES[nextScene].start };
     position.current = point;
@@ -710,11 +801,12 @@ export default function FateCityArt({
     return () => observer.disconnect();
   }, [tab]);
   useEffect(() => {
-    if (tab !== 'street' || opened) return;
+    if ((tab !== 'street' && !formalRef.current) || opened) return;
     surface.current?.focus({ preventScroll: true });
     let raf = 0,
       last = 0,
       wasMoving = false;
+    let publishedResidents = 0;
     const clear = () => {
       stop();
       drag.current = null;
@@ -723,6 +815,12 @@ export default function FateCityArt({
       last = 0;
     };
     const down = (event: KeyboardEvent) => {
+      if (tab !== 'street') return;
+      if (
+        formalRef.current?.blocked ||
+        (formalRef.current && !formalRef.current.control)
+      )
+        return;
       if (!surface.current?.contains(document.activeElement)) return;
       const key = event.key.toLowerCase();
       if (!ready.current[viewKey(activeScene.current, activeMode.current)])
@@ -809,8 +907,77 @@ export default function FateCityArt({
       const seconds = last
         ? Math.max(0, Math.min((now - last) / 1000, 0.1))
         : 0;
-      const travel = cityPilotFrameTravel(seconds);
+      const travel =
+        cityPilotFrameTravel(seconds) * (formalRef.current?.walkPace ?? 1);
       last = now;
+      const game = formalRef.current;
+      if (game) {
+        if (game.blocked) {
+          clear();
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+        const selected = game.actors.current.find(
+          (person) => person.id === game.active,
+        );
+        if (
+          selected &&
+          (syncedActor.current !== selected.id ||
+            !syncedPoint.current ||
+            distance(selected, syncedPoint.current) > 0.01)
+        ) {
+          const changedActor = syncedActor.current !== selected.id;
+          const previous = position.current;
+          position.current = { x: selected.x, y: selected.y };
+          direction.current =
+            distance(previous, selected) > 0.01
+              ? face(previous, selected)
+              : direction.current;
+          syncedActor.current = selected.id;
+          setPositionActor(selected.id);
+          syncedPoint.current = { ...position.current };
+          const nextScene = formalCityScene(selected, activeScene.current);
+          if (changedActor || nextScene !== activeScene.current) clear();
+          if (nextScene !== activeScene.current) {
+            activeScene.current = nextScene;
+            setScene(nextScene);
+            setPan({ x: 0, y: 0 });
+          }
+          setView({
+            point: { ...position.current },
+            direction: direction.current,
+            frame: selected.frame,
+          });
+        }
+        if (now - publishedResidents >= 100) {
+          publishedResidents = now;
+          setResidents(
+            game.actors.current
+              .filter(
+                (person) => isPartner(person.id) && !game.inside(person.id),
+              )
+              .map((person) => {
+                const old = residentHistory.current.get(person.id);
+                const moving = !!old && distance(old.point, person) > 0.01;
+                const view = {
+                  id: person.id as PartnerId,
+                  point: { x: person.x, y: person.y },
+                  direction: moving
+                    ? face(old!.point, person)
+                    : (old?.direction ?? ('down' as Direction)),
+                  frame: moving ? person.frame : 0,
+                };
+                residentHistory.current.set(person.id, view);
+                return view;
+              }),
+          );
+        }
+        if (!game.control || tab !== 'street') {
+          clear();
+          raf = requestAnimationFrame(tick);
+          return;
+        }
+      }
       const old = position.current;
       let next = { ...old };
       let arrived = false;
@@ -821,11 +988,13 @@ export default function FateCityArt({
         x:
           Number(k.has('d') || k.has('arrowright')) -
           Number(k.has('a') || k.has('arrowleft')) +
-          hold.current.x,
+          hold.current.x +
+          (game?.input.current.x ?? 0),
         y:
           Number(k.has('s') || k.has('arrowdown')) -
           Number(k.has('w') || k.has('arrowup')) +
-          hold.current.y,
+          hold.current.y +
+          (game?.input.current.y ?? 0),
       };
       const cameraMode = activeMode.current;
       const cameraScene = activeScene.current;
@@ -909,6 +1078,12 @@ export default function FateCityArt({
         travelled.current += walked;
       }
       position.current = next;
+      if (game && moved) {
+        const frame =
+          Math.floor(travelled.current / (CITY_PILOT_STRIDE / 6)) % 6;
+        syncedPoint.current = { ...next };
+        game.moved(next, direction.current, frame);
+      }
       if (moved && !browsingRef.current) trackingCamera.current = true;
       if (
         framing.current.following &&
@@ -1052,6 +1227,18 @@ export default function FateCityArt({
     setOpened(null);
     surface.current?.focus({ preventScroll: true });
   };
+  const enterOpened = () => {
+    if (!opened) return;
+    stop();
+    if (formalRef.current) {
+      formalRef.current.enter(opened.id);
+      setOpened(null);
+    } else setInterior(cityInteriorScene(opened.id));
+  };
+  const enterOpenedRef = useRef(enterOpened);
+  useLayoutEffect(() => {
+    enterOpenedRef.current = enterOpened;
+  });
   const exitInterior = () => {
     stop();
     setInterior(null);
@@ -1077,7 +1264,7 @@ export default function FateCityArt({
       ) {
         event.preventDefault();
         stop();
-        setInterior(cityInteriorScene(opened.id));
+        enterOpenedRef.current();
       }
       if (event.key === 'Escape') {
         event.preventDefault();
@@ -1110,14 +1297,18 @@ export default function FateCityArt({
     key: `street:${scene}`,
     ambient: 'outdoor',
     ground: 'stone',
-    active: tab === 'street' && !interior && !opened,
+    active: tab === 'street' && !interior && !opened && !formal?.blocked,
     position: () => view.point,
   });
 
   return (
     <main
       ref={gameShell}
-      className={`${styles.shell} ${chrome} ${appearance === 'paper' ? styles.paper : ''}`}
+      className={`${styles.shell} ${chrome} ${appearance === 'paper' ? styles.paper : ''} ${formal ? styles.embedded : ''}`}
+      data-formal-city={Boolean(formal)}
+      data-city-active-actor={formal?.active ?? 'illya'}
+      data-city-position-actor={formal ? positionActor : 'illya'}
+      data-city-control={formal?.control}
     >
       <header className={styles.header} inert={Boolean(opened)}>
         <div className={styles.brand}>
@@ -1472,6 +1663,12 @@ export default function FateCityArt({
                 origin={origin}
                 scale={scale}
                 actorScale={actorScale}
+                actor={formal?.active}
+                stage={formal?.stage}
+                residents={residents}
+                actorInside={Boolean(
+                  formal && !formal.control && formal.inside(formal.active),
+                )}
                 actorReady={load[viewKey(scene, mode)] === 'ready'}
                 arriving={Boolean(outgoing)}
                 inert={
@@ -1611,15 +1808,19 @@ export default function FateCityArt({
                   跟随
                 </button>
               </div>
-              {nearby && !opened && (
-                <button
-                  type="button"
-                  className={styles.nearby}
-                  onClick={inspect}
-                >
-                  查看{nearby.name.split(' · ')[0]} <kbd>E</kbd>
-                </button>
-              )}
+              {(nearby || formal?.interactionLabel) &&
+                !opened &&
+                (!formal || formal.control) && (
+                  <button
+                    type="button"
+                    className={styles.nearby}
+                    onClick={inspect}
+                  >
+                    {formal?.interactionLabel ??
+                      `查看${nearby!.name.split(' · ')[0]}`}{' '}
+                    <kbd>E</kbd>
+                  </button>
+                )}
               <div
                 className={styles.directionPad}
                 inert={
@@ -1636,7 +1837,10 @@ export default function FateCityArt({
                     key={input.label}
                     type="button"
                     aria-label={input.label}
-                    disabled={load[viewKey(scene, mode)] !== 'ready'}
+                    disabled={
+                      load[viewKey(scene, mode)] !== 'ready' ||
+                      Boolean(formal && !formal.control)
+                    }
                     onPointerDown={(event) => {
                       event.preventDefault();
                       stop();
@@ -1709,7 +1913,7 @@ export default function FateCityArt({
                       className={styles.primary}
                       onClick={() => {
                         stop();
-                        setInterior(cityInteriorScene(opened.id));
+                        enterOpened();
                       }}
                     >
                       进入室内

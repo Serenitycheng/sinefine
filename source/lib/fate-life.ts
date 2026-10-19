@@ -1952,7 +1952,7 @@ export function parseDailyLife(value: unknown): DailyLife {
                 : x.version < 12
                   ? LEGACY_STREET_PARTNERS
                   : LIFE_IDS;
-  for (const id of ['admin', ...ids] as ActorId[]) {
+  for (const id of ids as ActorId[]) {
     const p = x.positions?.[id];
     if (
       !p ||

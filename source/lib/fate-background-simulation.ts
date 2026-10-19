@@ -74,7 +74,9 @@ export async function runBackgroundRound(
     ) {
       called = true;
       const target = event.dialogue?.target ?? event.decision!.person;
-      const speaker = event.dialogue?.speaker ?? 'admin';
+      const speaker =
+        event.dialogue?.speaker ??
+        (event.decision?.person === 'illya' ? 'shirou' : 'illya');
       const data = await generate({
         mode: event.dialogue ? 'encounter' : 'decision',
         target,

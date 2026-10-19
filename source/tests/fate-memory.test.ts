@@ -430,10 +430,10 @@ void test('chat and decision prompts actually receive durable evidence after rec
           key: 'test-memory-key',
           model: 'deepseek-chat',
           target: 'shirou',
-          speaker: mode === 'chat' ? 'rin' : 'admin',
+          speaker: mode === 'chat' ? 'rin' : 'kiritsugu',
           message: '接下来做什么？',
           history: [],
-            recent: [],
+          recent: [],
           scene: lifeScene(
             parseDailyLife(life),
             'shirou',

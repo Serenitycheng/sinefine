@@ -449,19 +449,15 @@ void test('saved feedback cannot detach from its evidence or fabricate a schedul
   assert.deepEqual(parseDailyLife(old), old);
 });
 
-void test('admin visits preserve dialogue without inventing a resident bond or allowing annotations to masquerade as resident speech', () => {
+void test('the removed visitor cannot create conversations or attribute annotations to resident speech', () => {
   const { life, actors } = setup();
-  Object.assign(
-    actors.find((a) => a.id === 'admin')!,
-    { x: 1600, y: 907 },
-  );
   const entry = exchange('记得休息。', '谢谢。', { speaker: 'admin' });
   const result = recordOnsiteConversation(life, actors, 'admin', entry, {
     impressions: [
       { person: 'shirou', kind: 'care', turn: 0, quote: entry.message },
     ],
   });
-  assert.equal(result.ok, true);
+  assert.equal(result.ok, false);
   assert.equal(result.outcome, undefined);
   assert.deepEqual(life.bonds, {});
 });

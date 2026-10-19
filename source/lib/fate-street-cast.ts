@@ -1,15 +1,6 @@
 export const STREET_CAST = [
   // Keep the order aligned with the available street residents and gamepad cycling.
   {
-    id: 'admin' as const,
-    name: '管理员',
-    caption: '可选的来访身份',
-    image: '/fate/street/admin-walk.webp',
-    row: 0,
-    rows: 1,
-    aspect: 1,
-  },
-  {
     id: 'saber' as const,
     name: 'Saber',
     caption: '阿尔托莉雅',

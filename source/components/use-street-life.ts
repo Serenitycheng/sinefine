@@ -325,7 +325,8 @@ export function useStreetLife(
       )
         return;
       const target = event.dialogue?.target ?? event.decision!.person;
-      const speaker = event.dialogue?.speaker ?? 'admin';
+      const speaker =
+        event.dialogue?.speaker ?? (target === 'illya' ? 'shirou' : 'illya');
       const controller = new AbortController();
       request.current = controller;
       cfg.lastCall = Date.now();
@@ -1080,6 +1081,13 @@ export function useStreetLife(
     },
     [actors, cancel, publish, remember, saveLatest],
   );
+  function controlActor(id: ActorId) {
+    if (!initialized.current || !isPartner(id)) return;
+    life.current.people[id].activity = null;
+    const actor = actors.current.find((person) => person.id === id);
+    if (actor) actor.path = [];
+    publish();
+  }
   function resetPlans() {
     cancel();
     for (const id of LIFE_IDS) life.current.people[id].activity = null;
@@ -1130,6 +1138,7 @@ export function useStreetLife(
     pastime,
     homeCare,
     resetPlans,
+    controlActor,
   };
 }
 export type StreetLife = ReturnType<typeof useStreetLife>;

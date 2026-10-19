@@ -6,6 +6,27 @@
   color: #e9e8d8;
   font-family: var(--font-sans), sans-serif;
 }
+.shell.embedded {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+.embedded > footer {
+  display: none;
+}
+.embedded > header { min-height: 36px; padding: 3px 10px; }
+.embedded > header > .brand,
+.embedded > header > a { display: none; }
+.residentRetry {
+  position: absolute;
+  z-index: 25;
+  color: #344137;
+  background: #f6f3eb;
+  border: 1px solid #cbd3c3;
+  border-radius: 7px;
+  padding: 6px 10px;
+  transform: translate(-50%,-100%);
+}
 .paper {
   height: 100dvh;
   background: #f7f5ed;

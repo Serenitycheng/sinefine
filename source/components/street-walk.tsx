@@ -2,6 +2,7 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- This keyboard-controlled game uses a focusable application surface, not a document region. */
 
 import { LifeReminder } from './street-life-reminder';
+import FateCityArt from './fate-city-art';
 import { FateFullscreenButton } from './fate-fullscreen-button';
 import { FateSoundButton } from './fate-sound-button';
 import { useFateAudio } from './use-fate-audio';
@@ -217,7 +218,7 @@ export default function StreetWalk({
     null,
   );
   const [dialog, setDialog] = useState<'settings' | PartnerId | null>(null);
-  const [dialogSpeaker, setDialogSpeaker] = useState<ActorId>('admin');
+  const [dialogSpeaker, setDialogSpeaker] = useState<ActorId>('illya');
   const [interiorView, setInteriorView] = useState<
     InteriorView | HouseSiteId | null
   >(null);
@@ -226,7 +227,59 @@ export default function StreetWalk({
   const indoorPath = useRef<Point[]>([]);
   const overlay = useRef(false);
   const [active, setActive] = useState<ActorId>('illya');
+  const [cityView, setCityView] = useState(true);
+  const cityViewRef = useRef(true);
+  cityViewRef.current = cityView;
+  const cityInput = useRef<Point>({ x: 0, y: 0 });
+  const [preferencesReady, setPreferencesReady] = useState(false);
   const [mode, setMode] = useState<'control' | 'observe'>('observe');
+  useEffect(() => {
+    if (!fate.loaded) return;
+    let alive = true;
+    queueMicrotask(() => {
+      if (!alive) return;
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem('sinefine-formal-view-v1') ?? 'null',
+        );
+        if (
+          saved &&
+          !fate.save.house?.active &&
+          !fate.save.emiya?.active &&
+          !fate.save.life?.indoor
+        ) {
+          if (CAST.some((person) => person.id === saved.actor))
+            setActive(saved.actor);
+          if (saved.mode === 'control' || saved.mode === 'observe')
+            setMode(saved.mode);
+          if (typeof saved.city === 'boolean') setCityView(saved.city);
+        }
+      } catch {
+        /* Optional view preferences never replace the formal save. */
+      }
+      setPreferencesReady(true);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [
+    fate.loaded,
+    fate.save.house?.active,
+    fate.save.emiya?.active,
+    fate.save.life?.indoor,
+    CAST,
+  ]);
+  useEffect(() => {
+    if (!preferencesReady) return;
+    try {
+      localStorage.setItem(
+        'sinefine-formal-view-v1',
+        JSON.stringify({ actor: active, mode, city: cityView }),
+      );
+    } catch {
+      /* The formal save keeps its existing storage protection. */
+    }
+  }, [preferencesReady, active, mode, cityView]);
   const [scene, setScene] = useState<'street' | 'map'>('street');
   const [scenePlace, setScenePlace] = useState<DistrictLandmark>(
     DISTRICT_LANDMARKS.find((place) => place.id === 'cafe')!,
@@ -390,6 +443,10 @@ export default function StreetWalk({
     back: () => void;
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
+  const watchedHome =
+    mode === 'observe' && isPartner(active) && daily.isInside(active)
+      ? daily.view.people[active].activity?.home
+      : undefined;
   const period = lifePeriod(daily.view.minutes);
   const restoreEmiyaCamera = useCallback(
     (street: EmiyaStreetReturn | HouseStreetReturn) => {
@@ -474,6 +531,10 @@ export default function StreetWalk({
   }, [interiorView]);
   useEffect(() => {
     let alive = true;
+    if (cityView) return;
+    queueMicrotask(() => {
+      if (alive) setReady(false);
+    });
     const images = ASSETS.map(
       (src) =>
         new Promise<void>((resolve, reject) => {
@@ -497,7 +558,7 @@ export default function StreetWalk({
     return () => {
       alive = false;
     };
-  }, [attempt]);
+  }, [attempt, cityView]);
 
   useEffect(() => {
     const host = stage.current;
@@ -531,6 +592,7 @@ export default function StreetWalk({
     host.addEventListener('wheel', wheel, { passive: false });
     const keyDown = (e: KeyboardEvent) => {
       if (dailyActions.current.emiyaActive) return;
+      if (cityViewRef.current && !settings.current.interior) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if (
         (e.target as HTMLElement)?.closest(
@@ -736,6 +798,7 @@ export default function StreetWalk({
         );
         const input = keyboard.x || keyboard.y ? keyboard : sampled.move;
         const walkingInput = input;
+        cityInput.current = walkingInput;
         if (opts.mode === 'control' && (input.x || input.y))
           manualCamera.current = null;
         if (opts.mode === 'observe') {
@@ -763,10 +826,9 @@ export default function StreetWalk({
             stepActor(
               actor,
               dt,
-              walkingInput,
+              cityViewRef.current ? { x: 0, y: 0 } : walkingInput,
               WALK_SPEED * dailyActions.current.walkPace,
             );
-          else if (actor.id === 'admin') actor.frame = 0;
           const node = actorElements.current.get(actor.id),
             sprite = spriteElements.current.get(actor.id);
           if (node) {
@@ -916,6 +978,7 @@ export default function StreetWalk({
     journey.current = null;
     setJourneyLabel(null);
     if (settings.current.mode === 'control') dailyActions.current.cancel();
+    if (settings.current.mode === 'control') daily.controlActor(id);
     // Watching somebody must not interrupt that person or clear everyone else's route.
     const old = actors.current.find((p) => p.id === settings.current.active)!;
     if (settings.current.mode === 'control') old.path = [];
@@ -946,6 +1009,7 @@ export default function StreetWalk({
     setJourneyLabel(null);
     dailyActions.current.cancel();
     const next = settings.current.mode === 'control' ? 'observe' : 'control';
+    if (next === 'control') daily.controlActor(settings.current.active);
     const selected = actors.current.find(
       (p) => p.id === settings.current.active,
     )!;
@@ -1548,14 +1612,16 @@ export default function StreetWalk({
           <small>{lifePeriod(daily.view.minutes)}</small>
         </div>
         <div className={styles.headerActions}>
-          <Link
-            href="/fate/city-art"
+          <button
+            type="button"
+            onClick={() => setCityView((value) => !value)}
             className={styles.aiButton}
-            aria-label="查看冬木 2.5D 街区与室内场景"
+            aria-label={cityView ? '切换为原街道视图' : '切换为 2.5D 街区'}
+            aria-pressed={cityView}
           >
             <Palette size={16} />
             <span>2.5D 街区</span>
-          </Link>
+          </button>
           <button
             type="button"
             className={styles.aiButton}
@@ -1670,6 +1736,72 @@ export default function StreetWalk({
       )}
       <div className={styles.streetBody}>
         <div className={styles.stageWrap}>
+          {cityView && (
+            <div className={styles.formalCity} inert={Boolean(interiorView)}>
+              <FateCityArt
+                appearance="paper"
+                formal={{
+                  actors,
+                  active,
+                  control: mode === 'control',
+                  stage: waverStage,
+                  walkPace: daily.walkPace,
+                  input: cityInput,
+                  blocked:
+                    !ready ||
+                    suspended ||
+                    Boolean(interiorView) ||
+                    Boolean(dialog) ||
+                    lifePanel ||
+                    atlasOpen ||
+                    observerOpen ||
+                    Boolean(selectedPlace),
+                  inside: daily.isInside,
+                  interact: talk,
+                  loaded: setReady,
+                  interactionLabel:
+                    mode === 'control'
+                      ? nearbyStatus?.ok && nearby
+                        ? `与${fatePerson(nearby, waverStage)!.name}交谈`
+                        : nearbyHome
+                          ? '进入住宅'
+                          : undefined
+                      : undefined,
+                  enter: (id) => {
+                    if (isFormalPublicSite(id)) enterPublicInterior(id);
+                    else if (Object.hasOwn(FATE_HOMES, id))
+                      enterInterior(id as keyof typeof FATE_HOMES);
+                  },
+                  moved: (point, direction, frame) => {
+                    const person = actors.current.find(
+                      (person) => person.id === settings.current.active,
+                    );
+                    if (
+                      !person ||
+                      settings.current.mode !== 'control' ||
+                      settings.current.interior
+                    )
+                      return;
+                    person.x = point.x;
+                    person.y = point.y;
+                    person.frame = frame;
+                    if (direction === 'left') person.facing = -1;
+                    if (direction === 'right') person.facing = 1;
+                    person.path = [];
+                  },
+                }}
+              />
+              {!interiorView && watchedHome && (
+                <button
+                  type="button"
+                  className={styles.cityInteraction}
+                  onClick={() => visitInterior(watchedHome)}
+                >
+                  查看{current.name}的室内日常
+                </button>
+              )}
+            </div>
+          )}
           <div
             ref={stage}
             className={`${styles.stage} ${mode === 'observe' ? styles.observing : ''}`}
@@ -1677,6 +1809,7 @@ export default function StreetWalk({
             inert={Boolean(interiorView)}
             aria-hidden={Boolean(interiorView)}
             style={{
+              display: cityView ? 'none' : undefined,
               opacity: interiorView ? 0 : 1,
               pointerEvents: interiorView ? 'none' : undefined,
             }}
@@ -1883,7 +2016,7 @@ export default function StreetWalk({
               <div ref={marker} className={styles.destination} />
             </div>
           </div>
-          {!interiorView && (
+          {!interiorView && !cityView && (
             <>
               <div className={styles.modeBadge}>
                 <span className={styles.liveDot} />
@@ -2274,6 +2407,7 @@ export default function StreetWalk({
                 key={person.id}
                 disabled={!ready}
                 onClick={() => choose(person.id)}
+                data-character-id={person.id}
                 className={`${styles.castCard} ${active === person.id ? styles.selected : ''}`}
                 aria-pressed={active === person.id}
               >

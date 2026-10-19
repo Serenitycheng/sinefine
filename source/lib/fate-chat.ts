@@ -268,17 +268,11 @@ export function createFateChatHandler(
       } catch {
         return errorReply('人物与关系设定格式不正确。', 400);
       }
-      const speaker =
-        body.speaker === 'admin'
-          ? '管理员（由玩家控制的来访者，采用终末地女管理员外形；不可替玩家发言）'
-          : {
-              ...fatePerson(body.speaker, waverStage)!,
-              habits: lifeHabits(body.speaker, waverStage),
-            };
-      const speakerName =
-        body.speaker === 'admin'
-          ? '管理员'
-          : fatePerson(body.speaker, waverStage)!.name;
+      const speaker = {
+        ...fatePerson(body.speaker, waverStage)!,
+        habits: lifeHabits(body.speaker, waverStage),
+      };
+      const speakerName = fatePerson(body.speaker, waverStage)!.name;
       const relationship = relationshipContext(
         body.speaker,
         body.target,
@@ -449,7 +443,7 @@ export function createFateChatHandler(
                   )
                   .map((t) => ({
                     role: t.speaker === body.target ? 'assistant' : 'user',
-                    content: `【${t.speaker === 'admin' ? '管理员' : fatePerson(t.speaker, waverStage)!.name}（${t.speaker}）的历史发言】${t.text}`,
+                    content: `【${fatePerson(t.speaker, waverStage)?.name ?? '已移除身份'}（${t.speaker}）的历史发言】${t.text}`,
                   })),
               ),
               {

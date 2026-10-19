@@ -73,8 +73,7 @@ export function FateConversation({
     popup = useRef<HTMLDivElement>(null);
   const history = conversationHistory(ctx.save, target, speaker);
   const latestExchange = history.at(-1)?.id;
-  const speakerName =
-    speaker === 'admin' ? '管理员' : fatePerson(speaker, waverStage)!.name;
+  const speakerName = fatePerson(speaker, waverStage)?.name ?? '已移除身份';
   useEffect(() => () => running.current?.abort(), []);
   useEffect(() => {
     const viewport = window.visualViewport;

@@ -21,7 +21,7 @@ import {
   conversationSummary,
   type ConversationOutcome,
 } from './fate-social';
-import { samePavement, type ActorId, type Point } from './street';
+import { samePavement, isActorId, type ActorId, type Point } from './street';
 
 type Positions = readonly (Point & { id: ActorId })[];
 export type InteractionStatus = {
@@ -228,7 +228,11 @@ export function recordOnsiteConversation(
   effects?: unknown,
   localSpace?: LocalConversationSpace,
 ): InteractionStatus {
-  if (!isPartner(entry.target) || entry.speaker !== controlled)
+  if (
+    !isActorId(entry.speaker) ||
+    !isPartner(entry.target) ||
+    entry.speaker !== controlled
+  )
     return { ok: false, message: '人物已切换，请重新靠近后交谈。' };
   if (
     typeof entry.id !== 'string' ||
@@ -272,9 +276,7 @@ export function recordOnsiteConversation(
       message: '刚刚已经聊过这个话题了；可以换个话题，或继续日常后再聊。',
     };
   const speakerName =
-    entry.speaker === 'admin'
-      ? '管理员'
-      : fatePerson(entry.speaker, life.waverStage)!.name;
+    fatePerson(entry.speaker, life.waverStage)?.name ?? '已移除身份';
   const targetName = fatePerson(entry.target, life.waverStage)!.name;
   const event: LifeEvent = {
     id: life.nextId++,
