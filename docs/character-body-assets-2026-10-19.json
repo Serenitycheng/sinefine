@@ -1,0 +1,301 @@
+{
+  "version": 2,
+  "date": "2026-10-19",
+  "note": "Identity/outfit crops from existing project art; Rin v2 atlas is the common style reference. Original assets are preserved. Selected PNGs have real alpha. Runtime WebP conversion is lossless.",
+  "assets": [
+    {
+      "id": "rin",
+      "path": "source/public/fate/character-art/body-v2/rin.png",
+      "width": 1182,
+      "height": 1330,
+      "frames": 12,
+      "sha256": "3bc6a92147171e4dc5bb7624ea86d68d608a3e76b91997392342fc6fb256fa25",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Recovered candidate from preceding material session. Identity and outfit reference; eight neutral body views, chair sit/read left/right; additional standing work/read and floor poses where present. Exact prior prompt not retained."
+      ],
+      "promptNote": "Earlier candidate: exact initial prompt was not retained across pause; the saved prompt is a recovered summary. Subsequent extensions have their full prompt."
+    },
+    {
+      "id": "saber",
+      "path": "source/public/fate/character-art/body-v2/saber.png",
+      "width": 1122,
+      "height": 1402,
+      "frames": 20,
+      "sha256": "454878781ca09a6e9200a80c322181291746e122b1cc7b4a15b6109f47a01737",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Recovered candidate from preceding material session. Identity and outfit reference; eight neutral body views, chair sit/read left/right; additional standing work/read and floor poses where present. Exact prior prompt not retained."
+      ],
+      "promptNote": "Earlier candidate: exact initial prompt was not retained across pause; the saved prompt is a recovered summary. Subsequent extensions have their full prompt."
+    },
+    {
+      "id": "shirou",
+      "path": "source/public/fate/character-art/body-v2/shirou.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "6d8cdc581c50b68dfc97b75c1308e2017de0cb97e207bfdd9f57a225c16d9e2b",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Recovered candidate from preceding material session. Identity and outfit reference; eight neutral body views, chair sit/read left/right; additional standing work/read and floor poses where present. Exact prior prompt not retained."
+      ],
+      "promptNote": "Earlier candidate: exact initial prompt was not retained across pause; the saved prompt is a recovered summary. Subsequent extensions have their full prompt."
+    },
+    {
+      "id": "sakura",
+      "path": "source/public/fate/character-art/body-v2/sakura.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "a884c60f8503da3cd8dd7999e8b0e7484345278490da9b1c53dc45a0bc0fa64b",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Recovered candidate from preceding material session. Identity and outfit reference; eight neutral body views, chair sit/read left/right; additional standing work/read and floor poses where present. Exact prior prompt not retained."
+      ],
+      "promptNote": "Earlier candidate: exact initial prompt was not retained across pause; the saved prompt is a recovered summary. Subsequent extensions have their full prompt."
+    },
+    {
+      "id": "diarmuid",
+      "path": "source/public/fate/character-art/body-v2/diarmuid.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 20,
+      "sha256": "da4df57fbb2a41ecd0aa2c778a81de45abac952fe6394e7d6d7e3d44c3aa5571",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Row 5: sitting on floor LEFT, sitting on floor RIGHT, reading book while seated on floor LEFT, reading book while seated on floor RIGHT; folded legs, no furniture. Exactly 20 separate figures. Subject: Diarmuid Ua Duibhne, black swept hair, golden brown eyes and small mole under eye, dark green-black fitted armor, dark boots. Natural adult male proportions, NOT chibi. Natural adult proportions, no chibi."
+      ]
+    },
+    {
+      "id": "irisviel",
+      "path": "source/public/fate/character-art/body-v2/irisviel.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "497e019d3f906f89d2653b19e89b0f8f8beb50d4651a451271f7ffa78395e8b9",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Irisviel von Einzbern, silver long hair, red eyes, cream double-breasted coat, pale lavender stockings and light boots."
+      ]
+    },
+    {
+      "id": "cu",
+      "path": "source/public/fate/character-art/body-v2/cu.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "6f44ad6aa59ee00f16e02688cf254293a8ec73daa9119103e4a1d4ce83400480",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Cu Chulainn, blue tied-back hair, existing blue bodysuit with silver armor and boots."
+      ]
+    },
+    {
+      "id": "emiya",
+      "path": "source/public/fate/character-art/body-v2/emiya.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "d50b3e498b242b689519606aed24da287c9d4f0f8a400ea7e960685f6d4083df",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Archer / EMIYA, short white hair, darker skin, existing red coat with black and silver chest outfit, dark trousers and boots."
+      ]
+    },
+    {
+      "id": "gilgamesh",
+      "path": "source/public/fate/character-art/body-v2/gilgamesh.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "e9feeb28f2cd727d8d4f926e93ec1cca095134889a614c32215bb4ed2cea4c65",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Gilgamesh, blond hair and red eyes, existing gold armor with red draped cloth. No weapons."
+      ]
+    },
+    {
+      "id": "illya",
+      "path": "source/public/fate/character-art/body-v2/illya.png",
+      "width": 1106,
+      "height": 1422,
+      "frames": 16,
+      "sha256": "16d76755642c3f844eadbed33161113ae13400717fd5690688e4c48384cc76de",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Illyasviel von Einzbern, existing purple coat and matching purple hat, white scarf, silver hair, red eyes, dark purple boots. Keep the existing child character proportions and modest outfit, do not age her up.",
+        "Edit target: this exact sprite atlas. Change ONLY layout spacing: keep all 16 complete figures, same eight standing body orientations, four chair sitting/reading poses and four standing work/reading poses, same character face outfit proportions and art style. Arrange FOUR columns and FOUR rows of generously separated individual sprites. Every figure surrounded by at least 35 pixels of clear transparent padding, including BETWEEN ROWS. NO touching/overlap between shoes of one figure and hat or hair of the next. Keep scale consistent for all standing figures. Expand transparent canvas vertically to 2048x3072 if needed. True transparent alpha background, no checkerboard, no backdrop or colored fringe, no chairs or furniture, no text."
+      ]
+    },
+    {
+      "id": "iskandar",
+      "path": "source/public/fate/character-art/body-v2/iskandar.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "205f08271f80e2f450a3b3185a09e96dfc032597870e9089562826507e63bff4",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Iskandar, large broad muscular adult man, red beard and short red hair, red sleeveless casual shirt, charcoal trousers and brown boots. No horse.",
+        "Edit target: this exact sprite atlas. Change ONLY layout spacing: keep all 16 complete figures, same eight standing body orientations, four chair sitting/reading poses and four standing work/reading poses, same character face outfit proportions and art style. Arrange FOUR columns and FOUR rows of generously separated individual sprites. Every figure surrounded by at least 35 pixels of clear transparent padding, including BETWEEN ROWS. NO touching/overlap between shoes of one figure and hat or hair of the next. Keep scale consistent for all standing figures. Expand transparent canvas vertically to 2048x3072 if needed. True transparent alpha background, no checkerboard, no backdrop or colored fringe, no chairs or furniture, no text."
+      ]
+    },
+    {
+      "id": "kariya",
+      "path": "source/public/fate/character-art/body-v2/kariya.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "c3efdce04e15f97e03c18f64c70358432d83557c10dda067479e4314ba77bc96",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Kariya Matou, pale gray hair, pale complexion, dark blue hoodie over light shirt, dark trousers and shoes."
+      ]
+    },
+    {
+      "id": "kirei",
+      "path": "source/public/fate/character-art/body-v2/kirei.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "918ba38541931fe6a339110d5ff2c5e7d26539c622c5bb513572886f4a05c600",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Kirei Kotomine, short dark hair, existing black priest cassock with gold cross and dark shoes."
+      ]
+    },
+    {
+      "id": "kiritsugu",
+      "path": "source/public/fate/character-art/body-v2/kiritsugu.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "2dcce4eba998a17b6a92e8c33989fed2a65b68b8e34016b73223543241283176",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Kiritsugu Emiya, short black hair, black shirt and dark trousers, quiet adult proportions. Relaxed hands near pockets in standing views, not forced outstretched arms."
+      ]
+    },
+    {
+      "id": "kuzuki",
+      "path": "source/public/fate/character-art/body-v2/kuzuki.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "161abe4cfd56e1f41dc6b0f889f2add4cdc5bde0f50149afb30c4d028176198c",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Souichirou Kuzuki, short dark hair, glasses, dark green suit, white shirt and dark tie."
+      ]
+    },
+    {
+      "id": "medea",
+      "path": "source/public/fate/character-art/body-v2/medea.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "d1594e1dbebbbfcd3cd9368c4397eed8d69771a8a866ab5bd9ecc9207ccfed55",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Medea, long lavender hair, existing violet long gown and cape with gold trim, adult proportions, no hood covering face."
+      ]
+    },
+    {
+      "id": "medusa",
+      "path": "source/public/fate/character-art/body-v2/medusa.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "73c37fa738941ab667c539cde3dc99024a3d454b339a3a0f9a187a9e6d65b8fc",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Medusa, very long purple hair and purple eye covering, black and purple short dress, long dark boots. Preserve her existing outfit, not exaggerated anatomy."
+      ]
+    },
+    {
+      "id": "natalia",
+      "path": "source/public/fate/character-art/body-v2/natalia.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 20,
+      "sha256": "0bb056d9a7099d90c056421cfb221ba121b88e5e787c5513d2eef2128993d969",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Row 5: sitting on floor LEFT, sitting on floor RIGHT, floor reading LEFT, floor reading RIGHT with folded legs. Exactly 20 figures. Subject: Natalia Kaminski, mature adult woman, short swept wavy dark brown hair, existing olive green military field jacket over dark shirt, dark blue jeans and brown boots, confident practical posture. Natural adult proportions, NOT chibi."
+      ]
+    },
+    {
+      "id": "rin-work",
+      "path": "source/public/fate/character-art/body-v2/rin-work.png",
+      "width": 1967,
+      "height": 799,
+      "frames": 4,
+      "sha256": "5a1bd9ebc51b68f366b180cc9c090de0a3dbd1acc26fbd3d2ee5b8489f6a7db1",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case identity-preserve. Matching game sprite extension to reference Rin Tohsaka atlas. Keep exact same natural proportions, hairstyle, outfit red cross sweater black pleated skirt thigh high stockings brown loafers and soft painted anime quality. Produce ONLY FOUR complete standing sprites in ONE horizontal row, generous transparent space between them: 1 standing relaxed working hands reaching gently at waist level facing LEFT; 2 same working pose facing RIGHT; 3 standing reading an open small brown book facing LEFT; 4 standing reading facing RIGHT. Both feet planted naturally; no exaggerated arms, no furniture or scenery. Real alpha transparency, no backdrop, no text, no grid. Full hair and shoes visible. Use canvas wide landscape."
+      ]
+    },
+    {
+      "id": "taiga",
+      "path": "source/public/fate/character-art/body-v2/taiga.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 20,
+      "sha256": "ed26583db17c6f12fa01df559cd5adab5ebb521dd5cbdd625214255d296bdb7b",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Row 5: sitting on floor LEFT, sitting on floor RIGHT, floor reading LEFT, floor reading RIGHT, folded legs. Exactly 20 figures. Subject: Taiga Fujimura, short light brown bob, green cardigan over light top, long dark skirt and brown shoes."
+      ]
+    },
+    {
+      "id": "tokiomi",
+      "path": "source/public/fate/character-art/body-v2/tokiomi.png",
+      "width": 1182,
+      "height": 1330,
+      "frames": 16,
+      "sha256": "02389cc79314829175fac20cde0506cf4d444a78d0e8f4742d184c8f55cb78e2",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Tokiomi Tohsaka, short brown hair and neat small beard, burgundy formal suit and long burgundy coat."
+      ]
+    },
+    {
+      "id": "waver-young-chair",
+      "path": "source/public/fate/character-art/body-v2/waver-young-chair.png",
+      "width": 2172,
+      "height": 724,
+      "frames": 4,
+      "sha256": "2b9b7115e33895a6ffeed8d23922dd7f7cc68c69713d58f121497b27bc74373f",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case identity-preserve. Matching sprite extension to reference Young Waver Velvet. Preserve exact youthful face, chin length dark hair green eyes, green sweater over white shirt striped tie dark striped trousers brown shoes and soft anime style. Produce ONLY FOUR complete chair-sitting sprites in ONE horizontal row with generous transparent space: 1 sitting facing LEFT hands on lap, 2 sitting facing RIGHT hands on lap, 3 sitting reading an open small brown book facing LEFT, 4 sitting reading facing RIGHT. Chair sitting anatomy: hips level, thighs horizontal, knees 90 degrees, feet below knees. Draw character and book ONLY, absolutely NO chair stool furniture ground or background. Real alpha transparency, no text or grid. Same body scale in all four figures, full hair and shoes visible. Wide landscape canvas."
+      ]
+    },
+    {
+      "id": "waver-young",
+      "path": "source/public/fate/character-art/body-v2/waver-young.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "3474eefd4170d62f42d99ebc2765a1c680646ddff03117b60cd37ef4ee311cde",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Row 5: sitting on floor LEFT, sitting on floor RIGHT, floor reading LEFT, floor reading RIGHT with folded legs. Exactly 20 figures. Subject: Young Waver Velvet, slim short young adult male with chin-length dark bob and green eyes, green school blazer, white shirt and red tie, dark trousers and brown shoes. Natural youthful proportions matching the soft anime style, NOT chibi; do not draw adult long-haired Lord El-Melloi II. Match youthful face and green blazer, not the background illustration. Frame all shoes."
+      ]
+    },
+    {
+      "id": "waver",
+      "path": "source/public/fate/character-art/body-v2/waver.png",
+      "width": 1024,
+      "height": 1536,
+      "frames": 16,
+      "sha256": "60c539d007d7e62bdbc8724d734edab0a09abc623aef359c1027f5b039cef888",
+      "tool": "built-in imagegen",
+      "prompts": [
+        "Use case: stylized-concept. Production 2.5D game sprite atlas, soft detailed painted anime matching image 2. Image 1 defines CHARACTER IDENTITY AND OUTFIT ONLY; keep natural body proportions of image 2 (except existing child character, preserve her age). Real alpha transparent background; no background color, no floor, chair, stool, scenery, text, watermark, panels, borders or separate shadows. Each figure complete head to shoes with clear spacing. Exactly FOUR columns. Row 1: quiet standing facing front, front-left 45 degrees, LEFT full profile 90 degrees, rear-left 135 degrees. Row 2: exact back 180 degrees, rear-right 225 degrees, RIGHT full profile 270 degrees, front-right 315 degrees. Rotate pelvis, chest, legs and shoes together, not just head. Hands relaxed naturally next to sides (Kiritsugu can keep hands in pockets); neutral feet separated, not crossing. Same character scale throughout first 2 rows. Row 3: chair sitting LEFT, chair sitting RIGHT, chair reading book LEFT, chair reading book RIGHT. Hips level, thighs horizontal, knees 90 degrees, feet resting below knees, BUT draw NO chair, all four are suspended sitting poses to be mounted on game chairs. Row 4: standing gentle working reach LEFT, standing gentle working reach RIGHT, standing reading book LEFT, standing reading book RIGHT. Hands below chest near waist for working; no raised/exaggerated arm poses. Not a walking sequence. Clean alpha edge, no colored fringe, accurate hands and anatomy. Exactly 16 figures. Subject: Lord El-Melloi II / adult Waver Velvet, long straight dark hair, dark long coat, red waistcoat and dark trousers. Preserve adult proportions."
+      ]
+    }
+  ]
+}

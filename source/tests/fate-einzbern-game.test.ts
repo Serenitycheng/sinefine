@@ -35,7 +35,6 @@ import {
 } from '../lib/fate-backup';
 import { houseResidentSprite } from '../lib/fate-house-sprites';
 import { shirouWalkSprite } from '../lib/fate-emiya-walk';
-import { mirrorPreviewSprite } from '../lib/fate-preview-house';
 import { EmiyaGameSession } from '../lib/fate-emiya-game';
 import { runBackgroundRound } from '../lib/fate-background-simulation';
 import type { PartnerId } from '../lib/fate-cast';
@@ -435,23 +434,17 @@ void test('family v3 backup and inactive scene coexist with Emiya while original
   }
 });
 
-void test('Shirou visitor reuses the approved daily gait, full registered crop and one mirror transform', () => {
+void test('Shirou visitor has the registered casual body model while the native Emiya gait stays available', () => {
   for (const direction of ['up', 'down', 'left', 'right'] as const)
     for (let phase = 0; phase <= 6; phase++) {
       const sprite = houseResidentSprite('shirou', direction, phase)!,
         original = shirouWalkSprite(direction, phase);
-      assert.equal(sprite.file, original.sheet.path);
-      assert.equal(sprite.cropX, original.frame.x);
-      assert.equal(sprite.cropY, original.frame.y);
-      assert.equal(sprite.cellWidth, original.frame.width);
-      assert.equal(sprite.cellHeight, original.frame.height);
-      assert.equal(sprite.anchorX, original.anchorX);
-      assert.equal(sprite.scale, original.scale * 1.35);
-      assert.deepEqual(
-        original.mirror ? mirrorPreviewSprite(sprite).bounds : sprite.bounds,
-        original.frame.bounds,
-      );
-      assert.equal(sprite.mirror, original.mirror);
+      assert.match(sprite.file, /body-v2\/shirou\.png$/);
+      assert.equal(sprite.materialVersion, 'body-v2');
+      assert.ok(original.frame.bounds.height > 0 && original.anchorX > 0);
+      assert.ok(sprite.clip && sprite.clip.length > 3);
+      assert.equal(sprite.mirror, false);
+      assert.equal(Boolean(sprite.rig), phase > 0);
       assert.doesNotMatch(sprite.file, /school/);
     }
   for (const actor of CAST) assert.ok(houseResidentSprite(actor, 'down', 0));

@@ -244,7 +244,7 @@ void test('public interiors accept every existing playable identity without chan
   s.life.waverStage = 'young';
   const plan = formalHousePlan('waver', 'waver', 'young');
   assert.equal(plan.cast[0].name, '韦伯·维尔维特');
-  assert.equal(plan.rooms.lounge.actions.length, 0);
+  assert.ok(plan.rooms.lounge.actions.length > 0);
   assert.notEqual(
     plan.sprite('waver', 'down', 0).file,
     formalHousePlan('waver', 'waver', 'adult').sprite('waver', 'down', 0).file,
@@ -258,6 +258,8 @@ void test('public interiors accept every existing playable identity without chan
     )!.point,
   );
   s.action = HOUSE_PREVIEWS.waver.rooms.lounge.actions[0].id;
+  assert.equal(parseFateSave(formal(s)).house!.action, s.action);
+  s.action = 'nonexistent-pose';
   assert.throws(() => parseFateSave(formal(s)), /动作记录/);
 });
 

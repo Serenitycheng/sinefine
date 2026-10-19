@@ -250,13 +250,14 @@ void test('Emiya residents walk through the connected rooms when their activity 
   assert.ok(visited.has('forecourt'));
 });
 
-void test('Young Waver remains young in every residence and has no fabricated seated pose', () => {
+void test('Young Waver keeps his own model and stage in every residence, including newly authored seated poses', () => {
   for (const home of HOMES) {
     const session = fixture(home, 'waver');
     session.life.waverStage = 'young';
     const plan = formalHousePlan(home, 'waver', 'young');
     assert.ok(
-      Object.values(plan.rooms).every((room) => room.actions.length === 0),
+      home === 'emiya' ||
+        Object.values(plan.rooms).some((room) => room.actions.length > 0),
     );
     assert.deepEqual(
       plan.sprite('waver', 'left', 2),

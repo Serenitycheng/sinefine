@@ -1,8 +1,20 @@
 import data from './fate-tohsaka-sprite-data.json';
 import poses from './fate-tohsaka-pose-data.json';
 import archerClips from './fate-emiya-frame-clips.json';
+import nativeClips from './fate-tohsaka-frame-clips.json';
 import type { TohsakaActorId } from './fate-tohsaka-house';
 type Direction = 'up' | 'down' | 'left' | 'right';
+type Clip = { x: number; y: number; width: number; height: number };
+const registeredClips = nativeClips as {
+  walk: Record<string, Record<string, Clip>>;
+  pose: Record<string, Record<string, Clip>>;
+};
+const polygon = (c: Clip) => [
+  [c.x, c.y],
+  [c.x + c.width, c.y],
+  [c.x + c.width, c.y + c.height],
+  [c.x, c.y + c.height],
+];
 
 /** Actual pixel frames. Side gait is six native phases; right is mirrored.
  * Front/back have three native phases reused twice, never claimed as six drawings. */
@@ -18,6 +30,9 @@ export function tohsakaSprite(
     return {
       ...sheet.frames[index],
       ...sheet,
+      ...(registeredClips.pose[actor]?.[index]
+        ? { clip: polygon(registeredClips.pose[actor][index]) }
+        : {}),
       frames: undefined,
       index,
       mirror: false,
@@ -41,7 +56,7 @@ export function tohsakaSprite(
             { x: number; y: number; width: number; height: number }
           >
         )[index]
-      : undefined;
+      : registeredClips.walk[actor]?.[index];
   const bounds = clip ?? frame.bounds;
   const mirror = moving && direction === 'right';
   return {

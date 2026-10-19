@@ -15,7 +15,7 @@ export function FateArtRig({
   return (
     <span
       aria-hidden="true"
-      data-art-rig="kiritsugu"
+      data-art-rig={sprite.rig!.kind ?? 'kiritsugu'}
       data-rig-phase={sprite.rig!.phase}
       style={{
         display: 'block',
@@ -35,17 +35,27 @@ export function FateArtRig({
           style={{
             position: 'absolute',
             inset: 0,
-            backgroundImage: `url(${runtimeArt(sprite.file)})`,
-            backgroundSize: `${sprite.imageWidth * scale}px ${sprite.imageHeight * scale}px`,
-            backgroundPosition: `${-sprite.cropX * scale}px ${-sprite.cropY * scale}px`,
-            backgroundRepeat: 'no-repeat',
             clipPath: `polygon(${layer.clip.map(([x, y]) => `${(x / sprite.cellWidth) * 100}% ${(y / sprite.cellHeight) * 100}%`).join(',')})`,
             transformOrigin: '0 0',
             transform: `matrix(${[...layer.matrix.slice(0, 4), layer.matrix[4] * scale, layer.matrix[5] * scale].join(',')})`,
             filter:
               layer.shade !== 1 ? `brightness(${layer.shade ?? 1})` : undefined,
           }}
-        />
+        >
+          <span
+            style={{
+              position: 'absolute',
+              inset: 0,
+              backgroundImage: `url(${runtimeArt(sprite.file)})`,
+              backgroundSize: `${sprite.imageWidth * scale}px ${sprite.imageHeight * scale}px`,
+              backgroundPosition: `${-sprite.cropX * scale}px ${-sprite.cropY * scale}px`,
+              backgroundRepeat: 'no-repeat',
+              clipPath: sprite.clip
+                ? `polygon(${sprite.clip.map(([x, y]) => `${(x / sprite.cellWidth) * 100}% ${(y / sprite.cellHeight) * 100}%`).join(',')})`
+                : undefined,
+            }}
+          />
+        </span>
       ))}
     </span>
   );

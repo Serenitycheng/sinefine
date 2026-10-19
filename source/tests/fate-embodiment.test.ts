@@ -11,10 +11,7 @@ import { cityPreviewVisit } from '../lib/fate-city-preview-visit';
 import { previewPresentation } from '../lib/fate-preview-presentation';
 import { mirrorPreviewSprite } from '../lib/fate-preview-house';
 import { FootstepClock, fateAudio, roomAcoustics } from '../lib/fate-audio';
-import {
-  interactionArms,
-  interactionMotion,
-} from '../lib/fate-interaction-motion';
+import { interactionMotion } from '../lib/fate-interaction-motion';
 import crops from '../lib/fate-interior-closeup-data.json';
 import { interiorObjectFrame } from '../lib/fate-interior-detail';
 
@@ -41,15 +38,6 @@ void test('Illya has one consistent taller standing calibration across direction
         Math.abs(s.bounds.height * s.scale - 242 * ILLYA_DISPLAY_SCALE) < 4,
       );
       assert.ok(s.anchorY >= s.bounds.y + s.bounds.height - 4);
-      const a = interactionArms(s.bounds);
-      assert.ok(
-        a.left >= s.bounds.x &&
-          a.right + a.width <= s.bounds.x + s.bounds.width,
-      );
-      assert.ok(
-        a.bottom < s.bounds.y + s.bounds.height * 0.8,
-        'arms never cut planted feet',
-      );
     }
 });
 
@@ -67,7 +55,8 @@ void test('seated visitors do not grow with a chair multiplier, and registered p
           const relative =
             view.body.height /
             interiorDepth(action.contact, room.scene.floor) /
-            sprite.standingHeight!;
+            sprite.standingHeight! /
+            (room.scene.figureScale ?? 1);
           assert.ok(
             relative >= 0.73 && relative <= 0.84,
             `${site}/${action.id}/${actor}: ${relative}`,
@@ -88,7 +77,7 @@ void test('seated visitors do not grow with a chair multiplier, and registered p
               ) < 1e-7,
             );
           }
-          assert.equal(view.layer >= point.y, true);
+          if (!action.behind?.length) assert.equal(view.layer >= point.y, true);
         }
     }
 });

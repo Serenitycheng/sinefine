@@ -17,7 +17,10 @@ export function previewPresentation(
   const contact = action?.contact ?? point;
   const foot = interiorProject(contact, scene.floor);
   const depth = interiorDepth(contact, scene.floor);
-  const spriteScale = depth * poseDisplayScale(sprite, action?.scale ?? 1);
+  const spriteScale =
+    depth *
+    (scene.figureScale ?? 1) *
+    poseDisplayScale(sprite, action?.scale ?? 1);
   foot.y -= (action?.elevation ?? 0) * depth;
   if (action?.seat && sprite.seat) {
     foot.x = action.seat.x - (sprite.seat.x - sprite.anchorX) * spriteScale;
@@ -29,7 +32,7 @@ export function previewPresentation(
     width: sprite.bounds.width * spriteScale,
     height: sprite.bounds.height * spriteScale,
   };
-  const layer = scene.furniture.reduce(
+  const front = scene.furniture.reduce(
     (depth, furniture) =>
       action?.inFrontOf?.includes(furniture.id)
         ? Math.max(
@@ -38,6 +41,16 @@ export function previewPresentation(
           )
         : depth,
     point.y,
+  );
+  const layer = scene.furniture.reduce(
+    (depth, furniture) =>
+      action?.behind?.includes(furniture.id)
+        ? Math.min(
+            depth,
+            furniture.footprint.y + furniture.footprint.height - 1,
+          )
+        : depth,
+    front,
   );
   return { foot, spriteScale, body, layer };
 }

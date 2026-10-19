@@ -7,6 +7,8 @@ import { usePlayChrome } from './use-play-chrome';
 import { FateInteractionMotion } from './fate-interaction-motion';
 import { interactionMotion } from '@/lib/fate-interaction-motion';
 import { houseResidentSprite } from '@/lib/fate-house-sprites';
+import { FateArtRig } from './fate-art-rig';
+import { bodyFacing, type BodyFacing } from '@/lib/fate-body-facing';
 import { fateAudio } from '@/lib/fate-audio';
 import { interiorObjectFrame } from '@/lib/fate-interior-detail';
 import {
@@ -120,6 +122,7 @@ import {
 type Direction = 'up' | 'down' | 'left' | 'right';
 type Entity = EmiyaLocation & {
   direction: Direction;
+  bodyFacing: BodyFacing;
   walked: number;
   legs: EmiyaLeg[];
   frame: number;
@@ -167,6 +170,7 @@ const entity = (location: EmiyaLocation): Entity => ({
   ...location,
   point: { ...location.point },
   direction: 'up',
+  bodyFacing: 'up',
   walked: 0,
   legs: [],
   frame: 0,
@@ -250,15 +254,18 @@ export default function FateEmiyaHouse({
   const [artStatus, setArtStatus] = useState<Record<string, 'ready' | 'error'>>(
     {},
   );
-  const requiredArt = emiyaRoomRequiredArt(
-    view.player.room,
-    Boolean(life),
-    view.residentVisible && view.resident.room === view.player.room,
-    view.inhabitants
-      .filter((body) => body.room === view.player.room)
-      .map((body) => body.id),
-    Boolean(view.activity),
-  );
+  const requiredArt = [
+    ...emiyaRoomRequiredArt(
+      view.player.room,
+      Boolean(life),
+      view.residentVisible && view.resident.room === view.player.room,
+      view.inhabitants
+        .filter((body) => body.room === view.player.room)
+        .map((body) => body.id),
+      Boolean(view.activity),
+    ),
+    houseResidentSprite(life ? 'shirou' : 'illya', 'down', 0)!.file,
+  ];
   const load = requiredArt.some((url) => artStatus[url] === 'error')
     ? 'error'
     : requiredArt.every((url) => artStatus[url] === 'ready')
@@ -367,6 +374,7 @@ export default function FateEmiyaHouse({
     life ? 'shirou' : 'illya',
     view.player.direction,
     view.player.frame,
+    view.player.bodyFacing,
   );
   const clampCamera = (p: CityPoint) =>
     emiyaClampCamera(p, scale, size, cameraBody);
@@ -625,6 +633,7 @@ export default function FateEmiyaHouse({
         life ? 'shirou' : 'illya',
         e.player.direction,
         e.player.frame,
+        e.player.bodyFacing,
       ),
     );
     setZoom(nextZoom);
@@ -971,8 +980,10 @@ export default function FateEmiyaHouse({
                 return { x: b.x - a.x, y: b.y - a.y };
               })()
             : input;
-        if (delta.x || delta.y)
+        if (delta.x || delta.y) {
           player.direction = cityWalkFacing(delta, player.direction);
+          player.bodyFacing = bodyFacing(delta, player.bodyFacing);
+        }
         if (!life) player.walked += travelled;
       }
       if (life)
@@ -1120,6 +1131,7 @@ export default function FateEmiyaHouse({
           life ? 'shirou' : 'illya',
           player.direction,
           player.frame,
+          player.bodyFacing,
         ),
       );
       camera.current = next;
@@ -1182,6 +1194,17 @@ export default function FateEmiyaHouse({
   const playerWalk = life
     ? shirouWalkSprite(view.player.direction, view.player.frame)
     : null;
+  const bodyModel = houseResidentSprite(
+    life ? 'shirou' : 'illya',
+    view.player.direction,
+    view.player.frame,
+    'adult',
+    undefined,
+    undefined,
+    view.player.bodyFacing,
+  )!;
+  const paintedBodyScale =
+    interiorDepth(view.player.point, floor) * bodyModel.scale;
   const playerFrame = playerWalk?.frame ?? null;
   const anchor = playerFrame
     ? {
@@ -1623,6 +1646,8 @@ export default function FateEmiyaHouse({
                   data-player-id={life ? 'shirou' : 'illya'}
                   data-house-player
                   data-player-direction={view.player.direction}
+                  data-body-facing={bodyModel.bodyFacing}
+                  data-body-art={bodyModel.materialVersion}
                   data-player-frame={view.player.frame}
                   data-player-pose={pose?.pose ?? 'walk'}
                   data-player-pose-phase={pose?.phase ?? ''}
@@ -1673,6 +1698,23 @@ export default function FateEmiyaHouse({
                           )!.scale
                         }
                         motion={interactionMotion(inspection.title)}
+                      />
+                    ) : bodyModel.rig ? (
+                      <FateArtRig sprite={bodyModel} scale={paintedBodyScale} />
+                    ) : bodyModel.materialVersion ? (
+                      <span
+                        className={base.sprite}
+                        style={{
+                          width: bodyModel.cellWidth * paintedBodyScale,
+                          height: bodyModel.cellHeight * paintedBodyScale,
+                          backgroundImage: `url(${runtimeArt(bodyModel.file)})`,
+                          backgroundSize: `${bodyModel.imageWidth * paintedBodyScale}px ${bodyModel.imageHeight * paintedBodyScale}px`,
+                          backgroundPosition: `${-bodyModel.cropX * paintedBodyScale}px ${-bodyModel.cropY * paintedBodyScale}px`,
+                          clipPath: bodyModel.clip
+                            ? `polygon(${bodyModel.clip.map(([x, y]) => `${(x / bodyModel.cellWidth) * 100}% ${(y / bodyModel.cellHeight) * 100}%`).join(',')})`
+                            : undefined,
+                          transform: `translate(${-bodyModel.anchorX * paintedBodyScale}px,${-bodyModel.anchorY * paintedBodyScale}px)`,
+                        }}
                       />
                     ) : (
                       <span

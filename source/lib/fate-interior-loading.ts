@@ -1,5 +1,6 @@
 import type { ActorId } from './street';
 import type { PreviewHouse } from './fate-preview-house';
+import { bodyInteractionArt } from './fate-body-art';
 
 /** Entry waits for walking art only; optional poses warm after the room is playable. */
 export function houseWalkingArt(plan: PreviewHouse, actor: ActorId) {
@@ -20,6 +21,7 @@ export function houseRoomWarmArt(
   const config = plan.rooms[room];
   return [
     ...new Set([
+      ...bodyInteractionArt(plan.sprite(actor, 'down', 0)),
       ...config.actions.map((a) => plan.sprite(actor, 'down', 0, a.pose).file),
       ...config.doors
         .flatMap((d) =>

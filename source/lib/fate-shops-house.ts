@@ -42,9 +42,12 @@ type Spot = {
   seat?: Pair;
   scale?: number;
   mirror?: boolean;
+  facing?: PreviewAction['facing'];
   inFrontOf?: readonly string[];
+  behind?: readonly string[];
 };
 type Layout = {
+  figureScale?: number;
   floor?: InteriorFloor;
   pieces: readonly Piece[];
   spots: readonly Spot[];
@@ -990,6 +993,7 @@ const authored: Record<ShopBuildingId, Shop> = {
       ],
     },
     extra: {
+      figureScale: 1.35,
       pieces: [
         [
           'workbench',
@@ -1055,10 +1059,12 @@ const authored: Record<ShopBuildingId, Shop> = {
           point: [67, 91],
           detail: '翻开桌上的维修手册。',
           pose: 'read',
+          facing: 'left',
+          behind: ['desk'],
           contact: [81.5, 81],
           seat: [81.5, 59.5],
           scale: 1.7,
-          inFrontOf: ['chair', 'desk'],
+          inFrontOf: ['chair'],
         },
         {
           id: 'radio',
@@ -1294,6 +1300,7 @@ function room(scene: CityInteriorScene, layout: Layout): PreviewRoom {
   const result: PreviewRoom = {
     scene: {
       ...scene,
+      figureScale: layout.figureScale,
       floor: { ...(layout.floor ?? extraFloor) },
       furniture: [],
       spots: [],
@@ -1321,7 +1328,9 @@ function room(scene: CityInteriorScene, layout: Layout): PreviewRoom {
       seat: { x: spot.seat![0] * 16, y: spot.seat![1] * 9 },
       scale: spot.scale,
       mirror: spot.mirror,
+      facing: spot.facing,
       inFrontOf: spot.inFrontOf,
+      behind: spot.behind,
     }));
   return result;
 }

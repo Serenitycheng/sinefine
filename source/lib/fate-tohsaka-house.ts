@@ -417,12 +417,22 @@ export function houseCamera(
     start: number,
     extent: number,
   ) => {
-    if (painting * scale <= viewport) return (viewport - painting * scale) / 2;
+    if (painting * scale <= viewport)
+      return Math.max(
+        12 - start * scale,
+        Math.min(
+          viewport - 12 - (start + extent) * scale,
+          (viewport - painting * scale) / 2,
+        ),
+      );
     const lo = Math.max(viewport - painting * scale, 12 - start * scale);
     const hi = Math.min(0, viewport - 12 - (start + extent) * scale);
     return lo <= hi
       ? Math.max(lo, Math.min(hi, p))
-      : Math.max(viewport - painting * scale, Math.min(0, p));
+      : Math.max(
+          12 - start * scale,
+          Math.min(viewport - 12 - (start + extent) * scale, p),
+        );
   };
   return {
     x: axis(origin.x, size.width, 1600, body.x, body.width),

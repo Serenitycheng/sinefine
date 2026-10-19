@@ -1,0 +1,130 @@
+[
+  {
+    "id": "rin",
+    "height": 405,
+    "rows": 3
+  },
+  {
+    "id": "saber",
+    "height": 405,
+    "rows": 5
+  },
+  {
+    "id": "shirou",
+    "height": 413.1,
+    "rows": 4
+  },
+  {
+    "id": "sakura",
+    "height": 405,
+    "rows": 4
+  },
+  {
+    "id": "diarmuid",
+    "height": 405,
+    "rows": 5
+  },
+  {
+    "id": "irisviel",
+    "height": 409.05,
+    "rows": 4
+  },
+  {
+    "id": "cu",
+    "height": 405,
+    "rows": 4
+  },
+  {
+    "id": "emiya",
+    "height": 405.00000000000006,
+    "rows": 4
+  },
+  {
+    "id": "gilgamesh",
+    "height": 405,
+    "rows": 4
+  },
+  {
+    "id": "illya",
+    "height": 346.30729470000006,
+    "rows": 4
+  },
+  {
+    "id": "iskandar",
+    "height": 442.8,
+    "rows": 4
+  },
+  {
+    "id": "kariya",
+    "height": 410.37326732673273,
+    "rows": 4
+  },
+  {
+    "id": "kirei",
+    "height": 422.83891050583657,
+    "rows": 4
+  },
+  {
+    "id": "kiritsugu",
+    "height": 411.37874999999997,
+    "rows": 4
+  },
+  {
+    "id": "kuzuki",
+    "height": 405,
+    "rows": 4
+  },
+  {
+    "id": "medea",
+    "height": 405,
+    "rows": 4
+  },
+  {
+    "id": "medusa",
+    "height": 433.35,
+    "rows": 4
+  },
+  {
+    "id": "natalia",
+    "height": 405,
+    "rows": 5
+  },
+  {
+    "id": "rin-work",
+    "height": 405,
+    "rows": 1,
+    "extension": true
+  },
+  {
+    "id": "taiga",
+    "height": 405,
+    "rows": 5
+  },
+  {
+    "id": "tokiomi",
+    "height": 405.00000000000006,
+    "rows": 4
+  },
+  {
+    "id": "waver-young-chair",
+    "height": 390,
+    "rows": 1,
+    "extension": true
+  },
+  {
+    "id": "waver-young",
+    "height": 390,
+    "rows": 4,
+    "layout": {
+      "chair": null,
+      "work": 8,
+      "standingRead": 10,
+      "floor": 12
+    }
+  },
+  {
+    "id": "waver",
+    "height": 422.5809836065574,
+    "rows": 4
+  }
+]

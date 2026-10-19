@@ -88,8 +88,11 @@ import {
 import styles from './fate-city-art.module.css';
 import { cityPreviewVisit } from '@/lib/fate-city-preview-visit';
 import { houseWalkingArt } from '@/lib/fate-interior-loading';
+import { cityActorMotion } from '@/lib/fate-city-gait';
+import { houseGaitFrame } from '@/lib/fate-house-walk';
 import { formalCityScene, type FormalCityBridge } from '@/lib/fate-formal-city';
 import { isPartner, type PartnerId } from '@/lib/fate-cast';
+import { bodyFacing, type BodyFacing } from '@/lib/fate-body-facing';
 
 type Direction = 'down' | 'left' | 'right' | 'up';
 type ArtPlace = CityArtPlace;
@@ -127,7 +130,11 @@ export default function FateCityArt({
   const syncedActor = useRef('');
   const [positionActor, setPositionActor] = useState('');
   const syncedPoint = useRef<CityPoint | null>(null);
-  const residentHistory = useRef(new Map<string, CityArtActorView>());
+  const residentHistory = useRef(
+    new Map<string, CityArtActorView & { travel: number }>(),
+  );
+  const nativeTravel = useRef(0);
+  const gaitScale = useRef(0.4);
   const [residents, setResidents] = useState<
     (CityArtActorView & { id: PartnerId })[]
   >([]);
@@ -285,6 +292,7 @@ export default function FateCityArt({
     travelled = useRef(0),
     route = useRef<CityPoint[]>([]),
     keys = useRef(new Set<string>());
+  const bodyDirection = useRef<BodyFacing>('right');
   const target = useRef<ArtPlace | null>(null);
   const drag = useRef<{
     id: number;
@@ -315,6 +323,9 @@ export default function FateCityArt({
     scale,
     size,
   );
+  useLayoutEffect(() => {
+    gaitScale.current = actorScale;
+  }, [actorScale]);
   const origin = cityCameraOrigin(
     { x: baseOrigin.x + pan.x, y: baseOrigin.y + pan.y },
     player,
@@ -929,10 +940,24 @@ export default function FateCityArt({
           const changedActor = syncedActor.current !== selected.id;
           const previous = position.current;
           position.current = { x: selected.x, y: selected.y };
-          direction.current =
-            distance(previous, selected) > 0.01
-              ? face(previous, selected)
-              : direction.current;
+          const motion = cityActorMotion(
+            previous,
+            selected,
+            activeMode.current,
+            activeScene.current,
+            direction.current,
+            gaitScale.current,
+            bodyDirection.current,
+          );
+          const moved = !changedActor && distance(previous, selected) > 0.01;
+          if (moved) nativeTravel.current += motion.travel;
+          if (changedActor) nativeTravel.current = 0;
+          direction.current = moved ? motion.direction : direction.current;
+          bodyDirection.current = changedActor
+            ? direction.current
+            : moved
+              ? motion.bodyFacing
+              : bodyDirection.current;
           syncedActor.current = selected.id;
           setPositionActor(selected.id);
           syncedPoint.current = { ...position.current };
@@ -947,6 +972,8 @@ export default function FateCityArt({
             point: { ...position.current },
             direction: direction.current,
             frame: selected.frame,
+            gait: houseGaitFrame(selected.id, nativeTravel.current, moved),
+            bodyFacing: bodyDirection.current,
           });
         }
         if (now - publishedResidents >= 100) {
@@ -959,15 +986,41 @@ export default function FateCityArt({
               .map((person) => {
                 const old = residentHistory.current.get(person.id);
                 const moving = !!old && distance(old.point, person) > 0.01;
+                const motion = cityActorMotion(
+                  old?.point ?? person,
+                  person,
+                  activeMode.current,
+                  activeScene.current,
+                  old?.direction ?? 'down',
+                  (gaitScale.current *
+                    cityArtDepth(
+                      person,
+                      activeMode.current,
+                      activeScene.current,
+                    )) /
+                    Math.max(
+                      0.01,
+                      cityArtDepth(
+                        position.current,
+                        activeMode.current,
+                        activeScene.current,
+                      ),
+                    ),
+                  old?.bodyFacing ?? old?.direction ?? 'down',
+                );
+                const travel =
+                  (old?.travel ?? 0) + (moving ? motion.travel : 0);
                 const view = {
                   id: person.id as PartnerId,
                   point: { x: person.x, y: person.y },
-                  direction: moving
-                    ? face(old!.point, person)
-                    : (old?.direction ?? ('down' as Direction)),
+                  direction: motion.direction,
+                  bodyFacing: motion.bodyFacing,
                   frame: moving ? person.frame : 0,
+                  gait: houseGaitFrame(person.id, travel, moving),
+                  travel,
                 };
                 residentHistory.current.set(person.id, view);
+                if (person.id === game.active && !game.control) setView(view);
                 return view;
               }),
           );
@@ -1075,12 +1128,27 @@ export default function FateCityArt({
           { x: b.x - a.x, y: b.y - a.y },
           direction.current,
         );
+        bodyDirection.current = bodyFacing(
+          { x: b.x - a.x, y: b.y - a.y },
+          bodyDirection.current,
+        );
         travelled.current += walked;
+        nativeTravel.current += cityActorMotion(
+          old,
+          next,
+          cameraMode,
+          cameraScene,
+          direction.current,
+          gaitScale.current,
+        ).travel;
       }
       position.current = next;
-      if (game && moved) {
-        const frame =
-          Math.floor(travelled.current / (CITY_PILOT_STRIDE / 6)) % 6;
+      if (game && (moved || wasMoving)) {
+        // The original street atlas has three moving cells. Native 2.5D gait
+        // is published separately, so switching views cannot address cell 4/5.
+        const frame = moved
+          ? 1 + (Math.floor(travelled.current / (CITY_PILOT_STRIDE / 6)) % 3)
+          : 0;
         syncedPoint.current = { ...next };
         game.moved(next, direction.current, frame);
       }
@@ -1185,6 +1253,8 @@ export default function FateCityArt({
           frame: moved
             ? Math.floor(travelled.current / (CITY_PILOT_STRIDE / 6)) % 6
             : 0,
+          gait: houseGaitFrame(game?.active, nativeTravel.current, moved),
+          bodyFacing: bodyDirection.current,
         });
       }
       wasMoving = moved;

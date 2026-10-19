@@ -16,6 +16,8 @@ export function FateCityResident({
   scale,
   selected,
   hidden,
+  direction,
+  gait,
 }: {
   id: string;
   name: string;
@@ -25,6 +27,8 @@ export function FateCityResident({
   scale: number;
   selected: boolean;
   hidden?: boolean;
+  direction?: string;
+  gait?: number;
 }) {
   const [decoded, setDecoded] = useState('');
   const [failed, setFailed] = useState('');
@@ -62,6 +66,10 @@ export function FateCityResident({
       aria-label={`${name}${selected ? ' · 当前人物' : ''}`}
       data-city-actor={id}
       data-city-controlled={selected}
+      data-walk-direction={direction}
+      data-walk-phase={gait}
+      data-body-facing={sprite.bodyFacing}
+      data-body-art={sprite.materialVersion}
       data-foot-x={x}
       data-foot-y={y}
     >

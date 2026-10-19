@@ -11,6 +11,7 @@ import { FateFullscreenButton } from './fate-fullscreen-button';
 import { FateInteriorDetail } from './fate-interior-detail';
 import { FateInteractionMotion } from './fate-interaction-motion';
 import { interactionMotion } from '@/lib/fate-interaction-motion';
+import { seatedSpriteForAction } from '@/lib/fate-seated-sprites';
 import { fateAudio, roomAcoustics } from '@/lib/fate-audio';
 import { FateSoundButton } from './fate-sound-button';
 import { useFateAudio } from './use-fate-audio';
@@ -61,7 +62,6 @@ import {
 import type { PartnerId } from '@/lib/fate-cast';
 import {
   nearestPreviewDoor,
-  mirrorPreviewSprite,
   type PreviewHouse,
   type PreviewDoor,
   type PreviewAction,
@@ -81,6 +81,7 @@ import {
   nearbyInteriorSpots,
 } from '@/lib/fate-interior-interaction';
 import { FateArtRig } from './fate-art-rig';
+import { bodyFacing, type BodyFacing } from '@/lib/fate-body-facing';
 import { EMIYA_ROOMS, type EmiyaRoomId } from '@/lib/fate-emiya-house';
 import { FateEmiyaFurniture } from './fate-emiya-room';
 import {
@@ -260,6 +261,7 @@ function SingleRoomInterior({
   const [view, setView] = useState({
     point: { ...entry },
     direction: house?.formal?.direction ?? ('up' as Direction),
+    bodyFacing: (house?.formal?.direction ?? 'up') as BodyFacing,
     frame: 0,
     revision: 0,
   });
@@ -355,6 +357,7 @@ function SingleRoomInterior({
   } | null>(null);
   const destination = useRef<string | null>(null);
   const facing = useRef<Direction>(house?.formal?.direction ?? 'up');
+  const bodyDirection = useRef<BodyFacing>(house?.formal?.direction ?? 'up');
   const walked = useRef(0);
   const fingers = useRef(new Map<number, CityPoint>());
   const pinch = useRef<{ gap: number; zoom: number } | null>(null);
@@ -416,12 +419,17 @@ function SingleRoomInterior({
   const legacyAnchor =
     ART_SPRITE_FRAMES[view.direction][Math.min(5, view.frame)];
   const originalModel = house
-    ? house.plan.sprite(house.actor, view.direction, view.frame, pose?.pose)
+    ? house.plan.sprite(
+        house.actor,
+        view.direction,
+        view.frame,
+        pose?.pose,
+        view.bodyFacing,
+      )
     : null;
-  const model =
-    originalModel && pose?.mirror
-      ? mirrorPreviewSprite(originalModel)
-      : originalModel;
+  const model = originalModel
+    ? seatedSpriteForAction(originalModel, pose)
+    : null;
   const anchor = model
     ? { x: model.anchorX, y: model.anchorY, scale: model.scale }
     : legacyAnchor;
@@ -846,16 +854,20 @@ function SingleRoomInterior({
         moving = distance(previous, position.current) > 0.01;
       }
       if (moving) {
-        walked.current += houseWalkDistance(
-          tickStart,
-          position.current,
-          scene.floor,
-        );
+        walked.current +=
+          houseWalkDistance(tickStart, position.current, scene.floor) /
+          (scene.figureScale ?? 1);
         facing.current = interiorWalkFacing(
           tickStart,
           position.current,
           scene.floor,
           facing.current,
+        );
+        const beforePaint = interiorProject(tickStart, scene.floor),
+          afterPaint = interiorProject(position.current, scene.floor);
+        bodyDirection.current = bodyFacing(
+          { x: afterPaint.x - beforePaint.x, y: afterPaint.y - beforePaint.y },
+          bodyDirection.current,
         );
       }
       formal?.move(
@@ -934,6 +946,13 @@ function SingleRoomInterior({
               scene,
               facing.current,
             );
+            if (spot.target) {
+              const at = interiorProject(position.current, scene.floor);
+              bodyDirection.current = bodyFacing(
+                { x: spot.target.x - at.x, y: spot.target.y - at.y },
+                bodyDirection.current,
+              );
+            } else bodyDirection.current = facing.current;
             formal?.move(position.current, facing.current, null);
           }
           setMessage(spot?.detail ?? '已到达。');
@@ -964,10 +983,12 @@ function SingleRoomInterior({
           distance(old.point, point) > 0.001 ||
           old.frame !== frame ||
           old.direction !== facing.current ||
+          old.bodyFacing !== bodyDirection.current ||
           modelChanged
             ? {
                 point,
                 direction: facing.current,
+                bodyFacing: bodyDirection.current,
                 frame,
                 revision: old.revision + Number(modelChanged),
               }
@@ -1031,6 +1052,8 @@ function SingleRoomInterior({
           data-interior-event={feedback.revision}
           data-interior-feedback-target={feedback.id || undefined}
           data-interior-direction={view.direction}
+          data-body-facing={model?.bodyFacing}
+          data-body-art={model?.materialVersion}
           data-interior-pose={pose?.pose ?? 'stand'}
           onPointerDown={(event) => {
             event.stopPropagation();

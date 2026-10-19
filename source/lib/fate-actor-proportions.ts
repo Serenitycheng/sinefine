@@ -28,5 +28,8 @@ export function poseDisplayScale(sprite: PreviewSprite, furnitureScale = 1) {
     return sprite.scale * furnitureScale;
   // A chair cannot enlarge its visitor. Only a small local perspective correction is allowed.
   const perspective = Math.max(0.96, Math.min(1.08, furnitureScale));
-  return (sprite.standingHeight * 0.77 * perspective) / sprite.bounds.height;
+  return (
+    (sprite.standingHeight * (sprite.poseHeightRatio ?? 0.77) * perspective) /
+    sprite.bounds.height
+  );
 }

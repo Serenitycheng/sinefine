@@ -51,12 +51,15 @@ test('deployment filtering keeps the runtime build and its helper executable', a
   const original = await loadSharp()({ create: { width: 16, height: 16, channels: 4, background: '#8f9b87' } }).png().toBuffer();
   const input = join(root, 'public/fate/art-sample/illya-walk-v1.png');
   await fs.writeFile(input, original);
+  await fs.mkdir(join(root, 'public/fate/character-art/body-v2'), { recursive: true });
+  await fs.writeFile(join(root, 'public/fate/character-art/body-v2/actor.png'), original);
   const result = JSON.parse(execFileSync(process.execPath, ['scripts/build-runtime-art.mjs'], { cwd: root, encoding: 'utf8' }));
-  assert.equal(result.assets, 1);
+  assert.equal(result.assets, 2);
   assert.equal(result.created, 1);
   assert.equal(result.visiblePixelDifferences, 0);
   const manifest = JSON.parse(await fs.readFile(join(root, 'lib/fate-runtime-art-data.json'), 'utf8'));
   await fs.access(join(root, 'public', manifest['/fate/art-sample/illya-walk-v1.png']));
+  await fs.access(join(root, 'public', manifest['/fate/character-art/body-v2/actor.png']));
   assert.equal(hash(await fs.readFile(input)), hash(original));
 });
 

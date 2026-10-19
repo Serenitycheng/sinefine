@@ -4,6 +4,7 @@ import {
   type CityInteriorScene,
 } from './fate-city-interior-scenes';
 import type { ActorId } from './street';
+import type { BodyFacing } from './fate-body-facing';
 
 export type PreviewDirection = 'up' | 'down' | 'left' | 'right';
 export type PreviewDoor = {
@@ -19,12 +20,15 @@ export type PreviewAction = {
   contact: CityPoint;
   elevation: number;
   mirror?: boolean;
+  facing?: 'left' | 'right';
   /** The drawn chair can have a different local perspective from the ground. */
   scale?: number;
   /** Seat surface in the authored painting; registered sprites attach their hips here. */
   seat?: CityPoint;
   /** Furniture behind the seated body, independent of its safe walking approach. */
   inFrontOf?: readonly string[];
+  /** Seated limbs can pass under a desk even when the safe approach is in front. */
+  behind?: readonly string[];
 };
 export type PreviewRoom = {
   scene: CityInteriorScene;
@@ -33,9 +37,14 @@ export type PreviewRoom = {
 };
 /** Real crop coordinates support both reused irregular sheets and new atlases. */
 export type PreviewSprite = {
+  bodyFacing?: BodyFacing;
+  poseHeightRatio?: number;
+  materialVersion?: 'body-v2';
   standingHeight?: number;
   seated?: boolean;
+  seatedFacing?: 'left' | 'right';
   rig?: {
+    kind?: string;
     phase: number;
     layers: {
       part: string;
@@ -73,6 +82,7 @@ export type PreviewHouse = {
     direction: PreviewDirection,
     phase: number,
     pose?: 'sit' | 'read',
+    bodyFacing?: BodyFacing,
   ) => PreviewSprite;
 };
 export function nearestPreviewDoor(point: CityPoint, room: PreviewRoom) {
@@ -85,6 +95,11 @@ export function mirrorPreviewSprite(sprite: PreviewSprite): PreviewSprite {
   return {
     ...sprite,
     mirror: !sprite.mirror,
+    ...(sprite.seatedFacing
+      ? ({
+          seatedFacing: sprite.seatedFacing === 'left' ? 'right' : 'left',
+        } as const)
+      : {}),
     anchorX: sprite.cellWidth - sprite.anchorX,
     bounds: {
       ...sprite.bounds,

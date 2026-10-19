@@ -7,7 +7,8 @@ import {
 } from './fate-emiya-actions';
 import { EMIYA_LIFE_ACTIVITIES } from './fate-emiya-household';
 import { interiorDepth, interiorProject } from './fate-city-interior-scenes';
-import { shirouWalkSprite } from './fate-emiya-walk';
+import { bodyArtSprite } from './fate-body-art';
+import type { BodyFacing } from './fate-body-facing';
 import type { CityWalkDirection } from './fate-city-art-controls';
 import {
   CHARACTER_WORLD_SCALE,
@@ -38,6 +39,7 @@ export function emiyaCameraBody(
   actor: 'shirou' | 'illya',
   direction: CityWalkDirection = 'down',
   phase = 0,
+  facing: BodyFacing = direction,
 ): Rect {
   const activity =
     active && EMIYA_LIFE_ACTIVITIES.find((a) => a.id === active.id);
@@ -48,24 +50,30 @@ export function emiyaCameraBody(
   const point = pose?.point ?? location.point;
   const foot = interiorProject(point, floor);
   const depth = interiorDepth(point, floor);
-  const walk = shirouWalkSprite(direction, phase);
-  const frame = pose?.frame ?? walk.frame;
+  if (!pose) {
+    const model = bodyArtSprite(
+      actor,
+      direction,
+      phase,
+      'adult',
+      undefined,
+      facing,
+    )!;
+    const scale = depth * model.scale;
+    return {
+      x: foot.x + (model.bounds.x - model.anchorX) * scale,
+      y: foot.y + (model.bounds.y - model.anchorY) * scale,
+      width: model.bounds.width * scale,
+      height: model.bounds.height * scale,
+    };
+  }
+  const frame = pose.frame;
   const scale =
     (actor === 'illya' ? ILLYA_DISPLAY_SCALE : CHARACTER_WORLD_SCALE) *
     depth *
-    (pose
-      ? (actor === 'shirou' ? SHIROU_LIFE_SPRITES : EMIYA_LIFE_SPRITES).scale
-      : walk.scale);
-  if (!pose && actor === 'illya')
-    return {
-      x: foot.x - 125 * depth * ILLYA_DISPLAY_SCALE,
-      y: foot.y - 260 * depth * ILLYA_DISPLAY_SCALE,
-      width: 250 * depth * ILLYA_DISPLAY_SCALE,
-      height: 260 * depth * ILLYA_DISPLAY_SCALE,
-    };
+    (actor === 'shirou' ? SHIROU_LIFE_SPRITES : EMIYA_LIFE_SPRITES).scale;
   return {
-    x:
-      foot.x + (frame.bounds.x - (pose ? frame.anchorX : walk.anchorX)) * scale,
+    x: foot.x + (frame.bounds.x - frame.anchorX) * scale,
     y:
       foot.y -
       (pose?.elevation ?? 0) * depth * 0.85 +

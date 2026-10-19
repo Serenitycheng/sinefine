@@ -55,6 +55,8 @@ export type CityInteriorScene = {
   basis: string;
   description: string;
   painting: string;
+  /** Local painted furniture scale, independent of navigation and save coordinates. */
+  figureScale?: number;
   floor: InteriorFloor;
   furniture: readonly InteriorFurniture[];
   spots: readonly {

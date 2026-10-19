@@ -7,13 +7,17 @@ import { loadSharp } from './art-workflow.mjs';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const sharp = loadSharp();
 const sources = ['/fate/art-sample/illya-walk-v1.png'];
-for (const folder of ['city-art', 'interior-art', 'character-art']) {
+async function collect(folder) {
   for (const entry of await fs.readdir(join(root, 'public/fate', folder), {
     withFileTypes: true,
-  }))
-    if (entry.isFile() && entry.name.endsWith('.png'))
+  })) {
+    if (entry.isDirectory()) await collect(`${folder}/${entry.name}`);
+    else if (entry.isFile() && entry.name.endsWith('.png'))
       sources.push(`/fate/${folder}/${entry.name}`);
+  }
 }
+for (const folder of ['city-art', 'interior-art', 'character-art'])
+  await collect(folder);
 const copies = {};
 let originals = 0,
   served = 0,

@@ -287,27 +287,27 @@ void test('every building enters with all four walking directions and warms at m
   );
 });
 
-void test('Archer crops exclude neighbouring boots and Natalia retains her actual three columns', () => {
+void test('Archer and adult Natalia use isolated body crops; the original Natalia street atlas still has three columns', () => {
   for (const direction of ['left', 'right', 'up', 'down'] as const)
     for (let phase = 0; phase <= 6; phase++) {
       for (const id of ['emiya', 'natalia'] as const) {
         const s = houseResidentSprite(id, direction, phase)!;
         assert.ok(s.clip && s.clip.length >= 4);
-        assert.ok(s.bounds.x >= 0 && s.bounds.y >= 0);
-        assert.ok(s.bounds.x + s.bounds.width <= s.cellWidth + 0.001);
-        assert.ok(s.bounds.y + s.bounds.height <= s.cellHeight + 0.001);
+        assert.equal(s.materialVersion, 'body-v2');
+        assert.ok(s.cropX >= 0 && s.cropY >= 0);
+        assert.ok(
+          s.cropX + s.cellWidth <= s.imageWidth &&
+            s.cropY + s.cellHeight <= s.imageHeight,
+        );
         if (id === 'natalia') {
-          assert.equal(s.imageWidth / s.cellWidth, 3);
-          assert.ok(s.cropX <= 200);
           const fallback = streetSpriteCell(id, phase);
           assert.equal(fallback.columns, 3);
-          assert.equal(fallback.frame * 100, s.cropX);
           assert.ok(fallback.clipPath);
         }
       }
     }
   assert.ok(
-    houseResidentSprite('emiya', 'left', 1)!.bounds.y > 15,
-    'boots from the preceding row are outside the character crop',
+    houseResidentSprite('emiya', 'left', 0)!.clip!.length > 4,
+    'the registered contour excludes neighbouring paint',
   );
 });

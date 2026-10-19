@@ -16,11 +16,15 @@ import { isPartner } from '@/lib/fate-cast';
 import type { ActorId } from '@/lib/street';
 import type { CityPoint } from '@/lib/fate-city-layout';
 import styles from './fate-city-art.module.css';
+import type { BodyFacing } from '@/lib/fate-body-facing';
 
 export type CityArtActorView = {
   point: CityPoint;
   direction: 'down' | 'left' | 'right' | 'up';
   frame: number;
+  /** Native characters use 0=rest, 1..6=walking, independently of the old atlas. */
+  gait?: number;
+  bodyFacing?: BodyFacing;
 };
 
 /** Every layer is a complete painting with its own registered floor. The
@@ -101,8 +105,11 @@ export default function FateCityArtLayer({
           const sprite = houseResidentSprite(
             person.id,
             person.direction,
-            person.frame,
+            person.gait ?? (person.frame > 0 ? person.frame : 0),
             stage,
+            undefined,
+            undefined,
+            person.bodyFacing,
           );
           if (!sprite) return null;
           const foot = cityPilotPaint(person.point, mode, scene);
@@ -118,6 +125,8 @@ export default function FateCityArtLayer({
               y={foot.y}
               scale={actorScale * depthRatio}
               selected={person.id === actor}
+              direction={person.direction}
+              gait={person.gait ?? 0}
               hidden={
                 departing || !actorReady || (person.id === actor && actorInside)
               }
