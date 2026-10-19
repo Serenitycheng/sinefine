@@ -144,7 +144,7 @@ export const FateEmiyaFurniture = memo(function FateEmiyaFurniture({
         className={styles.paintedPiece}
         style={{
           ...style,
-          backgroundImage: `url(${EMIYA_ROOMS[room].scene.painting})`,
+          backgroundImage: `url(${runtimeArt(EMIYA_ROOMS[room].scene.painting)})`,
           clipPath: `polygon(${points?.map((p) => `${p.x / 16}% ${p.y / 9}%`).join(',')})`,
         }}
         data-furniture-id={piece.id}

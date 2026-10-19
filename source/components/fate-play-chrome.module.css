@@ -1,0 +1,44 @@
+.shell[data-game-immersive='true'] {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  z-index: 120;
+}
+.shell[data-game-fullscreen='true'] > header,
+.shell[data-game-fullscreen='true'] > footer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  background: #f7f5edeb;
+  backdrop-filter: blur(10px);
+  transition: opacity 220ms ease;
+}
+.shell[data-game-fullscreen='true'] > header {
+  top: 0;
+}
+.shell[data-game-fullscreen='true'] > footer {
+  bottom: 0;
+}
+.shell[data-game-fullscreen='true'] [data-game-toolbar] {
+  top: 66px;
+  transition: opacity 220ms ease;
+}
+.shell[data-game-fullscreen='true'][data-game-chrome='idle'] > header,
+.shell[data-game-fullscreen='true'][data-game-chrome='idle'] > footer,
+.shell[data-game-fullscreen='true'][data-game-chrome='idle']
+  [data-game-toolbar] {
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shell[data-game-fullscreen='true'] > header,
+  .shell[data-game-fullscreen='true'] > footer,
+  .shell[data-game-fullscreen='true'] [data-game-toolbar] {
+    transition: none;
+  }
+}

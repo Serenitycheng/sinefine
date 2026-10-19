@@ -25,6 +25,7 @@ export function einzbernSprite(
         imageWidth: sheet.imageWidth,
         imageHeight: sheet.imageHeight,
         scale: sheet.scale,
+        seat: { x: sheet.frame.anchorX, y: sheet.frame.anchorY },
         mirror: false,
         index,
       };

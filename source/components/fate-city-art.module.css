@@ -891,6 +891,7 @@
   font-size: 11px !important;
   line-height: 1.3;
   background: #2b3e32e8;
+  color: #fff7df;
   border: 1px solid #dacda277;
   border-radius: 6px;
   box-shadow: 0 2px 8px #1b2c2930;
@@ -925,6 +926,45 @@
 .exitGuide {
   background: #28434be8;
   border-color: #9bbeb5aa;
+}
+
+/* Scene overlays keep light lettering in both surrounding interface themes. */
+.shell
+  :is(
+    .sceneBadge,
+    .cameraModes,
+    .mapTools,
+    .minimap,
+    .nearby,
+    .loadNotice,
+    .directory,
+    .catalog,
+    .dialog,
+    .directionPad
+  ) {
+  color: #fff7df;
+}
+.shell
+  :is(
+    .cameraModes,
+    .mapTools,
+    .minimap,
+    .nearby,
+    .loadNotice,
+    .directory,
+    .catalog,
+    .dialog,
+    .directionPad
+  )
+  :is(button, a, select) {
+  color: inherit;
+}
+.shell .guide {
+  color: #fff7df;
+}
+.shell .cameraModes button[aria-pressed='true'],
+.shell .loadNotice button {
+  color: #293d30;
 }
 .exitGuide small {
   color: #b8dedb;

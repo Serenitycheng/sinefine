@@ -2,6 +2,10 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- This keyboard-controlled game uses a focusable application surface, not a document region. */
 
 import { LifeReminder } from './street-life-reminder';
+import { FateFullscreenButton } from './fate-fullscreen-button';
+import { FateSoundButton } from './fate-sound-button';
+import { useFateAudio } from './use-fate-audio';
+import { usePlayChrome } from './use-play-chrome';
 import {
   useCallback,
   useEffect,
@@ -32,6 +36,7 @@ import {
   Settings2,
   House,
   Palette,
+  X,
   Map as MapIcon,
 } from 'lucide-react';
 import {
@@ -109,6 +114,7 @@ import {
 import interiorStyles from './fate-interior.module.css';
 import styles from './street-walk.module.css';
 import { STREET_CAST } from '@/lib/fate-street-cast';
+import { streetSpriteCell } from '@/lib/fate-street-sprite-cell';
 import type { EmiyaStreetReturn } from '@/lib/fate-emiya-game';
 import {
   type HouseActorId,
@@ -166,10 +172,12 @@ function spriteStyle(
   person: (typeof BASE_CAST)[number],
   frame = 0,
 ): CSSProperties {
+  const cell = streetSpriteCell(person.id, frame);
   return {
     backgroundImage: `url(${person.image})`,
-    backgroundSize: `400% ${person.rows * 100}%`,
-    backgroundPosition: `${(frame / 3) * 100}% ${person.row * 100}%`,
+    backgroundSize: `${cell.columns * 100}% ${person.rows * 100}%`,
+    backgroundPosition: `${(cell.frame / (cell.columns - 1)) * 100}% ${person.row * 100}%`,
+    clipPath: cell.clipPath,
     aspectRatio: String(person.aspect),
   };
 }
@@ -236,6 +244,7 @@ export default function StreetWalk({
   );
   const [publicNotice, setPublicNotice] = useState('');
   const [ready, setReady] = useState(false);
+  const [castOpen, setCastOpen] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [location, setLocation] = useState('冬木市 · 商业街');
@@ -255,11 +264,14 @@ export default function StreetWalk({
     if (item.left < bounds.left) list.scrollLeft -= bounds.left - item.left + 2;
     else if (item.right > bounds.right)
       list.scrollLeft += item.right - bounds.right + 2;
-  }, [active, CAST]);
+  }, [active, CAST, castOpen]);
   const world = useRef<HTMLDivElement>(null);
   const marker = useRef<HTMLDivElement>(null);
   const actors = useRef(createStreetActors());
+  const gameShell = useRef<HTMLElement>(null);
+  const chrome = usePlayChrome(gameShell);
   const [lifePanel, setLifePanel] = useState(false);
+  const [observerOpen, setObserverOpen] = useState(false);
   const [lifeSection, setLifeSection] = useState<LifeSection>('today');
   const daily = useStreetLife(actors, {
     active,
@@ -769,7 +781,9 @@ export default function StreetWalk({
             node.style.zIndex = String(Math.round(projected.y));
           }
           if (sprite) {
-            sprite.style.backgroundPositionX = `${(actor.frame / 3) * 100}%`;
+            const cell = streetSpriteCell(actor.id, actor.frame);
+            sprite.style.backgroundPositionX = `${(cell.frame / (cell.columns - 1)) * 100}%`;
+            sprite.style.clipPath = cell.clipPath ?? '';
             sprite.style.transform = `scaleX(${actor.facing})`;
           }
         }
@@ -896,6 +910,7 @@ export default function StreetWalk({
   }, [setZoom]);
 
   function choose(id: ActorId) {
+    setCastOpen(false);
     manualCamera.current = null;
     setRouteNotice('');
     journey.current = null;
@@ -1225,6 +1240,8 @@ export default function StreetWalk({
     else if (selectedPlace) setSelectedPlace(null);
     else if (atlasOpen) setAtlasOpen(false);
     else if (lifePanel) setLifePanel(false);
+    else if (observerOpen) setObserverOpen(false);
+    else if (castOpen) setCastOpen(false);
     else if (settings.current.interior) leaveInterior();
     else stopWalking();
   }
@@ -1490,8 +1507,28 @@ export default function StreetWalk({
 
   const encounter = liveEncounter(daily.view)?.dialogue;
   const speech = liveSpeech(daily.view);
+  useFateAudio({
+    key: `formal-street:${active}`,
+    ambient: 'outdoor',
+    ground: 'stone',
+    active:
+      ready &&
+      scene === 'street' &&
+      !daily.house &&
+      !daily.emiya &&
+      !interiorView &&
+      !suspended,
+    position: () =>
+      settings.current.mode === 'control'
+        ? (actors.current.find((p) => p.id === settings.current.active) ?? null)
+        : null,
+  });
   return (
-    <main className={styles.shell} inert={!!daily.emiya || !!daily.house}>
+    <main
+      ref={gameShell}
+      className={`${styles.shell} ${chrome}`}
+      inert={!!daily.emiya || !!daily.house}
+    >
       <header className={styles.header}>
         <Link href="/" className={styles.brand} aria-label="返回世界">
           <span className={styles.wordmark}>SINE FINE</span>
@@ -1544,26 +1581,39 @@ export default function StreetWalk({
             <House size={16} />
             <span>住宅</span>
           </button>
-          <Link
-            href="/fate/world"
-            className={styles.back}
-            aria-label="世界设定"
-          >
-            <Settings2 size={16} />
-            <span>世界设定</span>
-          </Link>
           <button
             className={styles.aiButton}
-            aria-label={fate.verified ? 'DeepSeek 已连接' : '连接 DeepSeek'}
-            onClick={() => openDialog('settings')}
+            aria-label={observerOpen ? '收起街头旁听' : '打开街头旁听'}
+            aria-expanded={observerOpen}
+            aria-controls="street-observer"
+            onClick={() => {
+              setObserverOpen((v) => !v);
+              setLifePanel(false);
+              setAtlasOpen(false);
+            }}
           >
-            <Settings2 size={16} />
-            <span>对话设置</span>
+            <MessageCircle size={16} />
+            <span>旁听</span>
           </button>
-          <Link href="/" className={styles.back} aria-label="返回世界">
-            <ArrowLeft size={16} />
-            <span>返回世界</span>
-          </Link>
+          <details className={styles.moreMenu}>
+            <summary
+              aria-label="更多设置"
+              onKeyDown={(event) => {
+                if (event.key !== 'Escape') return;
+                const details = event.currentTarget.closest('details');
+                if (details) details.open = false;
+                event.stopPropagation();
+              }}
+            >
+              <Settings2 size={16} />
+              <span>更多</span>
+            </summary>
+            <div>
+              <Link href="/fate/world">世界设定</Link>
+              <button onClick={() => openDialog('settings')}>对话设置</button>
+              <Link href="/">返回世界</Link>
+            </div>
+          </details>
         </div>
       </header>
       <LifeControls
@@ -1573,6 +1623,7 @@ export default function StreetWalk({
         disabled={!ready || !fate.loaded}
         open={lifePanel}
         onToggle={() => {
+          setObserverOpen(false);
           setAtlasOpen(false);
           setSelectedPlace(null);
           setLifePanel((v) => !v);
@@ -1899,12 +1950,14 @@ export default function StreetWalk({
                   )}
                 </div>
               )}
-              <output
-                className={`${styles.gamepadStatus} ${padConnected ? styles.gamepadConnected : ''}`}
-              >
-                <Gamepad2 size={17} aria-hidden="true" />
-                <span>{padStatus}</span>
-              </output>
+              {padConnected && (
+                <output
+                  className={`${styles.gamepadStatus} ${styles.gamepadConnected}`}
+                >
+                  <Gamepad2 size={17} aria-hidden="true" />
+                  <span>{padStatus}</span>
+                </output>
+              )}
               {ready && mode === 'control' && (
                 <button
                   className={styles.talkButton}
@@ -1949,7 +2002,9 @@ export default function StreetWalk({
                   )}
                 </div>
               )}
-              <div className={styles.cameraTools}>
+              <div className={styles.cameraTools} data-game-toolbar>
+                <FateFullscreenButton />
+                <FateSoundButton />
                 <button
                   onClick={() => setZoom((v) => v / 1.15)}
                   disabled={zoom <= zoomLimits.min}
@@ -2171,28 +2226,47 @@ export default function StreetWalk({
               }
             }}
           />
-        ) : !interiorView ? (
-          <StreetObserver
-            life={daily}
-            watched={active}
-            onFocus={(id) => {
-              if (settings.current.mode === 'control') switchMode();
-              choose(id);
-            }}
-          />
+        ) : !interiorView && observerOpen ? (
+          <div className={styles.observerDrawer} id="street-observer">
+            <button
+              className={styles.closeDrawer}
+              aria-label="关闭街头旁听"
+              onClick={() => setObserverOpen(false)}
+            >
+              <X size={18} />
+            </button>
+            <StreetObserver
+              life={daily}
+              watched={active}
+              onFocus={(id) => {
+                if (settings.current.mode === 'control') switchMode();
+                choose(id);
+              }}
+            />
+          </div>
         ) : null}
       </div>
       {!interiorView && (
         <footer className={styles.footer}>
-          <div className={styles.controlIntro}>
-            <span className={styles.eyebrow}>
-              {mode === 'control' ? '暂时进入角色' : '观察人物'}
-            </span>
-            <p>{mode === 'control' ? '随时返回观察' : '选择人物跟随镜头'}</p>
-          </div>
+          <button
+            className={styles.characterChoice}
+            aria-label="选择角色"
+            aria-expanded={castOpen}
+            aria-controls="street-character-picker"
+            onClick={() => setCastOpen((v) => !v)}
+          >
+            <span
+              className={styles.chosenPortrait}
+              style={spriteStyle(current)}
+            />
+            <span>{current.name}</span>
+            <small>切换角色</small>
+          </button>
           <div
             ref={castList}
             className={styles.cast}
+            id="street-character-picker"
+            hidden={!castOpen}
             aria-label="横向浏览人物，观察模式下选择只跟随镜头"
           >
             {CAST.map((person) => (

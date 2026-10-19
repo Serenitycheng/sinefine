@@ -206,7 +206,7 @@ void test('family furniture poses survive refresh only at the registered physica
             .action,
           action.id,
         );
-        save.house!.location.point.y += 10;
+        save.house!.location.point = { x: 20, y: 620 };
         assert.throws(() => parseFateSave(save));
       }
 });
@@ -446,7 +446,7 @@ void test('Shirou visitor reuses the approved daily gait, full registered crop a
       assert.equal(sprite.cellWidth, original.frame.width);
       assert.equal(sprite.cellHeight, original.frame.height);
       assert.equal(sprite.anchorX, original.anchorX);
-      assert.equal(sprite.scale, original.scale);
+      assert.equal(sprite.scale, original.scale * 1.35);
       assert.deepEqual(
         original.mirror ? mirrorPreviewSprite(sprite).bounds : sprite.bounds,
         original.frame.bounds,

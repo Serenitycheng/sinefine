@@ -9,6 +9,10 @@ import { EMIYA_LIFE_ACTIVITIES } from './fate-emiya-household';
 import { interiorDepth, interiorProject } from './fate-city-interior-scenes';
 import { shirouWalkSprite } from './fate-emiya-walk';
 import type { CityWalkDirection } from './fate-city-art-controls';
+import {
+  CHARACTER_WORLD_SCALE,
+  ILLYA_DISPLAY_SCALE,
+} from './fate-actor-proportions';
 
 type Size = { width: number; height: number };
 type Rect = CityPoint & Size;
@@ -21,8 +25,8 @@ export function emiyaCameraZoom(value: number, size: Size) {
     1,
     Math.min(
       2.5,
-      (size.height - 40) / (340 * fit),
-      (size.width - 32) / (420 * fit),
+      (size.height - 40) / (340 * CHARACTER_WORLD_SCALE * fit),
+      (size.width - 32) / (420 * CHARACTER_WORLD_SCALE * fit),
     ),
   );
   return Math.max(1, Math.min(maximum, Number.isFinite(value) ? value : 1));
@@ -47,16 +51,17 @@ export function emiyaCameraBody(
   const walk = shirouWalkSprite(direction, phase);
   const frame = pose?.frame ?? walk.frame;
   const scale =
+    (actor === 'illya' ? ILLYA_DISPLAY_SCALE : CHARACTER_WORLD_SCALE) *
     depth *
     (pose
       ? (actor === 'shirou' ? SHIROU_LIFE_SPRITES : EMIYA_LIFE_SPRITES).scale
       : walk.scale);
   if (!pose && actor === 'illya')
     return {
-      x: foot.x - 125 * depth,
-      y: foot.y - 260 * depth,
-      width: 250 * depth,
-      height: 260 * depth,
+      x: foot.x - 125 * depth * ILLYA_DISPLAY_SCALE,
+      y: foot.y - 260 * depth * ILLYA_DISPLAY_SCALE,
+      width: 250 * depth * ILLYA_DISPLAY_SCALE,
+      height: 260 * depth * ILLYA_DISPLAY_SCALE,
     };
   return {
     x:

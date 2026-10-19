@@ -21,7 +21,7 @@ import type {
 import type { CityPoint } from '@/lib/fate-city-layout';
 import { houseResidentSprite, formalHousePlan } from '@/lib/fate-house-sprites';
 import styles from './fate-city-interior.module.css';
-import { houseWalkPhase } from '@/lib/fate-house-walk';
+import { houseGaitFrame } from '@/lib/fate-house-walk';
 import { FateArtRig } from './fate-art-rig';
 
 function ResidentBody({
@@ -35,7 +35,7 @@ function ResidentBody({
   walkTo: (point: CityPoint, id?: string | null) => void;
   disabled: boolean;
 }) {
-  const phase = houseWalkPhase(body.id, body.travelled, body.walking);
+  const phase = houseGaitFrame(body.id, body.travelled, body.walking);
   const sprite = houseResidentSprite(
     body.id,
     body.direction,
@@ -129,6 +129,9 @@ export default function FateHouseGame({
 }) {
   const [, redraw] = useState(0);
   const signature = useRef('');
+  const [arrivalAnchor, setArrivalAnchor] = useState<CityPoint | undefined>(
+    undefined,
+  );
   const plan = useMemo(
     () =>
       formalHousePlan(
@@ -145,6 +148,7 @@ export default function FateHouseGame({
     entry: session.location.point,
     actor: session.controlled,
     zoom: session.zoom,
+    arrivalAnchor,
     onActor: () => {},
     onZoom: (value) => {
       if (suspended) return;
@@ -152,13 +156,15 @@ export default function FateHouseGame({
       redraw((n) => n + 1);
       onSave();
     },
-    onDoor: (door) => {
-      if (!session.door(door)) return;
+    onDoor: (door, anchor) => {
+      if (!session.door(door)) return false;
+      setArrivalAnchor(anchor);
       if (!door.to) onExit();
       else {
         redraw((n) => n + 1);
         onSave();
       }
+      return true;
     },
     formal: {
       direction: session.direction,

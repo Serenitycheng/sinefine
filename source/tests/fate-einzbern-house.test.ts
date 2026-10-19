@@ -185,12 +185,17 @@ void test('Family furniture bounds stay finite and full keyboard steps cannot tu
       assert.ok(Object.values(r).every(Number.isFinite));
       assert.ok(r.width > 0 && r.height > 0);
       const start = { x: r.x + r.width / 2, y: r.y + r.height + 30 };
-      if (interiorWalkable(start, scene))
+      if (interiorWalkable(start, scene)) {
+        const end = interiorMove(start, { x: 0, y: -300 }, scene);
+        assert.ok(interiorWalkable(end, scene), id + ':' + solid.id);
+        assert.ok(interiorClearSegment(start, end, scene));
+        // Slanted ground outlines can be entered inside their broad AABB's
+        // empty corners, but the solid part must still stop the whole sweep.
         assert.ok(
-          interiorMove(start, { x: 0, y: -300 }, scene).y >=
-            r.y + r.height + 13 - 0.01,
+          end.y >= (solid.collision ? r.y : r.y + r.height + 13 - 0.01),
           id + ':' + solid.id,
         );
+      }
     }
 });
 void test('Manual hall walking stops at neighbouring room boundaries without blocking actual entrances', () => {

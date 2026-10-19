@@ -54,11 +54,14 @@ export function emiyaRoomRequiredArt(
   shirou: boolean,
   resident: boolean,
   guests: readonly PartnerId[],
+  active = true,
 ) {
   const files = [
     EMIYA_ROOMS[room].scene.painting,
     EMIYA_MATERIAL_ATLAS,
-    shirou ? SHIROU_LIFE_SPRITES.path : EMIYA_LIFE_SPRITES.path,
+    ...(active
+      ? [shirou ? SHIROU_LIFE_SPRITES.path : EMIYA_LIFE_SPRITES.path]
+      : []),
   ];
   if (!shirou) files.push(ILLYA_ART_SPRITE);
   if (shirou || resident)

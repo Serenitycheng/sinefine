@@ -15,9 +15,32 @@ import {
   type PreviewSprite,
 } from './fate-preview-house';
 import type { PartnerId } from './fate-cast';
+import nataliaClips from './fate-natalia-frame-clips.json';
+import { actorProportions } from './fate-actor-proportions';
 
 /** Formal visitors keep their existing everyday outfits and registered crops. */
 export function houseResidentSprite(
+  id: PartnerId,
+  direction: PreviewDirection,
+  phase: number,
+  stage: WaverStage = 'adult',
+  site?: HouseSiteId,
+  pose?: 'sit' | 'read',
+): PreviewSprite | null {
+  const sprite = rawResidentSprite(id, direction, phase, stage, site, pose);
+  if (!sprite) return null;
+  const standing = pose
+    ? rawResidentSprite(id, 'down', 0, stage, site)
+    : sprite;
+  return actorProportions(
+    id,
+    sprite,
+    standing!,
+    Boolean(pose && houseActorHasPose(id, stage, site ?? 'einzbern')),
+  );
+}
+
+function rawResidentSprite(
   id: PartnerId,
   direction: PreviewDirection,
   phase: number,
@@ -99,10 +122,26 @@ function legacySprite(
   phase: number,
 ): PreviewSprite {
   const actor = STREET_CAST.find((person) => person.id === id)!;
-  const frame = phase > 0 ? 1 + ((phase - 1) % 3) : 0;
+  const columns = id === 'natalia' ? 3 : 4;
+  const frame = phase > 0 ? 1 + ((Math.trunc(phase) - 1) % (columns - 1)) : 0;
+  const clip =
+    id === 'natalia'
+      ? (
+          nataliaClips as Record<
+            string,
+            {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+              polygon: readonly (readonly number[])[];
+            }
+          >
+        )[frame]
+      : undefined;
   return {
     file: actor.image,
-    imageWidth: 400,
+    imageWidth: columns * 100,
     imageHeight: 100 * actor.rows,
     cellWidth: 100,
     cellHeight: 100,
@@ -110,7 +149,19 @@ function legacySprite(
     cropY: actor.row * 100,
     anchorX: 50,
     anchorY: 95,
-    bounds: { x: 0, y: 0, width: 100, height: 100 },
+    bounds: clip
+      ? {
+          x: direction === 'left' ? 100 - clip.x - clip.width : clip.x,
+          y: clip.y,
+          width: clip.width,
+          height: clip.height,
+        }
+      : { x: 0, y: 0, width: 100, height: 100 },
+    ...(clip
+      ? {
+          clip: clip.polygon,
+        }
+      : {}),
     scale: 2.5,
     mirror: direction === 'left',
     index: frame,

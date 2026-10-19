@@ -9,6 +9,7 @@ import {
 } from './fate-life';
 import { createStreetActors, type Actor } from './street';
 import { nearestIndoorPoint } from './fate-indoor-map';
+import { emiyaActivityDistance } from './fate-emiya-access';
 import { interiorResidents, interiorResidentPoint } from './fate-interior';
 import { recordOnsiteConversation } from './fate-interaction';
 import type { PartnerId } from './fate-cast';
@@ -761,13 +762,7 @@ export class EmiyaLifeSession {
   }
   complete(activity: EmiyaActivity, location: EmiyaLocation, _meal: boolean) {
     this.move(location, this.meal);
-    if (
-      activity.room !== location.room ||
-      Math.hypot(
-        activity.point.x - location.point.x,
-        activity.point.y - location.point.y,
-      ) > 2
-    )
+    if (!Number.isFinite(emiyaActivityDistance(activity, location)))
       return { ok: false, message: '先沿路走到家具旁。' };
     const allowed = this.activityPlan(activity);
     if (!allowed.ok) return allowed;

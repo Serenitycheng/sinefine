@@ -12,9 +12,11 @@
   max-height: none;
   width: 100%;
   height: 100%;
-  position: absolute;
+  position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: 120;
+  box-sizing: border-box;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   background: var(--house-bg, #202c28);
@@ -92,7 +94,7 @@
   overflow: hidden;
   min-height: 180px;
   outline: none;
-  background: #202c28;
+  background: #f0eee5;
   touch-action: manipulation;
 }
 .world {
@@ -112,6 +114,85 @@
   pointer-events: none;
   width: 0;
   height: 0;
+}
+.gesture {
+  position: absolute;
+  transform-origin: 0 0;
+}
+.gesture[data-gesture='look'] {
+  animation: glance 650ms ease-in-out both;
+}
+.gesture[data-gesture='work'] {
+  animation: inspect 800ms ease-in-out both;
+}
+.gesture[data-gesture='settle'] {
+  animation: settle 180ms ease-out both;
+}
+@keyframes glance {
+  35%,
+  65% {
+    transform: rotate(-0.6deg);
+  }
+}
+@keyframes inspect {
+  35%,
+  65% {
+    transform: rotate(1.4deg);
+  }
+}
+@keyframes settle {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.objectResponse {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #e9d8a4;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: response 750ms ease-out both;
+}
+@keyframes response {
+  from {
+    opacity: 0.9;
+    scale: 0.65;
+  }
+  to {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+.world {
+  animation: roomReveal 160ms ease-out;
+}
+@keyframes roomReveal {
+  from {
+    opacity: 0.55;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.shell .doorGuide {
+  font-size: 11px;
+  box-shadow: none;
+}
+.shell .doorGuide[data-door-near='false']:not(:hover):not(:focus-visible) {
+  background: #344b3fba;
+  border-color: #f0e6c744;
+}
+@media (prefers-reduced-motion: reduce) {
+  .world,
+  .gesture,
+  .objectResponse {
+    animation: none !important;
+  }
 }
 .shadow {
   position: absolute;
@@ -187,6 +268,155 @@
 .doorGuide kbd {
   flex-shrink: 0;
 }
+.objectGuides {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.shell .objectGuide {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  padding: 0;
+  pointer-events: auto;
+  background: transparent;
+  color: #fff7df;
+  text-shadow: 0 1px 3px #17271c;
+}
+.objectGuide > span:first-child {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #f0e6c7b3;
+  border-radius: 50%;
+  background: #344b3fd9;
+}
+.objectLabel {
+  display: none;
+  position: absolute;
+  bottom: 44px;
+  padding: 6px 9px;
+  width: max-content;
+  max-width: 180px;
+  border-radius: 6px;
+  background: #283d32ed;
+  color: #fff7df;
+  text-shadow: none;
+}
+.objectGuide:hover .objectLabel,
+.objectGuide:focus-visible .objectLabel {
+  display: block;
+}
+.shell .nearInteraction {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  min-height: 42px;
+  max-width: min(250px, calc(100% - 16px));
+  padding: 9px 13px;
+  border-color: #d6ca97;
+  background: #283d32ed;
+  color: #fff7df;
+  pointer-events: auto;
+  box-shadow: 0 3px 10px #17271c35;
+}
+.nearInteraction kbd {
+  font: inherit;
+  opacity: 0.8;
+  border: 1px solid #d6ca9780;
+  border-radius: 4px;
+  padding: 2px 5px;
+}
+.feedback {
+  position: absolute;
+  z-index: 8;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: min(360px, calc(100% - 32px));
+  padding: 9px 14px;
+  border: 1px solid #7c89764d;
+  border-radius: 8px;
+  background: #f7f4eaf5;
+  color: #35443b;
+  box-shadow: 0 3px 12px #17271c20;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+  pointer-events: none;
+}
+.interactionBubble {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: max-content;
+  max-width: min(280px, calc(100% - 24px));
+  border: 1px solid #7c897680;
+  border-radius: 9px;
+  background: #f7f4eaf5;
+  color: #35443b;
+  box-shadow: 0 3px 14px #17271c25;
+  pointer-events: auto;
+}
+.shell .interactionBubble .nearInteraction {
+  position: static;
+  transform: none;
+  width: 100%;
+  max-width: none;
+  padding: 9px 13px;
+  border: 0;
+  background: transparent;
+  color: #35443b;
+  box-shadow: none;
+  justify-content: space-between;
+  gap: 18px;
+}
+.interactionBubble kbd {
+  border-color: #7c897680;
+  font-size: 11px;
+}
+.nearChoices {
+  max-height: 132px;
+  overflow-y: auto;
+}
+.nearChoices > button + button {
+  border-top: 1px solid #7c897630;
+}
+.contextMessage {
+  display: block;
+  padding: 0 13px 11px;
+  max-width: 280px;
+  max-height: 84px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #596756;
+}
+.destinations {
+  font-size: 12px;
+  color: var(--sf-muted);
+}
+.destinations summary {
+  cursor: pointer;
+  padding: 8px 0;
+}
+.destinationList {
+  position: absolute;
+  z-index: 20;
+  bottom: 100%;
+  left: 10px;
+  width: min(420px, calc(100% - 20px));
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 12px;
+  background: var(--sf-paper);
+  border: 1px solid var(--sf-border);
+  border-radius: 9px;
+  box-shadow: 0 4px 14px #17271c35;
+}
 .doorGuide[data-door-near='true'] {
   border-color: #e4d897;
 }
@@ -240,22 +470,30 @@
 /* Reserve the same controls area across rooms so text wrapping cannot change
    the camera scale or its maximum zoom during a door transition. */
 .shell[data-house-room] .footer {
-  flex: 0 0 144px;
+  flex: 0 0 96px;
   max-height: 40%;
-  overflow-y: auto;
+  overflow: visible;
   overscroll-behavior: contain;
+}
+.footerActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
 }
 .shell[data-house-formal='true'] .footer {
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  flex-basis: 144px;
   gap: 6px;
 }
 .shell[data-house-formal='true'] .footerActions {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 6px 16px;
 }
 .shell[data-house-formal='true'] .bottom {
   flex-shrink: 0;
@@ -344,6 +582,12 @@
   user-select: none;
 }
 @media (max-width: 600px) {
+  .feedback {
+    bottom: 16px;
+    max-width: calc(100% - 24px);
+    padding: 10px 14px;
+    font-size: 13px;
+  }
   .shell[data-interior-id='temple'][data-house-room='hall'] .world .exit,
   .shell[data-interior-id='church'][data-house-room='hall'] .world .exit {
     flex-direction: column;
@@ -380,7 +624,10 @@
     padding: 8px 10px;
   }
   .shell[data-house-room] .footer {
-    flex-basis: 176px;
+    flex-basis: 96px;
+  }
+  .shell[data-house-formal='true'] .footer {
+    flex-basis: 164px;
   }
   .spots {
     gap: 4px;
@@ -403,5 +650,47 @@
   .zoom {
     top: 8px;
     right: 8px;
+  }
+}
+
+/* Keep the scene tall; the room has its own viewport, without outer street chrome. */
+.shell .header {
+  flex: none;
+  min-height: 48px;
+  padding: 7px 16px;
+  align-items: center;
+}
+.shell .header h2 {
+  margin: 0;
+}
+.shell[data-house-room] .footer {
+  flex: 0 0 auto;
+  min-height: 52px;
+  max-height: 30dvh;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 16px;
+}
+.shell[data-house-room] .footerActions {
+  flex: 1;
+  align-items: center;
+}
+.shell[data-house-room] .bottom {
+  flex-shrink: 0;
+}
+.shell .zoom {
+  display: flex;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .shell .header {
+    padding: 7px 10px;
+  }
+  .shell[data-house-room] .footer {
+    padding: 6px 10px;
+    gap: 8px;
   }
 }

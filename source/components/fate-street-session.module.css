@@ -1,6 +1,6 @@
 .session {
-  height: 100svh;
-  min-height: 620px;
+  height: 100dvh;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #f6f3eb;
@@ -16,7 +16,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 4px 24px;
+  padding: 2px 12px;
   border-bottom: 1px solid #dfe2d5;
   font-size: 11px;
   color: #687462;
@@ -85,4 +85,15 @@
   .session {
     min-height: 440px;
   }
+}
+.session {
+  min-height: 0;
+}
+.session .statusBar {
+  min-height: 28px;
+  font-size: 10px;
+}
+.session .statusBar button {
+  min-height: 24px;
+  padding: 3px 8px;
 }

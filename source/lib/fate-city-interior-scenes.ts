@@ -39,8 +39,14 @@ export type InteriorFloor = {
 export type InteriorFurniture = {
   id: string;
   footprint: InteriorRect;
+  /** Optional exact ground outline; footprint remains its broad/depth bounds. */
+  collision?: readonly CityPoint[];
+  /** Separate solids leave the walkable spaces between grouped furniture open. */
+  collisions?: readonly (readonly CityPoint[])[];
   /** Painted silhouette of this piece, in the 1600×900 authored view. */
   silhouette?: readonly CityPoint[];
+  /** Disconnected painted parts, so gaps between chair legs stay transparent. */
+  silhouettes?: readonly (readonly CityPoint[])[];
 };
 export type CityInteriorScene = {
   id: CityInteriorId;
@@ -55,6 +61,17 @@ export type CityInteriorScene = {
     id: string;
     label: string;
     point: CityPoint;
+    /** Visible object in authored paint coordinates, separate from its safe approach. */
+    target?: CityPoint;
+    /** Optional closeup composition; never used for walking or collision. */
+    detailTarget?: CityPoint;
+    detailFrame?: InteriorRect;
+    /** Safe points beside the actual object, shared by walking and E interaction. */
+    approaches?: readonly CityPoint[];
+    /** Clear standing destinations; nearby physical reach can include closer edges. */
+    walkingApproaches?: readonly CityPoint[];
+    object?: string;
+    hitbox?: InteriorRect;
     detail: string;
   }[];
 };
@@ -241,6 +258,12 @@ export const CITY_INTERIOR_SCENES = Object.fromEntries(
           width: Math.max(0, maxX - x),
           height: Math.max(0, maxY - y),
         },
+        collision: [corners[0], corners[1], corners[3], corners[2]].map(
+          (p) => ({
+            x: Math.max(0, Math.min(INTERIOR_WORLD.width, p.x)),
+            y: Math.max(0, Math.min(INTERIOR_WORLD.height, p.y)),
+          }),
+        ),
         silhouette:
           'mask' in piece
             ? (piece.mask as number[][]).map(([px, py]) => ({

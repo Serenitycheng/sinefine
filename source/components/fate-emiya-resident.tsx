@@ -1,6 +1,7 @@
 import { fatePerson, type PartnerId } from '@/lib/fate-cast';
 import { runtimeArt } from '@/lib/fate-runtime-art';
 import { STREET_CAST } from '@/lib/fate-street-cast';
+import { streetSpriteCell } from '@/lib/fate-street-sprite-cell';
 import {
   interiorDepth,
   interiorProject,
@@ -26,6 +27,7 @@ export default function FateEmiyaResident({
   const height = body.id === 'illya' ? 250 : 295;
   const size = height * depth;
   const moving = body.phase !== 'doing' && body.frame > 0;
+  const cell = streetSpriteCell(body.id, moving ? body.frame : 0);
   const name = fatePerson(body.id)?.name ?? body.id;
   const presentation = emiyaResidentPresentation(body);
   const contact = presentation?.contact;
@@ -94,8 +96,9 @@ export default function FateEmiyaResident({
           height: size,
           transform: `translate(${-size / 2}px,${-size}px) scaleX(${body.direction === 'left' ? -1 : 1})`,
           backgroundImage: `url(${sprite.image})`,
-          backgroundSize: `400% ${sprite.rows * 100}%`,
-          backgroundPosition: `${((moving ? body.frame % 4 : 0) / 3) * 100}% ${sprite.row * 100}%`,
+          backgroundSize: `${cell.columns * 100}% ${sprite.rows * 100}%`,
+          backgroundPosition: `${(cell.frame / (cell.columns - 1)) * 100}% ${sprite.row * 100}%`,
+          clipPath: cell.clipPath,
           ...frameStyle,
         }}
       />

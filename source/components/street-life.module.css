@@ -996,3 +996,89 @@
   line-height: 1.85;
   margin: 12px 0;
 }
+
+.toolbar {
+  position: relative;
+  min-height: 44px;
+  padding: 4px 12px;
+  gap: 10px;
+  flex-wrap: nowrap;
+  z-index: 40;
+}
+.toolbar .clock {
+  flex: none;
+}
+.clock > span {
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: transparent;
+}
+.compactLabel {
+  display: none;
+}
+.playSettings {
+  font-size: 11px;
+}
+.playSettings summary {
+  padding: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.playSettingsPanel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 12px;
+  width: min(420px, calc(100vw - 24px));
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--sf-border);
+  border-radius: 12px;
+  background: var(--sf-paper);
+  box-shadow: 0 8px 30px #34413726;
+}
+.playSettingsPanel .paceControls {
+  display: grid;
+  gap: 12px;
+}
+.playSettingsPanel .paceField {
+  font-size: 12px;
+}
+.playSettingsPanel .paceField select {
+  width: 100%;
+  min-height: 38px;
+}
+.playSettingsPanel .play {
+  order: initial;
+  white-space: normal;
+}
+.playSettingsPanel .state {
+  display: block;
+}
+.toolbar .records {
+  margin-left: auto;
+  order: initial;
+}
+@media (max-width: 640px) {
+  .toolbar {
+    gap: 5px;
+  }
+  .toolbar .wideLabel {
+    display: none;
+  }
+  .toolbar .compactLabel {
+    display: inline;
+  }
+  .toolbar .clock {
+    font-size: 12px;
+  }
+  .toolbar .play {
+    order: initial;
+    padding: 6px 8px;
+  }
+  .toolbar .records {
+    min-height: 34px;
+    padding: 6px;
+  }
+}

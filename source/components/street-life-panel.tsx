@@ -57,84 +57,117 @@ export function LifeControls({
     <div className={styles.toolbar}>
       <div className={styles.clock}>
         <span />
-        {lifeTime(life.view.minutes)} · {weekdayName(life.view.minutes)}
+        <span className={styles.wideLabel}>
+          {lifeTime(life.view.minutes)} · {weekdayName(life.view.minutes)}
+        </span>
+        <span className={styles.compactLabel}>
+          {lifeTime(life.view.minutes).split(' · ')[1]}
+        </span>
       </div>
       <button
         type="button"
         className={styles.play}
+        aria-label={life.running ? '暂停日常' : '开始日常'}
         onClick={life.toggleRunning}
         disabled={disabled}
       >
         {life.running ? <Pause size={14} /> : <Play size={14} />}
-        {life.running ? '暂停日常' : '开始日常'}
+        <span className={styles.wideLabel}>
+          {life.running ? '暂停日常' : '开始日常'}
+        </span>
+        <span className={styles.compactLabel}>
+          {life.running ? '暂停' : '开始'}
+        </span>
       </button>
-      <div className={styles.paceControls}>
-        <label className={styles.paceField}>
-          <span>时间流速</span>
-          <select
-            aria-label="时间流速"
+      <details className={styles.playSettings}>
+        <summary
+          aria-label="日常设置"
+          onKeyDown={(event) => {
+            if (event.key !== 'Escape') return;
+            const details = event.currentTarget.closest('details');
+            if (details) details.open = false;
+            event.stopPropagation();
+          }}
+        >
+          <span className={styles.wideLabel}>日常设置</span>
+          <span className={styles.compactLabel}>设置</span>
+        </summary>
+        <div className={styles.playSettingsPanel}>
+          <div className={styles.paceControls}>
+            <label className={styles.paceField}>
+              <span>时间流速</span>
+              <select
+                aria-label="时间流速"
+                disabled={disabled}
+                value={life.speed}
+                onChange={(event) =>
+                  life.changeSpeed(parseFateClockSpeed(event.target.value))
+                }
+                title={clockSpeedLabel(life.speed)}
+              >
+                {FATE_CLOCK_SPEEDS.map((speed) => (
+                  <option key={speed} value={speed}>
+                    {speed}× · {clockSpeedLabel(speed)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className={styles.paceField}>
+              <span>人物走速</span>
+              <select
+                aria-label="人物走速"
+                disabled={disabled}
+                value={walkPace}
+                onChange={(event) =>
+                  onWalkPace(parseFateWalkPace(event.target.value))
+                }
+                title="只调整人物走路速度，时间流速保持不变"
+              >
+                {FATE_WALK_PACES.map((pace) => (
+                  <option key={pace} value={pace}>
+                    {walkPaceLabel(pace)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <span className={styles.state}>
+            {life.busy
+              ? '正在思考 · 日常暂歇'
+              : life.running
+                ? '日常正在继续'
+                : '日常已暂停'}
+          </span>
+          <button
+            type="button"
+            className={styles.play}
+            aria-pressed={life.auto}
             disabled={disabled}
-            value={life.speed}
-            onChange={(event) =>
-              life.changeSpeed(parseFateClockSpeed(event.target.value))
+            onClick={() =>
+              verified ? life.changeAuto(!life.auto) : onSettings()
             }
-            title={clockSpeedLabel(life.speed)}
+            title={`开启后同时启动居民日常；交谈使用 DeepSeek 额度，最多 ${life.limit} 次，平时的行程由人物习惯决定`}
           >
-            {FATE_CLOCK_SPEEDS.map((speed) => (
-              <option key={speed} value={speed}>
-                {speed}× · {clockSpeedLabel(speed)}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className={styles.paceField}>
-          <span>人物走速</span>
-          <select
-            aria-label="人物走速"
-            disabled={disabled}
-            value={walkPace}
-            onChange={(event) =>
-              onWalkPace(parseFateWalkPace(event.target.value))
-            }
-            title="只调整人物走路速度，时间流速保持不变"
-          >
-            {FATE_WALK_PACES.map((pace) => (
-              <option key={pace} value={pace}>
-                {walkPaceLabel(pace)}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-      <span className={styles.state}>
-        {life.busy
-          ? '正在思考 · 日常暂歇'
-          : life.running
-            ? '日常正在继续'
-            : '日常已暂停'}
-      </span>
-      <button
-        type="button"
-        className={styles.play}
-        aria-pressed={life.auto}
-        disabled={disabled}
-        onClick={() => (verified ? life.changeAuto(!life.auto) : onSettings())}
-        title={`开启后同时启动居民日常；交谈使用 DeepSeek 额度，最多 ${life.limit} 次，平时的行程由人物习惯决定`}
-      >
-        <Sparkles size={14} />
-        {life.auto
-          ? `AI 自主交谈 · ${life.used}/${life.limit}`
-          : '开启 AI 自主交谈'}
-      </button>
+            <Sparkles size={14} />
+            {life.auto
+              ? `AI 自主交谈 · ${life.used}/${life.limit}`
+              : '开启 AI 自主交谈'}
+          </button>
+        </div>
+      </details>
       <button
         type="button"
         className={styles.records}
+        aria-label={open ? '收起日常' : '日常与记录'}
         aria-expanded={open}
         aria-controls="street-life-panel"
         onClick={onToggle}
       >
         <BookOpen size={15} />
-        {open ? '收起日常' : '日常与记录'}
+        <span className={styles.wideLabel}>
+          {open ? '收起日常' : '日常与记录'}
+        </span>
+        <span className={styles.compactLabel}>手账</span>
       </button>
     </div>
   );

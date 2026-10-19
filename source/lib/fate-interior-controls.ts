@@ -31,6 +31,7 @@ export function interiorDoorGuides(
   screens: readonly CityPoint[],
   size: { width: number; height: number },
   body: Rect,
+  reserved: readonly Rect[] = [],
 ) {
   const width = Math.min(160, size.width - 24),
     height = 36,
@@ -46,7 +47,7 @@ export function interiorDoorGuides(
     height: body.height + 20,
   };
   const zoom = { x: size.width - 212, y: 0, width: 212, height: 64 };
-  const occupied: Rect[] = [];
+  const occupied: Rect[] = [...reserved];
   return screens.map((screen) => {
     const wanted = { x: clampX(screen.x), y: clampY(screen.y - 38) };
     const xs = new Set([

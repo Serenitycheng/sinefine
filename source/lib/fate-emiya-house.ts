@@ -272,6 +272,20 @@ export function emiyaDoorReached(point: CityPoint, door: EmiyaDoor) {
     : Math.abs(point.y - door.at.y) < 27 && Math.abs(point.x - door.at.x) < 72;
 }
 
+export function emiyaFurnitureTarget(
+  room: EmiyaRoomId,
+  piece: EmiyaFurniture,
+): CityPoint {
+  const r = piece.footprint,
+    point = { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+  const floor = EMIYA_ROOMS[room].scene.floor,
+    projected = interiorProject(point, floor);
+  return {
+    x: projected.x,
+    y: projected.y - piece.height * interiorDepth(point, floor) * 0.85,
+  };
+}
+
 export function emiyaFurnitureSilhouette(
   room: EmiyaRoomId,
   piece: EmiyaFurniture,

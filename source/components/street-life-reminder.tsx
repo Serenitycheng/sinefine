@@ -47,15 +47,7 @@ export function LifeReminder({
         pastime.work.stage
       ]
     : null;
-  if (!plan && !pastime)
-    return (
-      <div className={styles.reminder}>
-        <span>今天想做点什么？</span>
-        <button onClick={() => onOpen('activities')}>
-          打开手账 · 邀请吃饭 / 帮个小忙
-        </button>
-      </div>
-    );
+  if (!plan && !pastime) return null;
   return (
     <div className={styles.reminder} aria-label="眼前的安排">
       <span>

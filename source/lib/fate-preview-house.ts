@@ -33,6 +33,8 @@ export type PreviewRoom = {
 };
 /** Real crop coordinates support both reused irregular sheets and new atlases. */
 export type PreviewSprite = {
+  standingHeight?: number;
+  seated?: boolean;
   rig?: {
     phase: number;
     layers: {
@@ -141,6 +143,7 @@ export function paintedFurniture(
       width: Math.max(...corners.map((p) => p.x)) - minX,
       height: Math.max(...corners.map((p) => p.y)) - minY,
     },
+    collision: [corners[0], corners[1], corners[3], corners[2]],
     silhouette: mask.map(([x, y]) => ({ x: x * 16, y: y * 9 })),
   };
 }

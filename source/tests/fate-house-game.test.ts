@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import { FORMAL_HOUSE_PLANS } from '../lib/fate-formal-house-plans';
+import { interiorSpotRoute } from '../lib/fate-interior-access';
+import { interiorUnproject } from '../lib/fate-city-interior-scenes';
 import test from 'node:test';
 import {
   HouseGameSession,
@@ -14,7 +17,11 @@ import {
   type FateSave,
 } from '../lib/fate-state';
 import { createDailyLife, type LifeAction } from '../lib/fate-life';
-import { TOHSAKA_ROOMS, TOHSAKA_ROOM_IDS, type TohsakaRoomId } from '../lib/fate-tohsaka-house';
+import {
+  TOHSAKA_ROOMS,
+  TOHSAKA_ROOM_IDS,
+  type TohsakaRoomId,
+} from '../lib/fate-tohsaka-house';
 import { HOME_ENTRANCES } from '../lib/fate-home-entrances';
 import { indoorRoom } from '../lib/fate-indoor-map';
 import { DEFAULT_ZOOM } from '../lib/fate-camera';
@@ -194,9 +201,34 @@ void test('furniture poses survive refresh only at their registered physical int
         action.id,
       );
       const bad = structuredClone(save);
-      bad.house!.location.point.y += 10;
+      bad.house!.location.point = { x: 20, y: 620 };
       assert.throws(() => parseFateSave(bad));
     }
+});
+
+void test('formal movement and saved chair actions use the same physical geometry as the rendered room', () => {
+  const session = fixture(),
+    room = FORMAL_HOUSE_PLANS.tohsaka.rooms.study;
+  const point = interiorUnproject(
+    { x: 61.2 * 16, y: 70 * 9 },
+    room.scene.floor,
+  )!;
+  moveRoom(session, 'study', point);
+  session.move(point, 'up', 'tea');
+  const saved = parseFateSave(formal(session));
+  assert.deepEqual(saved.house!.location.point, point);
+  assert.equal(
+    new HouseGameSession(saved.life!, saved.house!.street, saved.house).action,
+    'tea',
+  );
+  session.bodies = [];
+  const window = room.scene.spots.find((s) => s.id === 'window')!;
+  const path = interiorSpotRoute(point, window, room.scene)!;
+  let from = point;
+  for (const to of path) {
+    assert.deepEqual(session.constrain(from, to), to);
+    from = to;
+  }
 });
 
 void test('invalid native locations, collisions and mismatched life records fail without changing source data', () => {
@@ -297,10 +329,17 @@ void test('residents cross the actual hall doors at bounded speed and retain sep
       room = body.room,
       point = { ...body.point };
     session.tick(0.05);
-    assert.ok(interiorWalkable(body.point, TOHSAKA_ROOMS[body.room as TohsakaRoomId].scene));
+    assert.ok(
+      interiorWalkable(
+        body.point,
+        FORMAL_HOUSE_PLANS.tohsaka.rooms[body.room].scene,
+      ),
+    );
     if (body.room === room) assert.ok(gap(point, body.point) <= 6.00001);
     else {
-      const door = TOHSAKA_ROOMS[room as TohsakaRoomId].doors.find((d) => d.to === body.room)!;
+      const door = TOHSAKA_ROOMS[room as TohsakaRoomId].doors.find(
+        (d) => d.to === body.room,
+      )!;
       assert.ok(door);
       assert.ok(gap(point, door.point) <= 6.00001);
       assert.deepEqual(body.point, door.arrival);
@@ -484,9 +523,16 @@ void test('backups, cloud parsing and checkpoints preserve v3 scenes and existin
 });
 
 void test('active formal rooms cannot start a second background clock or call upstream AI', async () => {
-  const backup = createFateBackup(formal(fixture(true))), original = JSON.stringify(backup);
+  const backup = createFateBackup(formal(fixture(true))),
+    original = JSON.stringify(backup);
   let called = false;
-  await assert.rejects(runBackgroundRound(backup, async () => { called = true; return {}; }), /先走回街道/);
+  await assert.rejects(
+    runBackgroundRound(backup, async () => {
+      called = true;
+      return {};
+    }),
+    /先走回街道/,
+  );
   assert.equal(called, false);
   assert.equal(JSON.stringify(backup), original);
 });

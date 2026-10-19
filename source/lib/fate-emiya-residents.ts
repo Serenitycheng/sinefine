@@ -6,6 +6,11 @@ import { interiorWalkable } from './fate-city-interior-navigation';
 import { interiorProject } from './fate-city-interior-scenes';
 import { cityWalkFacing } from './fate-city-art-controls';
 import {
+  interiorYieldRoute,
+  advanceInteriorYield,
+} from './fate-interior-traffic';
+import { interiorWalkFacing } from './fate-interior-controls';
+import {
   emiyaWalkAdvance,
   SABER_GAIT,
   EMIYA_VISITOR_SPRITES,
@@ -138,6 +143,95 @@ export function parseEmiyaResidents(value: unknown): EmiyaResidentSave[] {
 /** A presentation of real presence and activities, separate from world save coordinates. */
 export class EmiyaResidents {
   private bodies = new Map<PartnerId, EmiyaResidentBody>();
+  private yielding = new Map<
+    PartnerId,
+    { path: import('./fate-city-layout').CityPoint[]; seconds: number }
+  >();
+  requestPassage(player: EmiyaLocation, toward: EmiyaLocation) {
+    for (const body of this.all()) {
+      if (body.room !== toward.room || this.yielding.has(body.id)) continue;
+      const from = player.room === toward.room ? player.point : toward.point;
+      const next =
+        Math.hypot(from.x - toward.point.x, from.y - toward.point.y) > 0.001
+          ? toward.point
+          : { x: from.x, y: from.y - 80 };
+      if (Math.hypot(body.point.x - from.x, body.point.y - from.y) > 90)
+        continue;
+      const dx = next.x - from.x,
+        dy = next.y - from.y;
+      if (
+        (body.point.x - from.x) * dx + (body.point.y - from.y) * dy < -1 ||
+        Math.abs((body.point.x - from.x) * dy - (body.point.y - from.y) * dx) /
+          Math.hypot(dx, dy) >
+          36
+      )
+        continue;
+      const occupied = this.all()
+        .filter((b) => b !== body && b.room === body.room)
+        .map((b) => b.point);
+      if (player.room === body.room) occupied.push(player.point);
+      const path = interiorYieldRoute(
+        body.point,
+        from,
+        next,
+        EMIYA_ROOMS[body.room].scene,
+        occupied,
+      );
+      if (path?.length) this.yielding.set(body.id, { path, seconds: 2.5 });
+    }
+  }
+  private stepYield(player: EmiyaLocation, dt: number) {
+    let changed = false;
+    for (const [id, ticket] of this.yielding) {
+      ticket.seconds -= dt;
+      const body = this.bodies.get(id);
+      if (!body || ticket.seconds <= 0) {
+        this.yielding.delete(id);
+        continue;
+      }
+      const scene = EMIYA_ROOMS[body.room].scene;
+      const occupied = this.all()
+        .filter((b) => b !== body && b.room === body.room)
+        .map((b) => b.point);
+      if (player.room === body.room) occupied.push(player.point);
+      const before = { room: body.room, point: { ...body.point } };
+      const advanced = advanceInteriorYield(
+        body.point,
+        ticket.path,
+        120 * dt,
+        scene,
+        occupied,
+      );
+      body.point = advanced.point;
+      ticket.path = advanced.path;
+      body.frame = 0;
+      if (advanced.travelled > 0) {
+        body.direction = interiorWalkFacing(
+          before.point,
+          body.point,
+          scene.floor,
+          body.direction,
+        );
+        const cycle =
+          body.id === 'saber'
+            ? SABER_GAIT
+            : body.id === 'sakura' || body.id === 'taiga'
+              ? {
+                  frames: 6,
+                  cycleDistance: EMIYA_VISITOR_SPRITES[body.id].cycleDistance,
+                }
+              : { frames: 5, cycleDistance: 150 };
+        Object.assign(
+          body,
+          emiyaWalkAdvance(body.walked, before, advanced.travelled, cycle),
+        );
+        changed = true;
+      }
+      body.phase = 'walking';
+      body.seconds = 0;
+    }
+    return changed;
+  }
   constructor(
     life: DailyLife,
     player: EmiyaLocation,
@@ -254,13 +348,17 @@ export class EmiyaResidents {
     intents?: EmiyaResidentIntents,
   ) {
     if (!Number.isFinite(dt) || dt <= 0) return false;
-    if (!running) return this.reconcile(life, player, intents);
+    if (!running) {
+      const changed = this.reconcile(life, player, intents);
+      return this.stepYield(player, Math.min(dt, 0.05)) || changed;
+    }
     dt = Math.min(dt, 0.05);
     const count = this.bodies.size;
     this.sync(life, player);
     const contacts = this.contacts(life, intents);
-    let changed = this.bodies.size !== count;
+    let changed = this.stepYield(player, dt) || this.bodies.size !== count;
     for (const body of this.all()) {
+      if (this.yielding.has(body.id)) continue;
       const activity = life.people[body.id].activity;
       const inside = occupiedHome(life, body.id) === 'emiya';
       const arriving =

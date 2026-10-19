@@ -1,0 +1,63 @@
+.detail {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 12;
+  width: min(310px, calc(100% - 32px));
+  max-height: calc(100% - 90px);
+  overflow: auto;
+  border: 1px solid #cbd0bf;
+  border-radius: 12px;
+  background: #f7f4ecfa;
+  color: #35443b;
+  box-shadow: 0 5px 24px #17271c25;
+  animation: appear 220ms ease-out;
+  pointer-events: auto;
+}
+.detail header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 10px 7px 14px;
+  font-size: 13px;
+  gap: 8px;
+}
+.detail header button {
+  border: 0;
+  background: transparent;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 4px;
+}
+.picture {
+  display: block;
+  width: 100%;
+  aspect-ratio: 8/5;
+  overflow: hidden;
+  background: #e6dfcc;
+}
+.detail p {
+  margin: 0;
+  padding: 11px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+@keyframes appear {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.97);
+  }
+}
+@media (max-width: 600px) {
+  .detail {
+    width: 230px;
+    right: 10px;
+    bottom: 10px;
+    max-height: 46%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail {
+    animation: none;
+  }
+}

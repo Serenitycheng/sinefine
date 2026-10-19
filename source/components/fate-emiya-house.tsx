@@ -1,7 +1,23 @@
 'use client';
+import { FateGameFrame } from './fate-game-frame';
+import { FateFullscreenButton } from './fate-fullscreen-button';
+import { FateSoundButton } from './fate-sound-button';
+import { useFateAudio } from './use-fate-audio';
+import { usePlayChrome } from './use-play-chrome';
+import { FateInteractionMotion } from './fate-interaction-motion';
+import { interactionMotion } from '@/lib/fate-interaction-motion';
+import { houseResidentSprite } from '@/lib/fate-house-sprites';
+import { fateAudio } from '@/lib/fate-audio';
+import { interiorObjectFrame } from '@/lib/fate-interior-detail';
+import {
+  CHARACTER_WORLD_SCALE,
+  ILLYA_DISPLAY_SCALE,
+} from '@/lib/fate-actor-proportions';
+import { FateInteriorDetail } from './fate-interior-detail';
 /* oxlint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex, jsx-a11y/click-events-have-key-events -- The room surface provides keyboard walking and accessible alternatives for every destination. */
 
-import Image from 'next/image';
+import { loadArtImage, warmArtImages } from '@/lib/fate-art-loader';
+import { nearbyEmiyaActivities } from '@/lib/fate-emiya-access';
 import { runtimeArt } from '@/lib/fate-runtime-art';
 import Link from 'next/link';
 import {
@@ -88,7 +104,18 @@ import {
   emiyaDoorKey,
 } from './fate-emiya-room';
 import base from './fate-city-interior.module.css';
+import { interiorInteractionHint } from '@/lib/fate-interior-interaction';
 import styles from './fate-emiya-house.module.css';
+import {
+  emiyaActivityDistance,
+  emiyaActivitySpot,
+  emiyaPieceSpot,
+  emiyaNearestInspection,
+} from '@/lib/fate-emiya-access';
+import {
+  interiorSpotRoute,
+  interiorSpotDistance,
+} from '@/lib/fate-interior-access';
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 type Entity = EmiyaLocation & {
@@ -230,6 +257,7 @@ export default function FateEmiyaHouse({
     view.inhabitants
       .filter((body) => body.room === view.player.room)
       .map((body) => body.id),
+    Boolean(view.activity),
   );
   const load = requiredArt.some((url) => artStatus[url] === 'error')
     ? 'error'
@@ -237,14 +265,64 @@ export default function FateEmiyaHouse({
       ? 'ready'
       : 'loading';
   const [attempt, setAttempt] = useState(0);
+  const nearActivityMemory = useRef<string | null>(null);
+  const [nearActivityId, setNearActivityId] = useState<string | null>(null);
+  const artKey = JSON.stringify(requiredArt);
+  useEffect(() => {
+    let active = true;
+    for (const url of JSON.parse(artKey) as string[]) {
+      void loadArtImage(url).then(
+        () => {
+          if (active) setArtStatus((status) => ({ ...status, [url]: 'ready' }));
+        },
+        () => {
+          if (active) setArtStatus((status) => ({ ...status, [url]: 'error' }));
+        },
+      );
+    }
+    return () => {
+      active = false;
+    };
+  }, [artKey, attempt]);
+  useEffect(() => {
+    if (load !== 'ready') return;
+    let active = true;
+    warmArtImages(
+      [
+        (life ? SHIROU_LIFE_SPRITES : EMIYA_LIFE_SPRITES).path,
+        ...emiyaRoomDoors(view.player.room)
+          .slice(0, 2)
+          .map((d) => EMIYA_ROOMS[d.to].scene.painting),
+      ],
+      () => active,
+    );
+    return () => {
+      active = false;
+    };
+  }, [load, life, view.player.room]);
   const inputReady = useRef(load === 'ready');
   useLayoutEffect(() => {
     inputReady.current = load === 'ready';
   }, [load]);
   const artAttempt = useRef(0);
   const [message, setMessage] = useState('');
+  const [inspection, setInspection] = useState<{
+    target: CityPoint;
+    title: string;
+    detail: string;
+    room: EmiyaRoomId;
+    piece: string;
+    revision: number;
+  } | null>(null);
+  const inspectionRevision = useRef(0);
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(''), 5000);
+    return () => clearTimeout(timer);
+  }, [message]);
   const surface = useRef<HTMLDivElement>(null),
     shell = useRef<HTMLDialogElement>(null);
+  const chrome = usePlayChrome(shell);
   const initialFraming = useRef(false);
   const held = useRef<CityPoint>({ x: 0, y: 0 }),
     keys = useRef(new Set<string>());
@@ -262,6 +340,20 @@ export default function FateEmiyaHouse({
   const pinch = useRef<{ span: number; center: CityPoint } | null>(null);
   const suppressClick = useRef(false);
   const room = EMIYA_ROOMS[view.player.room];
+  useFateAudio({
+    key: `native:${room.id}`,
+    ambient:
+      room.id === 'forecourt' || room.id === 'garden' ? 'outdoor' : 'home',
+    ground:
+      room.material === 'stone'
+        ? 'stone'
+        : room.material === 'tatami'
+          ? 'tatami'
+          : 'wood',
+    active: load === 'ready' && !suspended,
+    position: () => engine.current!.player.point,
+    floor: room.scene.floor,
+  });
   const floor = room.scene.floor,
     foot = interiorProject(view.player.point, floor);
   const fit = Math.min(
@@ -287,6 +379,7 @@ export default function FateEmiyaHouse({
   const framing = useRef({ origin, size, scale, zoom });
   const publish = () => setView(snapshot(engine.current!));
   const stop = (feedback = false, keepHelp = false) => {
+    setInspection(null);
     if (!keepHelp) life?.cancelHelp();
     keys.current.clear();
     held.current = { x: 0, y: 0 };
@@ -324,6 +417,7 @@ export default function FateEmiyaHouse({
     publish();
   };
   const activity = (a: EmiyaActivity) => {
+    fateAudio.interact(interactionMotion(a.label));
     life?.beginActivity(a.id);
     const plan = life?.activityPlan(a);
     if (plan && !plan.ok && !('waiting' in plan && plan.waiting)) {
@@ -334,7 +428,25 @@ export default function FateEmiyaHouse({
       setMessage('先在灶台做好家常饭，再到小餐桌用餐。');
       return;
     }
-    walkTo({ room: a.room, point: a.point }, { kind: 'activity', id: a.id });
+    const player = engine.current!.player;
+    if (Number.isFinite(emiyaActivityDistance(a, player))) {
+      stop(false, life?.household.help?.activity === a.id);
+      engine.current!.goal = { kind: 'activity', id: a.id };
+      publish();
+      return;
+    }
+    const path =
+      player.room === a.room
+        ? interiorSpotRoute(
+            player.point,
+            emiyaActivitySpot(a),
+            EMIYA_ROOMS[a.room].scene,
+          )
+        : null;
+    walkTo(
+      { room: a.room, point: path?.at(-1) ?? a.point },
+      { kind: 'activity', id: a.id },
+    );
   };
   const choosePiece = (id: string) => {
     const a =
@@ -350,11 +462,44 @@ export default function FateEmiyaHouse({
           )
         : activities.find((a) => a.room === room.id && a.piece === id);
     if (a) {
-      activity(a);
+      const player = engine.current!.player;
+      if (Number.isFinite(emiyaActivityDistance(a, player))) activity(a);
+      else {
+        const path =
+          player.room === a.room
+            ? interiorSpotRoute(
+                player.point,
+                emiyaActivitySpot(a),
+                EMIYA_ROOMS[a.room].scene,
+              )
+            : null;
+        walkTo({ room: a.room, point: path?.at(-1) ?? a.point });
+      }
       return;
     }
     const piece = room.pieces.find((p) => p.id === id)!;
-    const point = emiyaPieceApproach(room.id, piece);
+    const spot = emiyaPieceSpot(room.id, piece.id),
+      player = engine.current!.player;
+    if (
+      player.room === room.id &&
+      Number.isFinite(interiorSpotDistance(player.point, spot, room.scene))
+    ) {
+      stop();
+      setMessage(piece.label);
+      if (spot.target)
+        setInspection({
+          target: spot.target,
+          title: piece.label,
+          detail: room.description,
+          room: room.id,
+          piece: piece.id,
+          revision: ++inspectionRevision.current,
+        });
+      return;
+    }
+    const point =
+      interiorSpotRoute(player.point, spot, room.scene)?.at(-1) ??
+      emiyaPieceApproach(room.id, piece);
     if (point) walkTo({ room: room.id, point }, { kind: 'inspect', piece: id });
   };
   const goDoor = (door: EmiyaDoor) =>
@@ -396,6 +541,10 @@ export default function FateEmiyaHouse({
   const interact = () => {
     const e = engine.current!,
       player = e.player;
+    if (e.activity) {
+      stop(true);
+      return;
+    }
     if (
       player.room === EMIYA_ENTRY.room &&
       gap(player.point, EMIYA_ENTRY.point) < 48
@@ -412,6 +561,20 @@ export default function FateEmiyaHouse({
       .sort(
         (a, b) => gap(player.point, a.point) - gap(player.point, b.point),
       )[0];
+    const a = nearbyEmiyaActivities(
+      activities,
+      player,
+      nearActivityMemory.current,
+    )[0];
+    if (a) {
+      activity(a);
+      return;
+    }
+    const inspect = emiyaNearestInspection(player, activities);
+    if (inspect) {
+      choosePiece(inspect.piece);
+      return;
+    }
     if (nearby) {
       chooseResident(nearby.id);
       return;
@@ -423,13 +586,7 @@ export default function FateEmiyaHouse({
       goDoor(nearDoor);
       return;
     }
-    const a = activities
-      .filter((a) => a.room === player.room && (a.id !== 'eat' || e.meal))
-      .sort(
-        (a, b) => gap(player.point, a.point) - gap(player.point, b.point),
-      )[0];
-    if (a && gap(player.point, a.point) < 70) activity(a);
-    else if (
+    if (
       e.residentVisible &&
       player.room === e.resident.room &&
       gap(player.point, e.resident.point) < 90
@@ -437,7 +594,7 @@ export default function FateEmiyaHouse({
       stop();
       publish();
       setMessage('士郎：「可以先去和室坐坐。饭做好以后，我会端过去。」');
-    } else setMessage('走近门、家具或士郎，再按 E。也可以点下方活动沿路过去。');
+    } else setMessage('走近家具或人物，再按 E；房门直接走入即可。');
   };
   const zoomCamera = (value: number, at?: CityPoint, nextAt?: CityPoint) => {
     const frame = framing.current,
@@ -614,6 +771,7 @@ export default function FateEmiyaHouse({
       const e = engine.current!;
       e.player.legs = [];
       e.goal = null;
+      setInspection(null);
       if (e.activity) {
         e.activity = null;
         setMessage('已起身，继续行走。');
@@ -746,6 +904,14 @@ export default function FateEmiyaHouse({
           collisionScene,
         );
         travelled = gap(previous.point, player.point);
+        if (travelled < 0.1)
+          life?.house.requestPassage(previous, {
+            room: player.room,
+            point: {
+              x: player.point.x + delta.x * 60,
+              y: player.point.y + delta.y * 60,
+            },
+          });
         const returning = emiyaRoomDoors(player.room).find(
           (d) => d.id === e.returnDoor,
         );
@@ -754,6 +920,16 @@ export default function FateEmiyaHouse({
         const door = emiyaRoomDoors(player.room).find(
           (d) => d.id !== e.returnDoor && emiyaDoorReached(player.point, d),
         );
+        if (
+          door &&
+          e.inhabitants.some(
+            (b) => b.room === door.to && gap(b.point, door.arrival) < 30,
+          )
+        )
+          life?.house.requestPassage(player, {
+            room: door.to,
+            point: door.arrival,
+          });
         if (
           door &&
           [...e.inhabitants, ...(e.residentVisible ? [e.resident] : [])].every(
@@ -820,7 +996,7 @@ export default function FateEmiyaHouse({
         }
         if (goal.kind === 'activity') {
           const a = activities.find((a) => a.id === goal.id)!;
-          if (player.room === a.room && gap(player.point, a.point) < 2) {
+          if (Number.isFinite(emiyaActivityDistance(a, player))) {
             const plan = life?.activityPlan(a);
             if (!plan || plan.ok) {
               e.activity = { id: a.id, seconds: 0 };
@@ -831,11 +1007,22 @@ export default function FateEmiyaHouse({
             }
           }
         } else if (goal.kind === 'resident') onResidentSelect?.(goal.id);
-        else if (goal.kind === 'inspect')
+        else if (goal.kind === 'inspect') {
+          const inspectedRoom = EMIYA_ROOMS[player.room];
+          const spot = emiyaPieceSpot(player.room, goal.piece);
+          if (spot.target)
+            setInspection({
+              target: spot.target,
+              title: spot.label,
+              detail: inspectedRoom.description,
+              room: player.room,
+              piece: goal.piece,
+              revision: ++inspectionRevision.current,
+            });
           setMessage(
             `${EMIYA_ROOMS[player.room].pieces.find((p) => p.id === goal.piece)?.label}：${EMIYA_ROOMS[player.room].description}`,
           );
-        else
+        } else
           setMessage(
             `已到${EMIYA_ROOMS[player.room].name}。走近家具按 E 交互。`,
           );
@@ -954,9 +1141,18 @@ export default function FateEmiyaHouse({
         wasTransitioning !== !!e.transition
       ) {
         published = now;
+        setNearActivityId(
+          (previous) =>
+            nearbyEmiyaActivities(activities, e.player, previous)[0]?.id ??
+            null,
+        );
         setView(snapshot(e));
       }
       if (blocked) {
+        const first = player.legs[0];
+        const next = first?.points[0];
+        if (first && next)
+          life?.house.requestPassage(player, { room: first.room, point: next });
         blockedSeconds += dt;
         if (
           life &&
@@ -995,7 +1191,10 @@ export default function FateEmiyaHouse({
       }
     : ART_SPRITE_FRAMES[view.player.direction][view.player.frame];
   const playerSheet = life ? SHIROU_LIFE_SPRITES : EMIYA_LIFE_SPRITES;
-  const bodyScale = interiorDepth(view.player.point, floor) * anchor.scale;
+  const bodyScale =
+    interiorDepth(view.player.point, floor) *
+    anchor.scale *
+    (life ? CHARACTER_WORLD_SCALE : ILLYA_DISPLAY_SCALE);
   const currentActivity = view.activity
     ? activities.find((a) => a.id === view.activity!.id)!
     : null;
@@ -1008,7 +1207,9 @@ export default function FateEmiyaHouse({
     : null;
   const playerFoot = pose ? interiorProject(pose.point, floor) : foot;
   const poseScale = pose
-    ? interiorDepth(pose.point, floor) * playerSheet.scale
+    ? interiorDepth(pose.point, floor) *
+      playerSheet.scale *
+      (life ? CHARACTER_WORLD_SCALE : ILLYA_DISPLAY_SCALE)
     : 1;
   const poseElevation = pose
     ? pose.elevation * interiorDepth(pose.point, floor) * 0.85
@@ -1023,7 +1224,44 @@ export default function FateEmiyaHouse({
     gap(view.player.point, EMIYA_ENTRY.point) < 48;
   const residentFoot = interiorProject(view.resident.point, floor);
   const residentScale =
-    interiorDepth(view.resident.point, floor) * residentWalk.scale;
+    interiorDepth(view.resident.point, floor) *
+    residentWalk.scale *
+    CHARACTER_WORLD_SCALE;
+  const nearActivities = nearbyEmiyaActivities(
+    activities,
+    view.player,
+    nearActivityId,
+  );
+  const nearActivity = nearActivities[0];
+  useLayoutEffect(() => {
+    nearActivityMemory.current = nearActivity?.id ?? null;
+  });
+  const nearPiece = nearActivity
+    ? null
+    : emiyaNearestInspection(view.player, activities);
+  const hintBody = pose
+    ? {
+        x: origin.x + (playerFoot.x - pose.frame.anchorX * poseScale) * scale,
+        y:
+          origin.y +
+          (playerFoot.y - poseElevation - pose.frame.anchorY * poseScale) *
+            scale,
+        width: pose.frame.width * poseScale * scale,
+        height: pose.frame.height * poseScale * scale,
+      }
+    : {
+        x: origin.x + (foot.x - anchor.x * bodyScale) * scale,
+        y: origin.y + (foot.y - anchor.y * bodyScale) * scale,
+        width: (playerFrame?.width ?? 256) * bodyScale * scale,
+        height: (playerFrame?.height ?? 256) * bodyScale * scale,
+      };
+  const nearbyHeight =
+    44 *
+    (currentActivity || nearPiece ? 1 : Math.min(3, nearActivities.length));
+  const nearbyHint = interiorInteractionHint(hintBody, size, {
+    width: 280,
+    height: nearbyHeight,
+  });
   const chooseRoom = (id: EmiyaRoomId) =>
     walkTo({ room: id, point: { x: 500, y: 560 } });
   const zoomTo = (value: number) => {
@@ -1056,6 +1294,16 @@ export default function FateEmiyaHouse({
         };
     const bodies = [
       body,
+      ...(nearActivity || nearPiece || currentActivity
+        ? [
+            {
+              x: nearbyHint.x - 140,
+              y: nearbyHint.y - nearbyHeight / 2,
+              width: 280,
+              height: nearbyHeight,
+            },
+          ]
+        : []),
       ...view.inhabitants
         .filter((resident) => resident.room === room.id)
         .map((resident) => {
@@ -1105,7 +1353,7 @@ export default function FateEmiyaHouse({
       inert={suspended}
       aria-modal="true"
       aria-label={`卫宫宅 · ${room.name}`}
-      className={`${base.shell} ${styles.shell}`}
+      className={`${base.shell} ${styles.shell} ${chrome}`}
       data-interior-id="emiya"
       data-house-room={room.id}
       data-house-suspended={suspended}
@@ -1127,585 +1375,700 @@ export default function FateEmiyaHouse({
           走回出口
         </button>
       </header>
-      <div
-        ref={surface}
-        className={`${base.surface} ${styles.surface}`}
-        role="application"
-        tabIndex={0}
-        aria-label="卫宫宅室内行走：点击地面、方向键或 WASD，E 交互，Escape 停止"
-        data-interior-load={load}
-        data-life-table={
-          life ? JSON.stringify(life.household.table) : undefined
-        }
-        data-life-invitations={
-          life
-            ? JSON.stringify(
-                life.household.invitations.map(({ person, status, key }) => ({
-                  person,
-                  status,
-                  key,
-                })),
-              )
-            : undefined
-        }
-        data-life-help={life?.household.help?.activity ?? ''}
-        data-life-failed-task={life?.household.failed ?? ''}
-        data-interior-x={view.player.point.x.toFixed(3)}
-        data-interior-y={view.player.point.y.toFixed(3)}
-        data-interior-zoom={zoom}
-        data-house-room={room.id}
-        data-house-activity={view.activity?.id ?? ''}
-        data-house-route={view.player.legs.length}
-        data-house-meal={view.meal}
-        data-house-transition={!!view.transition}
-        data-resident-room={view.residentVisible ? view.resident.room : ''}
-        data-resident-x={view.resident.point.x.toFixed(3)}
-        data-resident-y={view.resident.point.y.toFixed(3)}
-        data-life-residents={JSON.stringify(
-          view.inhabitants.map(
-            ({ id, room, point, phase, kind, direction }) => ({
-              id,
-              room,
-              point,
-              phase,
-              kind,
-              direction,
-            }),
-          ),
-        )}
-        data-resident-phase={
-          view.residentVisible && !view.residentOn
-            ? 'paused'
-            : view.resident.legs.length
-              ? 'walking'
-              : 'doing'
-        }
-        onPointerDownCapture={(event) => {
-          if (!pointers.current.size) suppressClick.current = false;
-          pointers.current.set(event.pointerId, {
-            x: event.clientX,
-            y: event.clientY,
-          });
-          if (pointers.current.size !== 2) return;
-          const [a, b] = [...pointers.current.values()],
-            rect = event.currentTarget.getBoundingClientRect();
-          pinch.current = {
-            span: gap(a, b),
-            center: {
-              x: (a.x + b.x) / 2 - rect.left,
-              y: (a.y + b.y) / 2 - rect.top,
-            },
-          };
-          stop();
-          pointer.current = null;
-          suppressClick.current = true;
-          event.preventDefault();
-          event.stopPropagation();
-          event.currentTarget.setPointerCapture(event.pointerId);
-        }}
-        onPointerMoveCapture={(event) => {
-          if (!pointers.current.has(event.pointerId)) return;
-          pointers.current.set(event.pointerId, {
-            x: event.clientX,
-            y: event.clientY,
-          });
-          if (!pinch.current || pointers.current.size !== 2) return;
-          const [a, b] = [...pointers.current.values()],
-            rect = event.currentTarget.getBoundingClientRect();
-          const span = gap(a, b),
-            center = {
-              x: (a.x + b.x) / 2 - rect.left,
-              y: (a.y + b.y) / 2 - rect.top,
-            };
-          if (span > 5 && pinch.current.span > 5)
-            zoomCamera(
-              (framing.current.zoom * span) / pinch.current.span,
-              pinch.current.center,
-              center,
-            );
-          pinch.current = { span, center };
-          event.preventDefault();
-          event.stopPropagation();
-        }}
-        onPointerUpCapture={(event) => {
-          pointers.current.delete(event.pointerId);
-          if (pinch.current) {
-            pinch.current = null;
-            pointers.current.clear();
-            pointer.current = null;
+      <FateGameFrame>
+        <div
+          ref={surface}
+          className={`${base.surface} ${styles.surface}`}
+          role="application"
+          tabIndex={0}
+          aria-label="卫宫宅室内行走：点击地面、方向键或 WASD，E 交互，Escape 停止"
+          data-interior-load={load}
+          data-life-table={
+            life ? JSON.stringify(life.household.table) : undefined
           }
-        }}
-        onClickCapture={(event) => {
-          if (suppressClick.current || pointer.current?.moved) {
+          data-life-invitations={
+            life
+              ? JSON.stringify(
+                  life.household.invitations.map(({ person, status, key }) => ({
+                    person,
+                    status,
+                    key,
+                  })),
+                )
+              : undefined
+          }
+          data-life-help={life?.household.help?.activity ?? ''}
+          data-life-failed-task={life?.household.failed ?? ''}
+          data-interior-x={view.player.point.x.toFixed(3)}
+          data-interior-y={view.player.point.y.toFixed(3)}
+          data-interior-zoom={zoom}
+          data-house-room={room.id}
+          data-house-activity={view.activity?.id ?? ''}
+          data-house-route={view.player.legs.length}
+          data-house-meal={view.meal}
+          data-house-transition={!!view.transition}
+          data-resident-room={view.residentVisible ? view.resident.room : ''}
+          data-resident-x={view.resident.point.x.toFixed(3)}
+          data-resident-y={view.resident.point.y.toFixed(3)}
+          data-life-residents={JSON.stringify(
+            view.inhabitants.map(
+              ({ id, room, point, phase, kind, direction }) => ({
+                id,
+                room,
+                point,
+                phase,
+                kind,
+                direction,
+              }),
+            ),
+          )}
+          data-resident-phase={
+            view.residentVisible && !view.residentOn
+              ? 'paused'
+              : view.resident.legs.length
+                ? 'walking'
+                : 'doing'
+          }
+          onPointerDownCapture={(event) => {
+            if (!pointers.current.size) suppressClick.current = false;
+            pointers.current.set(event.pointerId, {
+              x: event.clientX,
+              y: event.clientY,
+            });
+            if (pointers.current.size !== 2) return;
+            const [a, b] = [...pointers.current.values()],
+              rect = event.currentTarget.getBoundingClientRect();
+            pinch.current = {
+              span: gap(a, b),
+              center: {
+                x: (a.x + b.x) / 2 - rect.left,
+                y: (a.y + b.y) / 2 - rect.top,
+              },
+            };
+            stop();
+            pointer.current = null;
+            suppressClick.current = true;
             event.preventDefault();
             event.stopPropagation();
-            suppressClick.current = false;
-            pointer.current = null;
-          }
-        }}
-        onPointerDown={(event) => {
-          event.stopPropagation();
-          pointer.current = {
-            id: event.pointerId,
-            x: event.clientX,
-            y: event.clientY,
-            moved: false,
-          };
-        }}
-        onPointerMove={(event) => {
-          const p = pointer.current;
-          if (
-            p?.id === event.pointerId &&
-            gap({ x: p.x, y: p.y }, { x: event.clientX, y: event.clientY }) > 7
-          ) {
-            p.moved = true;
-            stop(true);
-          }
-        }}
-        onPointerCancel={() => {
-          pointer.current = null;
-          pointers.current.clear();
-          pinch.current = null;
-          stop(true);
-        }}
-        onClick={(event) => {
-          if (
-            (event.target as HTMLElement).closest('button') ||
-            pointer.current?.moved
-          ) {
-            pointer.current = null;
-            return;
-          }
-          pointer.current = null;
-          const rect = event.currentTarget.getBoundingClientRect();
-          const point = interiorUnproject(
-            {
-              x: (event.clientX - rect.left - origin.x) / scale,
-              y: (event.clientY - rect.top - origin.y) / scale,
-            },
-            floor,
-          );
-          if (point) walkTo({ room: room.id, point });
-          else setMessage('请点地面，或点门和家具沿路前往。');
-        }}
-      >
-        {requiredArt.map((url) => (
-          <Image
-            key={`${attempt}:${url}`}
-            src={runtimeArt(url)}
-            width={1}
-            height={1}
-            alt=""
-            unoptimized
-            loading="eager"
-            fetchPriority="high"
-            aria-hidden="true"
-            className={styles.preload}
-            data-house-art={url}
-            onLoad={() => {
-              if (attempt === artAttempt.current)
-                setArtStatus((status) => ({ ...status, [url]: 'ready' }));
-            }}
-            onError={() => {
-              if (attempt === artAttempt.current)
-                setArtStatus((status) => ({ ...status, [url]: 'error' }));
-            }}
-          />
-        ))}
-        <div
-          className={base.world}
-          style={{
-            width: 1600,
-            height: 900,
-            transform: `translate(${origin.x}px,${origin.y}px) scale(${scale})`,
+            event.currentTarget.setPointerCapture(event.pointerId);
           }}
-          data-interior-origin-x={origin.x}
-          data-interior-origin-y={origin.y}
-          data-interior-scale={scale}
+          onPointerMoveCapture={(event) => {
+            if (!pointers.current.has(event.pointerId)) return;
+            pointers.current.set(event.pointerId, {
+              x: event.clientX,
+              y: event.clientY,
+            });
+            if (!pinch.current || pointers.current.size !== 2) return;
+            const [a, b] = [...pointers.current.values()],
+              rect = event.currentTarget.getBoundingClientRect();
+            const span = gap(a, b),
+              center = {
+                x: (a.x + b.x) / 2 - rect.left,
+                y: (a.y + b.y) / 2 - rect.top,
+              };
+            if (span > 5 && pinch.current.span > 5)
+              zoomCamera(
+                (framing.current.zoom * span) / pinch.current.span,
+                pinch.current.center,
+                center,
+              );
+            pinch.current = { span, center };
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onPointerUpCapture={(event) => {
+            pointers.current.delete(event.pointerId);
+            if (pinch.current) {
+              pinch.current = null;
+              pointers.current.clear();
+              pointer.current = null;
+            }
+          }}
+          onClickCapture={(event) => {
+            if (suppressClick.current || pointer.current?.moved) {
+              event.preventDefault();
+              event.stopPropagation();
+              suppressClick.current = false;
+              pointer.current = null;
+            }
+          }}
+          onPointerDown={(event) => {
+            event.stopPropagation();
+            pointer.current = {
+              id: event.pointerId,
+              x: event.clientX,
+              y: event.clientY,
+              moved: false,
+            };
+          }}
+          onPointerMove={(event) => {
+            const p = pointer.current;
+            if (
+              p?.id === event.pointerId &&
+              gap({ x: p.x, y: p.y }, { x: event.clientX, y: event.clientY }) >
+                7
+            ) {
+              p.moved = true;
+              stop(true);
+            }
+          }}
+          onPointerCancel={() => {
+            pointer.current = null;
+            pointers.current.clear();
+            pinch.current = null;
+            stop(true);
+          }}
+          onClick={(event) => {
+            if (
+              (event.target as Element).closest('button, [data-game-detail]') ||
+              pointer.current?.moved
+            ) {
+              pointer.current = null;
+              return;
+            }
+            pointer.current = null;
+            const rect = event.currentTarget.getBoundingClientRect();
+            const point = interiorUnproject(
+              {
+                x: (event.clientX - rect.left - origin.x) / scale,
+                y: (event.clientY - rect.top - origin.y) / scale,
+              },
+              floor,
+            );
+            if (point) walkTo({ room: room.id, point });
+            else setMessage('请点地面，或点门和家具沿路前往。');
+          }}
         >
-          <FateEmiyaRoomBackdrop
-            room={room.id}
-            windowOpen={!view.closedWindows.has(room.id)}
-          />
-          {view.transition && (
-            <div className={styles.outgoing} key={view.transition.until}>
-              <FateEmiyaRoomBackdrop
-                room={view.transition.room}
-                windowOpen={!view.closedWindows.has(view.transition.room)}
-              />
-            </div>
-          )}
-          {load === 'ready' && (
-            <>
-              {room.pieces.map((piece) => (
-                <FateEmiyaFurniture
-                  key={piece.id}
-                  room={room.id}
-                  piece={piece}
-                  active={currentActivity?.piece === piece.id}
-                  mealReady={view.meal}
+          <div
+            className={base.world}
+            style={{
+              width: 1600,
+              height: 900,
+              transform: `translate(${origin.x}px,${origin.y}px) scale(${scale})`,
+            }}
+            data-interior-origin-x={origin.x}
+            data-interior-origin-y={origin.y}
+            data-interior-scale={scale}
+          >
+            <FateEmiyaRoomBackdrop
+              room={room.id}
+              windowOpen={!view.closedWindows.has(room.id)}
+            />
+            {view.transition && (
+              <div className={styles.outgoing} key={view.transition.until}>
+                <FateEmiyaRoomBackdrop
+                  room={view.transition.room}
+                  windowOpen={!view.closedWindows.has(view.transition.room)}
                 />
-              ))}
-              {emiyaRoomDoors(room.id).map((door) => (
-                <FateEmiyaDoorFrame
-                  key={door.id}
-                  room={room.id}
-                  door={door}
-                  open={view.doors.has(emiyaDoorKey(door))}
-                />
-              ))}
-              {room.pieces.map((piece) => (
-                <button
-                  key={piece.id}
-                  type="button"
-                  className={styles.modelTarget}
-                  aria-label={`与${piece.label}交互`}
-                  title={piece.label}
-                  data-house-furniture={piece.id}
-                  style={{
-                    ...hitShape(emiyaFurnitureSilhouette(room.id, piece)),
-                    zIndex:
-                      Math.round(piece.footprint.y + piece.footprint.height) +
-                      11,
-                  }}
-                  onClick={() => choosePiece(piece.id)}
-                />
-              ))}
-              {emiyaRoomDoors(room.id).map((door) => (
-                <button
-                  key={door.id}
-                  type="button"
-                  className={styles.modelTarget}
-                  aria-label={`打开通往${EMIYA_ROOMS[door.to].name}的门`}
-                  data-house-door-model={door.id}
-                  style={{ ...hitShape(emiyaDoorSilhouette(door)), zIndex: 3 }}
-                  onClick={() => goDoor(door)}
-                />
-              ))}
-              <div
-                className={base.actor}
-                style={{
-                  left: playerFoot.x,
-                  top: playerFoot.y - poseElevation,
-                  zIndex: pose?.z ?? Math.round(view.player.point.y) + 10,
-                }}
-                aria-label={life ? '士郎的室内站位' : '伊莉雅的室内站位'}
-                data-player-id={life ? 'shirou' : 'illya'}
-                data-house-player
-                data-player-direction={view.player.direction}
-                data-player-frame={view.player.frame}
-                data-player-pose={pose?.pose ?? 'walk'}
-                data-player-pose-phase={pose?.phase ?? ''}
-                data-pose-x={pose?.point.x ?? ''}
-                data-pose-y={pose?.point.y ?? ''}
-              >
-                <span
-                  className={base.shadow}
-                  style={{
-                    transform: `scale(${interiorDepth(view.player.point, floor)})`,
-                    opacity: pose && pose.elevation > 0 ? 0 : 1,
-                  }}
-                />
-                {pose ? (
-                  <span
-                    className={styles.lifeSprite}
-                    style={{
-                      width: pose.frame.width * poseScale,
-                      height: pose.frame.height * poseScale,
-                      backgroundImage: `url(${runtimeArt(playerSheet.path)})`,
-                      backgroundSize: `${playerSheet.width * poseScale}px ${playerSheet.height * poseScale}px`,
-                      backgroundPosition: `${-pose.frame.x * poseScale}px ${-pose.frame.y * poseScale}px`,
-                      transform: `translate(${-pose.frame.anchorX * poseScale}px,${-pose.frame.anchorY * poseScale}px)`,
-                    }}
-                  />
-                ) : (
-                  <span
-                    className={base.sprite}
-                    style={{
-                      width: (playerFrame?.width ?? 256) * bodyScale,
-                      height: (playerFrame?.height ?? 256) * bodyScale,
-                      backgroundImage: `url(${runtimeArt(playerWalk ? playerWalk.sheet.path : ILLYA_ART_SPRITE)})`,
-                      backgroundSize: playerFrame
-                        ? `${playerWalk!.sheet.width * bodyScale}px ${playerWalk!.sheet.height * bodyScale}px`
-                        : undefined,
-                      backgroundPosition: playerFrame
-                        ? `${-playerFrame.x * bodyScale}px ${-playerFrame.y * bodyScale}px`
-                        : `${(view.player.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.player.direction) / 3) * 100}%`,
-                      transform: `translate(${-anchor.x * bodyScale}px,${-anchor.y * bodyScale}px)${playerWalk?.mirror ? ' scaleX(-1)' : ''}`,
-                    }}
-                  />
-                )}
               </div>
-              {view.residentVisible && view.resident.room === room.id && (
+            )}
+            {load === 'ready' && (
+              <>
+                {room.pieces.map((piece) => (
+                  <FateEmiyaFurniture
+                    key={piece.id}
+                    room={room.id}
+                    piece={piece}
+                    active={currentActivity?.piece === piece.id}
+                    mealReady={view.meal}
+                  />
+                ))}
+                {emiyaRoomDoors(room.id).map((door) => (
+                  <FateEmiyaDoorFrame
+                    key={door.id}
+                    room={room.id}
+                    door={door}
+                    open={view.doors.has(emiyaDoorKey(door))}
+                  />
+                ))}
+                {room.pieces.map((piece) => (
+                  <button
+                    key={piece.id}
+                    type="button"
+                    className={styles.modelTarget}
+                    aria-label={`与${piece.label}交互`}
+                    title={piece.label}
+                    data-house-furniture={piece.id}
+                    style={{
+                      ...hitShape(emiyaFurnitureSilhouette(room.id, piece)),
+                      zIndex:
+                        Math.round(piece.footprint.y + piece.footprint.height) +
+                        11,
+                    }}
+                    onClick={() => choosePiece(piece.id)}
+                  />
+                ))}
+                {emiyaRoomDoors(room.id).map((door) => (
+                  <button
+                    key={door.id}
+                    type="button"
+                    className={styles.modelTarget}
+                    aria-label={`打开通往${EMIYA_ROOMS[door.to].name}的门`}
+                    data-house-door-model={door.id}
+                    style={{
+                      ...hitShape(emiyaDoorSilhouette(door)),
+                      zIndex: 3,
+                    }}
+                    onClick={() => goDoor(door)}
+                  />
+                ))}
                 <div
                   className={base.actor}
-                  aria-label={`卫宫士郎 · ${view.resident.legs.length ? '沿路行走' : EMIYA_RESIDENT_ROUTINE[view.routine].label}`}
-                  data-house-resident
                   style={{
-                    left: residentFoot.x,
-                    top: residentFoot.y,
-                    zIndex: Math.round(view.resident.point.y) + 10,
+                    left: playerFoot.x,
+                    top: playerFoot.y - poseElevation,
+                    zIndex: pose?.z ?? Math.round(view.player.point.y) + 10,
                   }}
+                  aria-label={life ? '士郎的室内站位' : '伊莉雅的室内站位'}
+                  data-player-id={life ? 'shirou' : 'illya'}
+                  data-house-player
+                  data-player-direction={view.player.direction}
+                  data-player-frame={view.player.frame}
+                  data-player-pose={pose?.pose ?? 'walk'}
+                  data-player-pose-phase={pose?.phase ?? ''}
+                  data-pose-x={pose?.point.x ?? ''}
+                  data-pose-y={pose?.point.y ?? ''}
                 >
                   <span
                     className={base.shadow}
                     style={{
-                      transform: `scale(${interiorDepth(view.resident.point, floor)})`,
+                      transform: `scale(${interiorDepth(view.player.point, floor)})`,
+                      opacity: pose && pose.elevation > 0 ? 0 : 1,
                     }}
                   />
-                  <span
-                    className={styles.residentSprite}
-                    style={{
-                      width: residentFrame.width * residentScale,
-                      height: residentFrame.height * residentScale,
-                      transform: `translate(${-residentWalk.anchorX * residentScale}px,${-residentFrame.anchorY * residentScale}px)${residentWalk.mirror ? ' scaleX(-1)' : ''}`,
-                      backgroundImage: `url(${runtimeArt(residentWalk.sheet.path)})`,
-                      backgroundSize: `${residentWalk.sheet.width * residentScale}px ${residentWalk.sheet.height * residentScale}px`,
-                      backgroundPosition: `${-residentFrame.x * residentScale}px ${-residentFrame.y * residentScale}px`,
-                    }}
-                  />
+                  <div
+                    key={
+                      pose
+                        ? currentActivity?.id
+                        : `inspect:${inspection?.revision ?? 0}`
+                    }
+                    className={base.gesture}
+                    data-gesture="settle"
+                  >
+                    {pose ? (
+                      <span
+                        className={styles.lifeSprite}
+                        style={{
+                          width: pose.frame.width * poseScale,
+                          height: pose.frame.height * poseScale,
+                          backgroundImage: `url(${runtimeArt(playerSheet.path)})`,
+                          backgroundSize: `${playerSheet.width * poseScale}px ${playerSheet.height * poseScale}px`,
+                          backgroundPosition: `${-pose.frame.x * poseScale}px ${-pose.frame.y * poseScale}px`,
+                          transform: `translate(${-pose.frame.anchorX * poseScale}px,${-pose.frame.anchorY * poseScale}px)`,
+                        }}
+                      />
+                    ) : inspection && life ? (
+                      <FateInteractionMotion
+                        sprite={houseResidentSprite(
+                          'shirou',
+                          view.player.direction,
+                          0,
+                        )!}
+                        scale={
+                          interiorDepth(view.player.point, floor) *
+                          houseResidentSprite(
+                            'shirou',
+                            view.player.direction,
+                            0,
+                          )!.scale
+                        }
+                        motion={interactionMotion(inspection.title)}
+                      />
+                    ) : (
+                      <span
+                        className={base.sprite}
+                        style={{
+                          width: (playerFrame?.width ?? 256) * bodyScale,
+                          height: (playerFrame?.height ?? 256) * bodyScale,
+                          backgroundImage: `url(${runtimeArt(playerWalk ? playerWalk.sheet.path : ILLYA_ART_SPRITE)})`,
+                          backgroundSize: playerFrame
+                            ? `${playerWalk!.sheet.width * bodyScale}px ${playerWalk!.sheet.height * bodyScale}px`
+                            : undefined,
+                          backgroundPosition: playerFrame
+                            ? `${-playerFrame.x * bodyScale}px ${-playerFrame.y * bodyScale}px`
+                            : `${(view.player.frame / 5) * 100}% ${(['down', 'left', 'right', 'up'].indexOf(view.player.direction) / 3) * 100}%`,
+                          transform: `translate(${-anchor.x * bodyScale}px,${-anchor.y * bodyScale}px)${playerWalk?.mirror ? ' scaleX(-1)' : ''}`,
+                        }}
+                      />
+                    )}
+                  </div>
                 </div>
-              )}
-              {view.inhabitants
-                .filter((body) => body.room === room.id)
-                .map((body) => (
-                  <FateEmiyaResident
-                    key={body.id}
-                    body={body}
-                    onChoose={chooseResident}
-                  />
-                ))}
-            </>
-          )}
-        </div>
-        {load === 'ready' && (
-          <div className={styles.labels}>
-            {emiyaRoomDoors(room.id).map((door) => (
-              <button
-                key={door.id}
-                type="button"
-                className={styles.doorLabel}
-                style={labelPosition(interiorProject(door.at, floor))}
-                data-house-door={door.id}
-                onClick={() => goDoor(door)}
-              >
-                <DoorOpen size={14} />
-                {door.label}
-              </button>
-            ))}
-            {room.id === EMIYA_ENTRY.room && (
-              <button
-                type="button"
-                className={styles.doorLabel}
-                style={labelPosition(
-                  interiorProject(EMIYA_ENTRY.point, floor),
-                  95,
+                {view.residentVisible && view.resident.room === room.id && (
+                  <div
+                    className={base.actor}
+                    aria-label={`卫宫士郎 · ${view.resident.legs.length ? '沿路行走' : EMIYA_RESIDENT_ROUTINE[view.routine].label}`}
+                    data-house-resident
+                    style={{
+                      left: residentFoot.x,
+                      top: residentFoot.y,
+                      zIndex: Math.round(view.resident.point.y) + 10,
+                    }}
+                  >
+                    <span
+                      className={base.shadow}
+                      style={{
+                        transform: `scale(${interiorDepth(view.resident.point, floor)})`,
+                      }}
+                    />
+                    <span
+                      className={styles.residentSprite}
+                      style={{
+                        width: residentFrame.width * residentScale,
+                        height: residentFrame.height * residentScale,
+                        transform: `translate(${-residentWalk.anchorX * residentScale}px,${-residentFrame.anchorY * residentScale}px)${residentWalk.mirror ? ' scaleX(-1)' : ''}`,
+                        backgroundImage: `url(${runtimeArt(residentWalk.sheet.path)})`,
+                        backgroundSize: `${residentWalk.sheet.width * residentScale}px ${residentWalk.sheet.height * residentScale}px`,
+                        backgroundPosition: `${-residentFrame.x * residentScale}px ${-residentFrame.y * residentScale}px`,
+                      }}
+                    />
+                  </div>
                 )}
-                onClick={() => walkTo(EMIYA_ENTRY, { kind: 'exit' })}
-              >
-                <DoorOpen size={14} />
-                回街道
-              </button>
-            )}
-          </div>
-        )}
-        {mapVisible && (
-          <EmiyaHouseMap
-            room={room.id}
-            point={view.player.point}
-            resident={view.residentVisible ? view.resident : null}
-            residents={view.inhabitants}
-            onChoose={chooseRoom}
-          />
-        )}
-        <div className={base.zoom}>
-          <button
-            type="button"
-            aria-label="显示室内地图"
-            onClick={() => setMapVisible((v) => !v)}
-            aria-pressed={mapVisible}
-          >
-            <MapIcon size={17} />
-          </button>
-          <button
-            type="button"
-            aria-label="缩小室内视角"
-            disabled={zoom <= 1}
-            onClick={() => zoomTo(zoom - 0.25)}
-          >
-            <Minus size={17} />
-          </button>
-          <button
-            type="button"
-            aria-label="显示完整室内"
-            onClick={() => zoomTo(1)}
-          >
-            {Math.round(zoom * 100)}%
-          </button>
-          <button
-            type="button"
-            aria-label="放大室内视角"
-            disabled={zoom >= 2.5}
-            onClick={() => zoomTo(zoom + 0.25)}
-          >
-            <Plus size={17} />
-          </button>
-        </div>
-        {load !== 'ready' && (
-          <output className={base.loading}>
-            {load === 'loading' ? (
-              '正在打开卫宫宅…'
-            ) : (
-              <>
-                <span>场景未能载入。</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    artAttempt.current += 1;
-                    setArtStatus({});
-                    setAttempt(artAttempt.current);
-                  }}
-                >
-                  重新载入
-                </button>
-                <button type="button" onClick={onExit}>
-                  返回门口
-                </button>
+                {view.inhabitants
+                  .filter((body) => body.room === room.id)
+                  .map((body) => (
+                    <FateEmiyaResident
+                      key={body.id}
+                      body={body}
+                      onChoose={chooseResident}
+                    />
+                  ))}
               </>
             )}
-          </output>
-        )}
-        {currentActivity && (
-          <output className={styles.progress}>
-            <span>{currentActivity.progress}</span>
-            <progress
-              aria-label={currentActivity.label}
-              value={view.activity!.seconds}
-              max={currentActivity.seconds}
+          </div>
+          {load === 'ready' && (
+            <div className={styles.labels}>
+              {emiyaRoomDoors(room.id).map((door) => (
+                <button
+                  key={door.id}
+                  type="button"
+                  className={styles.doorLabel}
+                  style={labelPosition(interiorProject(door.at, floor))}
+                  data-house-door={door.id}
+                  onClick={() => goDoor(door)}
+                >
+                  <DoorOpen size={14} />
+                  {door.label}
+                </button>
+              ))}
+              {room.id === EMIYA_ENTRY.room && (
+                <button
+                  type="button"
+                  className={styles.doorLabel}
+                  style={labelPosition(
+                    interiorProject(EMIYA_ENTRY.point, floor),
+                    95,
+                  )}
+                  onClick={() => walkTo(EMIYA_ENTRY, { kind: 'exit' })}
+                >
+                  <DoorOpen size={14} />
+                  回街道
+                </button>
+              )}
+            </div>
+          )}
+          {mapVisible && (
+            <EmiyaHouseMap
+              room={room.id}
+              point={view.player.point}
+              resident={view.residentVisible ? view.resident : null}
+              residents={view.inhabitants}
+              onChoose={chooseRoom}
             />
-            <button type="button" onClick={() => stop(true)}>
-              起身／取消
-            </button>
-          </output>
-        )}
-      </div>
-      <footer className={base.footer}>
-        <div className={`${base.spots} ${styles.activities}`}>
-          {activities.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              disabled={load !== 'ready'}
-              onClick={() => activity(a)}
-              data-house-action={a.id}
-              aria-pressed={view.activity?.id === a.id}
-            >
-              {a.label}
-            </button>
-          ))}
-          <button type="button" disabled={load !== 'ready'} onClick={interact}>
-            <DoorOpen size={14} />E · 交互
-          </button>
-          <button
-            type="button"
-            disabled={!canExit || load !== 'ready'}
-            onClick={() => {
-              stop();
-              onExit();
-            }}
-          >
-            从门口出去
-          </button>
-          <button type="button" onClick={() => stop(true)}>
-            <Square size={12} />
-            停下
-          </button>
-        </div>
-        <div className={styles.options}>
-          {lifeInteractions}
-          {!life && (
-            <Link href="/fate/emiya-life" target="_blank" rel="noreferrer">
-              试玩士郎生活
-            </Link>
           )}
-          <button
-            type="button"
-            disabled={load !== 'ready' || !emiyaHasPaperWindow(room.id)}
-            onClick={() => {
-              const e = engine.current!;
-              if (e.closedWindows.has(room.id)) e.closedWindows.delete(room.id);
-              else e.closedWindows.add(room.id);
-              publish();
-              setMessage(
-                e.closedWindows.has(room.id)
-                  ? '纸窗合上，窗光变柔。'
-                  : '推开纸窗，庭院日光照进来。',
-              );
-            }}
-            aria-pressed={!view.closedWindows.has(room.id)}
-          >
-            <Sun size={14} />
-            {view.closedWindows.has(room.id) ? '开窗' : '合上纸窗'}
-          </button>
-          {!life && (
+          {load === 'ready' &&
+            (nearActivity || nearPiece || currentActivity) && (
+              <div className={base.objectGuides}>
+                <div
+                  className={base.interactionBubble}
+                  style={{ left: nearbyHint.x, top: nearbyHint.y }}
+                >
+                  {nearActivity && !currentActivity ? (
+                    <div
+                      className={base.nearChoices}
+                      aria-label="附近可操作物件"
+                    >
+                      {nearActivities.map((item, index) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className={base.nearInteraction}
+                          data-interior-near={index === 0 ? item.id : undefined}
+                          data-interior-choice={item.id}
+                          onClick={() => activity(item)}
+                          onKeyDown={(event) => {
+                            if (event.key.toLowerCase() !== 'e') return;
+                            event.preventDefault();
+                            event.stopPropagation();
+                            if (!event.repeat) activity(item);
+                          }}
+                        >
+                          {item.label}
+                          {index === 0 && <kbd aria-hidden="true">E</kbd>}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className={base.nearInteraction}
+                      data-interior-near={
+                        currentActivity?.id ??
+                        nearActivity?.id ??
+                        nearPiece?.spot.id
+                      }
+                      onClick={() =>
+                        currentActivity
+                          ? stop(true)
+                          : nearActivity
+                            ? activity(nearActivity)
+                            : nearPiece && choosePiece(nearPiece.piece)
+                      }
+                    >
+                      {currentActivity
+                        ? '起身／取消'
+                        : (nearActivity?.label ?? nearPiece?.spot.label)}
+                      <kbd aria-hidden="true">
+                        {currentActivity ? 'Esc' : 'E'}
+                      </kbd>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          <div className={base.zoom} data-game-toolbar>
+            <FateFullscreenButton />
+            <FateSoundButton />
             <button
               type="button"
-              disabled={load !== 'ready' || !!life}
-              aria-pressed={view.residentOn}
-              onClick={() => {
-                const e = engine.current!;
-                if (
-                  !e.residentOn &&
-                  e.player.room === e.resident.room &&
-                  gap(e.player.point, e.resident.point) < 45
-                ) {
-                  setMessage('先离开士郎的站位，再开始观察。');
-                  return;
-                }
-                e.residentOn = !e.residentOn;
-                e.residentVisible = true;
-                if (!e.residentOn) {
-                  e.resident.frame = 0;
-                  const lastLeg = e.player.legs.at(-1),
-                    target = lastLeg?.points.at(-1);
-                  if (lastLeg && target) {
-                    const route = emiyaHouseRoute(
-                      e.player,
-                      { room: lastLeg.room, point: target },
-                      e.resident,
-                    );
-                    if (route) e.player.legs = route;
-                  }
-                }
-                publish();
-                setMessage(
-                  e.residentOn
-                    ? '观察士郎：做饭、去和室、整理笔记、缘侧休息，均沿实际通路。'
-                    : '已暂停士郎的日常演示。',
-                );
+              aria-label="显示室内地图"
+              onClick={() => setMapVisible((v) => !v)}
+              aria-pressed={mapVisible}
+            >
+              <MapIcon size={17} />
+            </button>
+            <button
+              type="button"
+              aria-label="缩小室内视角"
+              disabled={zoom <= 1}
+              onClick={() => zoomTo(zoom - 0.25)}
+            >
+              <Minus size={17} />
+            </button>
+            <button
+              type="button"
+              aria-label="显示完整室内"
+              onClick={() => zoomTo(1)}
+            >
+              {Math.round(zoom * 100)}%
+            </button>
+            <button
+              type="button"
+              aria-label="放大室内视角"
+              disabled={zoom >= 2.5}
+              onClick={() => zoomTo(zoom + 0.25)}
+            >
+              <Plus size={17} />
+            </button>
+          </div>
+          {inspection && inspection.room === room.id && (
+            <FateInteriorDetail
+              key={inspection.revision}
+              painting={room.scene.painting}
+              target={inspection.target}
+              frame={interiorObjectFrame(inspection.target, inspection.title)}
+              title={inspection.title}
+              detail={inspection.detail}
+              layers={room.pieces
+                .filter((piece) => piece.id === inspection.piece)
+                .map((piece) => (
+                  <FateEmiyaFurniture
+                    key={piece.id}
+                    room={room.id}
+                    piece={piece}
+                    active={false}
+                    mealReady={view.meal}
+                  />
+                ))}
+              onClose={() => {
+                setInspection(null);
+                surface.current?.focus({ preventScroll: true });
               }}
-            >
-              <Users size={14} />
-              {view.residentOn
-                ? '暂停士郎日常'
-                : view.residentVisible
-                  ? '继续士郎日常'
-                  : '观察士郎日常'}
-            </button>
+            />
           )}
-          {view.residentVisible && (
-            <span>
-              士郎：{EMIYA_ROOMS[view.resident.room].name} ·{' '}
-              {!view.residentOn
-                ? '暂停中'
-                : view.resident.legs.length
-                  ? '沿路前往'
-                  : EMIYA_RESIDENT_ROUTINE[view.routine].label}
-            </span>
+          {load !== 'ready' && (
+            <output className={base.loading}>
+              {load === 'loading' ? (
+                '正在打开卫宫宅…'
+              ) : (
+                <>
+                  <span>场景未能载入。</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      artAttempt.current += 1;
+                      setArtStatus({});
+                      setAttempt(artAttempt.current);
+                    }}
+                  >
+                    重新载入
+                  </button>
+                  <button type="button" onClick={onExit}>
+                    返回门口
+                  </button>
+                </>
+              )}
+            </output>
+          )}
+          {currentActivity && (
+            <output className={styles.progress}>
+              <span>{currentActivity.progress}</span>
+              <progress
+                aria-label={currentActivity.label}
+                value={view.activity!.seconds}
+                max={currentActivity.seconds}
+              />
+              <button type="button" onClick={() => stop(true)}>
+                起身／取消
+              </button>
+            </output>
+          )}
+          {message && (
+            <output
+              className={base.feedback}
+              aria-live="polite"
+              data-interior-feedback
+            >
+              {message}
+            </output>
           )}
         </div>
+      </FateGameFrame>
+      <footer className={base.footer}>
+        <details className={base.destinations}>
+          <summary>物件与通路</summary>
+          <div className={base.destinationList}>
+            <div className={`${base.spots} ${styles.activities}`}>
+              {activities.map((a) => (
+                <button
+                  key={a.id}
+                  type="button"
+                  disabled={load !== 'ready'}
+                  onClick={() => activity(a)}
+                  data-house-action={a.id}
+                  aria-pressed={view.activity?.id === a.id}
+                >
+                  {a.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={load !== 'ready'}
+                onClick={interact}
+              >
+                <DoorOpen size={14} />E · 交互
+              </button>
+              <button
+                type="button"
+                disabled={!canExit || load !== 'ready'}
+                onClick={() => {
+                  stop();
+                  onExit();
+                }}
+              >
+                从门口出去
+              </button>
+              <button type="button" onClick={() => stop(true)}>
+                <Square size={12} />
+                停下
+              </button>
+            </div>
+            <div className={styles.options}>
+              {lifeInteractions}
+              {!life && (
+                <Link href="/fate/emiya-life" target="_blank" rel="noreferrer">
+                  试玩士郎生活
+                </Link>
+              )}
+              <button
+                type="button"
+                disabled={load !== 'ready' || !emiyaHasPaperWindow(room.id)}
+                onClick={() => {
+                  const e = engine.current!;
+                  if (e.closedWindows.has(room.id))
+                    e.closedWindows.delete(room.id);
+                  else e.closedWindows.add(room.id);
+                  publish();
+                  setMessage(
+                    e.closedWindows.has(room.id)
+                      ? '纸窗合上，窗光变柔。'
+                      : '推开纸窗，庭院日光照进来。',
+                  );
+                }}
+                aria-pressed={!view.closedWindows.has(room.id)}
+              >
+                <Sun size={14} />
+                {view.closedWindows.has(room.id) ? '开窗' : '合上纸窗'}
+              </button>
+              {!life && (
+                <button
+                  type="button"
+                  disabled={load !== 'ready' || !!life}
+                  aria-pressed={view.residentOn}
+                  onClick={() => {
+                    const e = engine.current!;
+                    if (
+                      !e.residentOn &&
+                      e.player.room === e.resident.room &&
+                      gap(e.player.point, e.resident.point) < 45
+                    ) {
+                      setMessage('先离开士郎的站位，再开始观察。');
+                      return;
+                    }
+                    e.residentOn = !e.residentOn;
+                    e.residentVisible = true;
+                    if (!e.residentOn) {
+                      e.resident.frame = 0;
+                      const lastLeg = e.player.legs.at(-1),
+                        target = lastLeg?.points.at(-1);
+                      if (lastLeg && target) {
+                        const route = emiyaHouseRoute(
+                          e.player,
+                          { room: lastLeg.room, point: target },
+                          e.resident,
+                        );
+                        if (route) e.player.legs = route;
+                      }
+                    }
+                    publish();
+                    setMessage(
+                      e.residentOn
+                        ? '观察士郎：做饭、去和室、整理笔记、缘侧休息，均沿实际通路。'
+                        : '已暂停士郎的日常演示。',
+                    );
+                  }}
+                >
+                  <Users size={14} />
+                  {view.residentOn
+                    ? '暂停士郎日常'
+                    : view.residentVisible
+                      ? '继续士郎日常'
+                      : '观察士郎日常'}
+                </button>
+              )}
+              {view.residentVisible && (
+                <span>
+                  士郎：{EMIYA_ROOMS[view.resident.room].name} ·{' '}
+                  {!view.residentOn
+                    ? '暂停中'
+                    : view.resident.legs.length
+                      ? '沿路前往'
+                      : EMIYA_RESIDENT_ROUTINE[view.routine].label}
+                </span>
+              )}
+            </div>
+          </div>
+        </details>
         <div className={base.bottom}>
-          <output aria-live="polite">{message}</output>
           <details className={base.controlsHelp}>
             <summary>操作</summary>
             <p>

@@ -316,7 +316,7 @@ void test('actual residents cross real thresholds, wait for an occupied doorway 
           interiorClearSegment(
             previous,
             body.point,
-            HOUSE_PREVIEWS[site].rooms[from].scene,
+            FORMAL_HOUSE_PLANS[site].rooms[from].scene,
           ),
         );
       } else {

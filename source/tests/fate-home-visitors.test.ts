@@ -154,7 +154,7 @@ for (const home of HOMES) {
   });
 }
 
-void test('Emiya visitors reuse all seven existing scenes and sixteen room-door directions, including furniture masks', () => {
+void test('Emiya visitors reuse all seven scenes and sixteen door directions, with masks only for baked furniture', () => {
   const plan = FORMAL_HOUSE_PLANS.emiya,
     session = fixture('emiya', 'saber');
   assert.deepEqual(session.location, EMIYA_ENTRY);
@@ -164,14 +164,14 @@ void test('Emiya visitors reuse all seven existing scenes and sixteen room-door 
     const config = plan.rooms[id];
     assert.equal(config.scene.painting, source.scene.painting);
     assert.deepEqual(config.scene.floor, source.scene.floor);
-    for (const furniture of config.scene.furniture)
+    for (const furniture of config.scene.furniture) {
+      const piece = source.pieces.find((piece) => piece.id === furniture.id)!;
+      assert.deepEqual(furniture.footprint, piece.footprint);
       assert.deepEqual(
         furniture.silhouette,
-        emiyaFurnitureSilhouette(
-          source.id,
-          source.pieces.find((piece) => piece.id === furniture.id)!,
-        ),
+        piece.painted ? emiyaFurnitureSilhouette(source.id, piece) : undefined,
       );
+    }
     for (const door of config.doors) {
       const entry =
         Object.values(plan.rooms)

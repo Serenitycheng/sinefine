@@ -66,6 +66,42 @@ void test('native Emiya entry includes Illya walking art and only the current ro
   assert.ok(!art.includes(EMIYA_ROOMS.study.scene.painting));
 });
 
+void test('an image which never loads times out and remains manually retryable', async (context) => {
+  context.mock.timers.enable({ apis: ['setTimeout'] });
+  const previous = Object.getOwnPropertyDescriptor(globalThis, 'window');
+  const instances: FakeImage[] = [];
+  class FakeImage {
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    fetchPriority = '';
+    decoding = '';
+    src = '';
+    constructor() {
+      instances.push(this);
+    }
+    decode() {
+      return Promise.resolve();
+    }
+  }
+  Object.defineProperty(globalThis, 'window', {
+    configurable: true,
+    value: { Image: FakeImage },
+  });
+  try {
+    const pending = loadArtImage('/loading-test/timeout.png');
+    context.mock.timers.tick(20001);
+    await assert.rejects(pending, /timed out/);
+    const retry = loadArtImage('/loading-test/timeout.png');
+    assert.equal(instances.length, 2);
+    instances[1].onload!();
+    await retry;
+  } finally {
+    if (previous) Object.defineProperty(globalThis, 'window', previous);
+    else Reflect.deleteProperty(globalThis, 'window');
+    context.mock.timers.reset();
+  }
+});
+
 void test('a room waits for all visible resident sheets without preloading absent residents', () => {
   const plain = emiyaRoomRequiredArt('hall', true, false, []);
   const occupied = emiyaRoomRequiredArt('hall', true, false, [

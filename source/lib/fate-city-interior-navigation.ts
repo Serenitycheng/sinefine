@@ -11,6 +11,68 @@ const ROWS = INTERIOR_WORLD.height / STEP + 1;
 const distance = (a: CityPoint, b: CityPoint) =>
   Math.hypot(a.x - b.x, a.y - b.y);
 
+function pointSegmentDistance(p: CityPoint, a: CityPoint, b: CityPoint) {
+  const dx = b.x - a.x,
+    dy = b.y - a.y;
+  const t = Math.max(
+    0,
+    Math.min(
+      1,
+      ((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy || 1),
+    ),
+  );
+  return distance(p, { x: a.x + t * dx, y: a.y + t * dy });
+}
+
+function inside(p: CityPoint, polygon: readonly CityPoint[]) {
+  let result = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const a = polygon[i],
+      b = polygon[j];
+    if (
+      a.y > p.y !== b.y > p.y &&
+      p.x < ((b.x - a.x) * (p.y - a.y)) / (b.y - a.y) + a.x
+    )
+      result = !result;
+  }
+  return result;
+}
+
+function polygonBlocks(
+  from: CityPoint,
+  to: CityPoint,
+  polygon: readonly CityPoint[],
+  radius: number,
+) {
+  if (inside(from, polygon)) return true;
+  if (from.x === to.x && from.y === to.y)
+    return polygon.some(
+      (a, i) =>
+        pointSegmentDistance(from, a, polygon[(i + 1) % polygon.length]) <
+        radius - 1e-9,
+    );
+  if (inside(to, polygon)) return true;
+  const cross = (a: CityPoint, b: CityPoint, c: CityPoint) =>
+    (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  return polygon.some((a, i) => {
+    const b = polygon[(i + 1) % polygon.length];
+    if (
+      cross(from, to, a) * cross(from, to, b) < 0 &&
+      cross(a, b, from) * cross(a, b, to) < 0
+    )
+      return true;
+    return (
+      Math.min(
+        pointSegmentDistance(from, a, b),
+        pointSegmentDistance(to, a, b),
+        pointSegmentDistance(a, from, to),
+        pointSegmentDistance(b, from, to),
+      ) <
+      radius - 1e-9
+    );
+  });
+}
+
 export function interiorWalkable(
   point: CityPoint,
   scene: CityInteriorScene,
@@ -26,11 +88,14 @@ export function interiorWalkable(
   )
     return false;
   return !scene.furniture.some(
-    ({ footprint: r }) =>
+    ({ footprint: r, collision, collisions }) =>
       point.x > r.x - radius &&
       point.x < r.x + r.width + radius &&
       point.y > r.y - radius &&
-      point.y < r.y + r.height + radius,
+      point.y < r.y + r.height + radius &&
+      (collisions
+        ? collisions.some((p) => polygonBlocks(point, point, p, radius))
+        : !collision || polygonBlocks(point, point, collision, radius)),
   );
 }
 
@@ -45,35 +110,50 @@ export function interiorClearSegment(
   // Intersect the entire segment with each open, radius-expanded footprint.
   // Fixed-distance samples can miss a tiny diagonal corner, producing a route
   // that the per-frame movement correctly refuses to follow.
-  const furnitureBlocked = scene.furniture.some(({ footprint: r }) => {
-    let entry = 0,
-      leave = 1;
-    for (const [start, delta, minimum, maximum] of [
-      [
-        from.x,
-        to.x - from.x,
-        r.x - INTERIOR_PLAYER_RADIUS,
-        r.x + r.width + INTERIOR_PLAYER_RADIUS,
-      ],
-      [
-        from.y,
-        to.y - from.y,
-        r.y - INTERIOR_PLAYER_RADIUS,
-        r.y + r.height + INTERIOR_PLAYER_RADIUS,
-      ],
-    ]) {
-      if (Math.abs(delta) < 1e-12) {
-        if (start <= minimum || start >= maximum) return false;
-        continue;
+  const furnitureBlocked = scene.furniture.some(
+    ({ footprint: r, collision, collisions }) => {
+      if (
+        Math.max(from.x, to.x) <= r.x - INTERIOR_PLAYER_RADIUS ||
+        Math.min(from.x, to.x) >= r.x + r.width + INTERIOR_PLAYER_RADIUS ||
+        Math.max(from.y, to.y) <= r.y - INTERIOR_PLAYER_RADIUS ||
+        Math.min(from.y, to.y) >= r.y + r.height + INTERIOR_PLAYER_RADIUS
+      )
+        return false;
+      if (collisions)
+        return collisions.some((p) =>
+          polygonBlocks(from, to, p, INTERIOR_PLAYER_RADIUS),
+        );
+      if (collision)
+        return polygonBlocks(from, to, collision, INTERIOR_PLAYER_RADIUS);
+      let entry = 0,
+        leave = 1;
+      for (const [start, delta, minimum, maximum] of [
+        [
+          from.x,
+          to.x - from.x,
+          r.x - INTERIOR_PLAYER_RADIUS,
+          r.x + r.width + INTERIOR_PLAYER_RADIUS,
+        ],
+        [
+          from.y,
+          to.y - from.y,
+          r.y - INTERIOR_PLAYER_RADIUS,
+          r.y + r.height + INTERIOR_PLAYER_RADIUS,
+        ],
+      ]) {
+        if (Math.abs(delta) < 1e-12) {
+          if (start <= minimum || start >= maximum) return false;
+          continue;
+        }
+        const a = (minimum - start) / delta,
+          b = (maximum - start) / delta;
+        entry = Math.max(entry, Math.min(a, b));
+        leave = Math.min(leave, Math.max(a, b));
+        if (entry >= leave - 1e-12) return false;
       }
-      const a = (minimum - start) / delta,
-        b = (maximum - start) / delta;
-      entry = Math.max(entry, Math.min(a, b));
-      leave = Math.min(leave, Math.max(a, b));
-      if (entry >= leave - 1e-12) return false;
-    }
-    return entry < leave - 1e-12;
-  });
+      return entry < leave - 1e-12;
+    },
+  );
   if (furnitureBlocked) return false;
   const dx = to.x - from.x,
     dy = to.y - from.y,

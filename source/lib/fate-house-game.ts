@@ -2,6 +2,12 @@ import { TOHSAKA_ROOMS } from './fate-tohsaka-house';
 import { MATOU_ROOMS } from './fate-matou-house';
 import { EINZBERN_ROOMS } from './fate-einzbern-house';
 import { FORMAL_HOUSE_PLANS } from './fate-formal-house-plans';
+import { HOUSE_PREVIEWS } from './fate-preview-houses';
+import {
+  advanceInteriorYield,
+  interiorYieldRoute,
+} from './fate-interior-traffic';
+import { houseWalkDistance } from './fate-house-walk';
 import { EMIYA_ENTRY, type EmiyaRoomId } from './fate-emiya-house';
 import { WAVER_ROOMS } from './fate-waver-house';
 import { TEMPLE_ROOMS } from './fate-temple-house';
@@ -19,6 +25,7 @@ import {
 } from './fate-building-presence';
 import { homeOf, isHomeId } from './fate-housing';
 import { houseActorHasPose } from './fate-house-sprites';
+import { interiorSpotDistance } from './fate-interior-access';
 import { visitPublicPlace } from './fate-public-places';
 import {
   startPublicOuting,
@@ -163,14 +170,14 @@ type HouseRules = {
 };
 const publicRule = (id: (typeof FORMAL_PUBLIC_SITES)[number]): HouseRules => ({
   name: FORMAL_HOUSE_PLANS[id].name,
-  rooms: FORMAL_HOUSE_PLANS[id].rooms,
+  rooms: HOUSE_PREVIEWS[id].rooms,
   lifeZones: {},
   residents: STREET_PARTNERS,
 });
 const PUBLIC_RULES = Object.fromEntries(
   FORMAL_PUBLIC_SITES.map((id) => [id, publicRule(id)]),
 ) as Record<(typeof FORMAL_PUBLIC_SITES)[number], HouseRules>;
-const HOUSE_RULES: Record<HouseSiteId, HouseRules> = {
+const RAW_HOUSE_RULES: Record<HouseSiteId, HouseRules> = {
   ...PUBLIC_RULES,
   emiya: {
     name: '卫宫宅',
@@ -270,6 +277,14 @@ const HOUSE_RULES: Record<HouseSiteId, HouseRules> = {
     activityRooms: { eat: 'quarters', cook: 'quarters' },
   },
 };
+/** Render, route, collision and saved actions share the same registered rooms. */
+const HOUSE_RULES: Record<HouseSiteId, HouseRules> = Object.fromEntries(
+  Object.entries(RAW_HOUSE_RULES).map(([site, rules]) => [
+    site,
+    { ...rules, rooms: FORMAL_HOUSE_PLANS[site as HouseSiteId].rooms },
+  ]),
+) as Record<HouseSiteId, HouseRules>;
+
 export function houseHomeForActor(actor: string): HouseHomeId | null {
   return actor === 'rin'
     ? 'tohsaka'
@@ -359,7 +374,16 @@ export function parseHouseGameSave(
       !room.actions.some((a) => a.id === save.action) ||
       !room.scene.spots.some(
         (s) =>
-          s.id === save.action && distance(s.point, save.location.point) < 2,
+          s.id === save.action &&
+          (Number.isFinite(
+            interiorSpotDistance(save.location.point, s, room.scene),
+          ) ||
+            RAW_HOUSE_RULES[save.home].rooms[
+              save.location.room
+            ].scene.spots.some(
+              (old) =>
+                old.id === s.id && distance(old.point, save.location.point) < 2,
+            )),
       ))
   )
     throw new Error(`${name}动作记录无效，原存档已保留。`);
@@ -429,6 +453,51 @@ export class HouseGameSession {
     { goal: string; path: Point[]; retryAt: number }
   >();
   private elapsed = 0;
+  private yielding = new Map<PartnerId, { path: Point[]; until: number }>();
+
+  requestPassage(
+    from: Point,
+    toward: Point,
+    room = this.location.room,
+    requester?: PartnerId,
+  ) {
+    const dx = toward.x - from.x,
+      dy = toward.y - from.y;
+    if (Math.hypot(dx, dy) < 0.001) return;
+    for (const body of this.bodies) {
+      if (
+        body.room !== room ||
+        body.id === requester ||
+        distance(body.point, from) > 90 ||
+        this.yielding.has(body.id)
+      )
+        continue;
+      if (requester && requester.localeCompare(body.id) > 0) continue;
+      if (
+        (body.point.x - from.x) * dx + (body.point.y - from.y) * dy < -1 ||
+        Math.abs((body.point.x - from.x) * dy - (body.point.y - from.y) * dx) /
+          Math.hypot(dx, dy) >
+          36
+      )
+        continue;
+      const occupied = this.bodies
+        .filter((b) => b !== body && b.room === room)
+        .map((b) => b.point);
+      for (const [id, ticket] of this.yielding)
+        if (id !== body.id && ticket.path.length)
+          occupied.push(ticket.path.at(-1)!);
+      if (this.location.room === room) occupied.push(this.location.point);
+      const path = interiorYieldRoute(
+        body.point,
+        from,
+        toward,
+        this.rules.rooms[room].scene,
+        occupied,
+      );
+      if (path?.length)
+        this.yielding.set(body.id, { path, until: this.elapsed + 2.5 });
+    }
+  }
 
   constructor(
     life: DailyLife,
@@ -456,7 +525,7 @@ export class HouseGameSession {
           });
     this.direction = saved?.direction ?? 'up';
     this.action = saved?.action ?? null;
-    this.zoom = saved?.zoom ?? 1.5;
+    this.zoom = saved?.zoom ?? 1.25;
     this.actors = createStreetActors().map((actor) => ({
       ...actor,
       ...this.life.positions[actor.id],
@@ -548,7 +617,20 @@ export class HouseGameSession {
     const occupied = this.bodies
       .filter((b) => b.room === actual.to)
       .map((b) => b.point);
-    if (occupied.some((p) => distance(p, actual.arrival) < 30)) return false;
+    if (occupied.some((p) => distance(p, actual.arrival) < 30)) {
+      const back = this.rules.rooms[actual.to].doors.find(
+        (d) => d.to === this.location.room,
+      );
+      const from = back?.point ?? actual.arrival;
+      this.requestPassage(
+        from,
+        distance(from, actual.arrival) > 0.001
+          ? actual.arrival
+          : { x: from.x, y: from.y - 80 },
+        actual.to,
+      );
+      return false;
+    }
     const arrivalRoom = this.rules.rooms[actual.to];
     const back = arrivalRoom.doors.find((d) => d.to === this.location.room);
     if (back)
@@ -577,6 +659,7 @@ export class HouseGameSession {
         this.occupied(),
       );
     if (clear(to)) return to;
+    this.requestPassage(from, to);
     let low = 0,
       high = 1;
     for (let i = 0; i < 18; i++) {
@@ -674,6 +757,37 @@ export class HouseGameSession {
         );
     for (const body of this.bodies) {
       body.walking = false;
+      const yielding = this.yielding.get(body.id);
+      if (yielding && yielding.until > this.elapsed) {
+        const scene = this.rules.rooms[body.room].scene;
+        const occupied = this.bodies
+          .filter((b) => b !== body && b.room === body.room)
+          .map((b) => b.point);
+        if (this.location.room === body.room)
+          occupied.push(this.location.point);
+        const before = body.point;
+        const advanced = advanceInteriorYield(
+          before,
+          yielding.path,
+          120 * seconds,
+          scene,
+          occupied,
+        );
+        yielding.path = advanced.path;
+        body.point = advanced.point;
+        body.walking = advanced.travelled > 0.01;
+        if (body.walking) {
+          body.travelled += houseWalkDistance(before, body.point, scene.floor);
+          body.direction = interiorWalkFacing(
+            before,
+            body.point,
+            scene.floor,
+            body.direction,
+          );
+        }
+        continue;
+      }
+      this.yielding.delete(body.id);
       const inside = this.personInside(body.id);
       const targetRoom = inside ? this.residentRoom(body.id) : null;
       const room = this.rules.rooms[body.room];
@@ -696,6 +810,8 @@ export class HouseGameSession {
         .map((b) => b.point);
       if (this.location.room === body.room) occupied.push(this.location.point);
       const key = `${targetRoom}:${target.x}:${target.y}`;
+      if (occupied.some((p) => distance(p, body.point) < 65))
+        this.requestPassage(body.point, target, body.room, body.id);
       let planned = this.routes.get(body.id);
       if (
         distance(body.point, target) > 1e-6 &&
@@ -734,11 +850,11 @@ export class HouseGameSession {
           },
           room.scene,
         );
-        if (occupied.some((p) => distance(moved, p) < 30)) break;
+        if (!interiorClearSegment(from, moved, room.scene, occupied)) break;
         const spent = distance(from, moved);
         body.point = moved;
         remaining -= amount;
-        body.travelled += spent;
+        body.travelled += houseWalkDistance(from, moved, room.scene.floor);
         body.walking ||= spent > 0.01;
         if (spent)
           body.direction = interiorWalkFacing(

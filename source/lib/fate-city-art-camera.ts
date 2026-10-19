@@ -1,5 +1,6 @@
 import type { CityPoint } from './fate-city-layout';
 import type { CityArtScene } from './fate-city-art-scenes';
+import { ILLYA_DISPLAY_SCALE } from './fate-actor-proportions';
 
 export const CITY_ART_MODES = ['overview', 'along', 'eye'] as const;
 export type CityArtMode = (typeof CITY_ART_MODES)[number];
@@ -100,7 +101,7 @@ export function cityCameraActorScale(
   size: { width: number; height: number },
 ) {
   return Math.min(
-    0.44 * depth,
+    0.44 * ILLYA_DISPLAY_SCALE * depth,
     Math.max(32, size.height - 64) / (276 * 1.05 * scale),
     Math.max(32, size.width - 32) / (312 * 1.05 * scale),
   );

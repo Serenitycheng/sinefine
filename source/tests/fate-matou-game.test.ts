@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { FORMAL_HOUSE_PLANS } from '../lib/fate-formal-house-plans';
 import test from 'node:test';
 import {
   HouseGameSession,
@@ -164,7 +165,7 @@ void test('Matou furniture actions for all three models retain registered contac
           action.id,
         );
         const bad = structuredClone(save);
-        bad.house!.location.point.y += 10;
+        bad.house!.location.point = { x: 20, y: 620 };
         assert.throws(() => parseFateSave(bad));
       }
 });
@@ -256,7 +257,10 @@ void test('Matou resident changes rooms through registered doors at bounded spee
       from = body.room;
     session.tick(0.05);
     assert.ok(
-      interiorWalkable(body.point, MATOU_ROOMS[body.room as MatouRoomId].scene),
+      interiorWalkable(
+        body.point,
+        FORMAL_HOUSE_PLANS.matou.rooms[body.room].scene,
+      ),
     );
     if (from === body.room) assert.ok(gap(before, body.point) <= 6.00001);
     else {

@@ -129,7 +129,7 @@ export const TOHSAKA_ROOMS: Record<TohsakaRoomId, TohsakaRoom> = {
           id: 'tea',
           label: '茶具与会客区',
           point: { x: 480, y: 560 },
-          detail: '会客区保留瓷器与旧木茶几，可以在椅边坐下。',
+          detail: '茶几上摆着一套瓷茶具。',
         },
         {
           id: 'books',
@@ -141,7 +141,7 @@ export const TOHSAKA_ROOMS: Record<TohsakaRoomId, TohsakaRoom> = {
           id: 'window',
           label: '看看庭院',
           point: { x: 720, y: 50 },
-          detail: '窗外的枫树和蔷薇延续街景的庭前环境。',
+          detail: '窗外的枫树下，蔷薇开得正好。',
         },
       ],
     },
@@ -218,6 +218,7 @@ function paintedPiece(
       width: Math.max(...corners.map((p) => p.x)) - minX,
       height: Math.max(...corners.map((p) => p.y)) - minY,
     },
+    collision: [corners[0], corners[1], corners[3], corners[2]],
     silhouette: mask.map(([x, y]) => ({ x: x * 16, y: y * 9 })),
   };
 }
@@ -436,6 +437,10 @@ export function houseZoom(
   const fit = Math.min(size.width / 1600, size.height / 900);
   return Math.max(
     1,
-    Math.min(zoom, 2.5, fit > 0 ? (size.height - 30) / (Math.max(330, bodyHeight) * fit) : 1),
+    Math.min(
+      zoom,
+      2.5,
+      fit > 0 ? (size.height - 30) / (Math.max(330, bodyHeight) * fit) : 1,
+    ),
   );
 }
