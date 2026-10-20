@@ -14,6 +14,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type ReactNode,
   type PointerEvent,
 } from 'react';
 import Link from 'next/link';
@@ -24,19 +25,16 @@ import {
   ArrowDown,
   ArrowRight,
   ArrowUp,
+  BookOpen,
+  ChevronRight,
   Eye,
-  Footprints,
   Focus,
   Minus,
   Plus,
-  RotateCcw,
-  HelpCircle,
   MapPin,
   Gamepad2,
   MessageCircle,
-  Settings2,
   House,
-  Palette,
   X,
   Map as MapIcon,
 } from 'lucide-react';
@@ -73,8 +71,9 @@ import { fatePerson, isPartner, type PartnerId } from '@/lib/fate-cast';
 import { FateAISettings, FateConversation } from './fate-conversation';
 import { useFate } from './fate-provider';
 import { useStreetLife } from './use-street-life';
+import { FatePlayHud, FatePlayPanel } from './fate-play-hud';
 import { FateAutonomyControls } from './fate-autonomy-controls';
-import { LifeControls, LifePanel, type LifeSection } from './street-life-panel';
+import { LifeSettings, LifePanel, type LifeSection } from './street-life-panel';
 import { StreetObserver } from './street-observer';
 import { lifePeriod, lifeStatus, lifeTime } from '@/lib/fate-life';
 import { shoppingChoice, SUPPLIES } from '@/lib/fate-belongings';
@@ -129,7 +128,6 @@ import {
   nearFormalEntrance,
   type HouseSiteId,
 } from '@/lib/fate-formal-buildings';
-import { FORMAL_HOUSE_PLANS } from '@/lib/fate-formal-house-plans';
 
 const FateEmiyaLifeScene = dynamic(() =>
   import('./fate-emiya-life').then((module) => module.FateEmiyaLifeScene),
@@ -186,8 +184,12 @@ function spriteStyle(
 
 export default function StreetWalk({
   suspended = false,
+  onBackground,
+  backgroundStatus,
 }: {
   suspended?: boolean;
+  onBackground?: () => void;
+  backgroundStatus?: string;
 }) {
   const fate = useFate();
   const waverStage = fate.save.life?.waverStage ?? 'young';
@@ -229,6 +231,9 @@ export default function StreetWalk({
   const overlay = useRef(false);
   const [active, setActive] = useState<ActorId>('illya');
   const [cityView, setCityView] = useState(true);
+  const [cityTab, setCityTab] = useState<'street' | 'map' | 'catalog'>(
+    'street',
+  );
   const cityViewRef = useRef(true);
   cityViewRef.current = cityView;
   const cityInput = useRef<Point>({ x: 0, y: 0 });
@@ -299,10 +304,20 @@ export default function StreetWalk({
   const [publicNotice, setPublicNotice] = useState('');
   const [ready, setReady] = useState(false);
   const [castOpen, setCastOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState<'control' | 'observe'>(
+    'control',
+  );
+  const [menuOpen, setMenuOpen] = useState(false);
+  overlay.current = Boolean(dialog) || menuOpen || castOpen;
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [location, setLocation] = useState('冬木市 · 商业街');
   const [hint, setHint] = useState('');
+  useEffect(() => {
+    if (!hint) return;
+    const timer = window.setTimeout(() => setHint(''), 4500);
+    return () => window.clearTimeout(timer);
+  }, [hint]);
   const [padStatus, setPadStatus] = useState('连接手柄后，按任意按钮');
   const [padConnected, setPadConnected] = useState(false);
   const stage = useRef<HTMLDivElement>(null);
@@ -330,7 +345,7 @@ export default function StreetWalk({
   const daily = useStreetLife(actors, {
     active,
     mode,
-    overlay: Boolean(dialog) || suspended,
+    overlay: Boolean(dialog) || suspended || menuOpen || castOpen,
     ready: ready && !suspended,
   });
   const outing = currentPublicOuting(
@@ -442,6 +457,7 @@ export default function StreetWalk({
     center: () => void;
     talk: () => void;
     back: () => void;
+    map: () => void;
   } | null>(null);
   const current = CAST.find((p) => p.id === active)!;
   const watchedHome =
@@ -593,8 +609,7 @@ export default function StreetWalk({
     host.addEventListener('wheel', wheel, { passive: false });
     const keyDown = (e: KeyboardEvent) => {
       if (dailyActions.current.emiyaActive) return;
-      if (cityViewRef.current && !settings.current.interior) return;
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
       if (
         (e.target as HTMLElement)?.closest(
           'input,textarea,select,[contenteditable="true"],[role="dialog"],[role="menu"],[role="listbox"]',
@@ -616,6 +631,13 @@ export default function StreetWalk({
         padActions.current?.back();
         return;
       }
+      if (key === 'm' && !e.repeat && !settings.current.interior) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        padActions.current?.map();
+        return;
+      }
+      if (cityViewRef.current && !settings.current.interior) return;
       if (settings.current.interior) {
         if (key === 'e' && !e.repeat && settings.current.mode === 'control') {
           e.preventDefault();
@@ -1302,12 +1324,15 @@ export default function StreetWalk({
   }
   function goBack() {
     if (dialog) closeDialog();
+    else if (menuOpen) setMenuOpen(false);
+    else if (castOpen) setCastOpen(false);
     else if (selectedPlace) setSelectedPlace(null);
     else if (atlasOpen) setAtlasOpen(false);
     else if (lifePanel) setLifePanel(false);
     else if (observerOpen) setObserverOpen(false);
-    else if (castOpen) setCastOpen(false);
     else if (settings.current.interior) leaveInterior();
+    else if (cityView && cityTab !== 'street') setCityTab('street');
+    else if (!cityView && scene === 'map') toggleScene();
     else stopWalking();
   }
   useEffect(() => {
@@ -1317,6 +1342,12 @@ export default function StreetWalk({
       center: recenter,
       talk,
       back: goBack,
+      map: () => {
+        closeDrawers();
+        if (cityViewRef.current)
+          setCityTab((view) => (view === 'map' ? 'street' : 'map'));
+        else toggleScene();
+      },
     };
   });
   function selectHomeEntrance(event: { currentTarget: HTMLButtonElement }) {
@@ -1588,129 +1619,308 @@ export default function StreetWalk({
         ? (actors.current.find((p) => p.id === settings.current.active) ?? null)
         : null,
   });
+  function renderFlatTools() {
+    return (
+      <div className={styles.menuCamera}>
+        <div className={styles.cameraTools} data-game-toolbar>
+          <FateFullscreenButton />
+          <FateSoundButton />
+          <button
+            onClick={() => setZoom((v) => v / 1.15)}
+            disabled={zoom <= zoomLimits.min}
+            aria-label="拉远镜头"
+            title={zoom <= zoomLimits.min ? '已拉到最远' : '拉远镜头'}
+          >
+            <Minus size={19} />
+          </button>
+          <button
+            onClick={recenter}
+            aria-label="镜头回到人物"
+            title="镜头回到人物，保留当前缩放"
+          >
+            <Focus size={14} />
+          </button>
+          <button
+            type="button"
+            className={styles.zoomReset}
+            onClick={() => setZoom(DEFAULT_ZOOM)}
+            aria-label="恢复默认缩放"
+            title={`当前 ${zoomPercent}%；点击恢复 100%`}
+          >
+            <span>{zoomPercent}%</span>
+          </button>
+          <button
+            onClick={() => setZoom((v) => v * 1.15)}
+            disabled={zoom >= zoomLimits.max}
+            aria-label="拉近镜头"
+            title={zoom >= zoomLimits.max ? '已拉到最近' : '拉近镜头'}
+          >
+            <Plus size={19} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+  function renderIndoorHud(place: string, tools: ReactNode) {
+    return (
+      <FatePlayHud
+        person={current.name}
+        portrait={
+          <span className={styles.hudPortrait} style={spriteStyle(current)} />
+        }
+        location={place}
+        time={lifeTime(daily.view.minutes).split(' · ')[1]}
+        observing={false}
+        running={daily.running}
+        disabled={suspended || fate.storageBlocked}
+        onToggleRunning={daily.toggleRunning}
+        menuOpen={menuOpen}
+        onMenuChange={setMenuOpen}
+      >
+        <button
+          type="button"
+          className={styles.saveProgress}
+          onClick={() => {
+            if (daily.house) daily.saveHouse();
+            else daily.saveEmiya();
+            setMenuOpen(false);
+          }}
+        >
+          保存进度
+        </button>
+        <details className={styles.menuSection}>
+          <summary>房间与生活</summary>
+          {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- Delegated clicks include keyboard activation of the semantic destination buttons. */}
+          <div
+            onClick={(event) => {
+              if ((event.target as HTMLElement).closest('[data-menu-walk]'))
+                setMenuOpen(false);
+            }}
+          >
+            {tools}
+          </div>
+        </details>
+        <details className={styles.menuSection}>
+          <summary>日常与交谈</summary>
+          <LifeSettings
+            life={daily}
+            disabled={suspended || fate.storageBlocked}
+            verified={fate.verified}
+            onSettings={() => {
+              setMenuOpen(false);
+              openDialog('settings');
+            }}
+          />
+          <FateAutonomyControls
+            historyOnly
+            life={daily}
+            verified={fate.verified}
+            disabled={suspended || fate.storageBlocked}
+            onSettings={() => {
+              setMenuOpen(false);
+              openDialog('settings');
+            }}
+          />
+        </details>
+        <p className={styles.menuHelp}>
+          点地面或物件走近，E 交互，走进房门即可通行；WASD 行走，滚轮缩放。
+        </p>
+      </FatePlayHud>
+    );
+  }
+  const mapOpen = cityView ? cityTab === 'map' : scene === 'map';
+  function closeDrawers() {
+    setLifePanel(false);
+    setObserverOpen(false);
+    setAtlasOpen(false);
+    setSelectedPlace(null);
+  }
+  function renderHud(place: string, tools?: ReactNode) {
+    if (daily.house || daily.emiya) return null;
+    return (
+      <FatePlayHud
+        person={current.name}
+        portrait={
+          <span className={styles.hudPortrait} style={spriteStyle(current)} />
+        }
+        location={place}
+        time={lifeTime(daily.view.minutes).split(' · ')[1]}
+        observing={mode === 'observe'}
+        onChoose={
+          !interiorView
+            ? () => {
+                closeDrawers();
+                setPickerMode('control');
+                setCastOpen(true);
+              }
+            : undefined
+        }
+        onBack={
+          mapOpen
+            ? () => {
+                if (cityView) setCityTab('street');
+                else toggleScene();
+              }
+            : undefined
+        }
+        running={daily.running}
+        disabled={!ready || !fate.loaded || suspended}
+        onToggleRunning={daily.toggleRunning}
+        menuOpen={menuOpen}
+        onMenuChange={(open) => {
+          if (open) closeDrawers();
+          setMenuOpen(open);
+        }}
+      >
+        <nav className={styles.menuNav} aria-label="游戏功能">
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              closeDrawers();
+              if (cityView) setCityTab('map');
+              else if (scene !== 'map') toggleScene();
+              else setAtlasOpen(true);
+            }}
+          >
+            <MapIcon size={17} />
+            <span>地图与地点</span>
+            <ChevronRight size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              visitInterior('directory');
+            }}
+          >
+            <House size={17} />
+            <span>住宅</span>
+            <ChevronRight size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              closeDrawers();
+              setLifePanel(true);
+            }}
+          >
+            <BookOpen size={17} />
+            <span>日常手账</span>
+            <ChevronRight size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              closeDrawers();
+              setObserverOpen(true);
+            }}
+          >
+            <MessageCircle size={17} />
+            <span>街头旁听</span>
+            <ChevronRight size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMenuOpen(false);
+              switchMode();
+            }}
+          >
+            <Eye size={17} />
+            <span>{mode === 'control' ? '旁观生活' : '扮演当前人物'}</span>
+            <ChevronRight size={14} />
+          </button>
+        </nav>
+        <details className={styles.menuSection}>
+          <summary>日常与交谈</summary>
+          <LifeSettings
+            life={daily}
+            disabled={!fate.loaded || suspended}
+            verified={fate.verified}
+            onSettings={() => {
+              setMenuOpen(false);
+              openDialog('settings');
+            }}
+          />
+          {!outing && (
+            <LifeReminder
+              life={daily}
+              controlled={mode === 'control' ? active : null}
+              onOpen={(section) => {
+                setMenuOpen(false);
+                closeDrawers();
+                setLifeSection(section);
+                setLifePanel(true);
+              }}
+            />
+          )}
+        </details>
+        <details className={styles.menuSection}>
+          <summary>画面与操作</summary>
+          <label className={styles.viewChoice}>
+            街景样式
+            <select
+              aria-label="街景样式"
+              value={cityView ? 'city' : 'flat'}
+              onChange={(event) => {
+                setCityView(event.target.value === 'city');
+                setCityTab('street');
+                closeDrawers();
+                if (scene !== 'street') toggleScene();
+              }}
+            >
+              <option value="city">2.5D 街景</option>
+              <option value="flat">2D 平面街区</option>
+            </select>
+          </label>
+          {tools}
+          <button
+            type="button"
+            className={styles.menuTextButton}
+            onClick={() => {
+              setMenuOpen(false);
+              reset();
+            }}
+          >
+            回到初始位置
+          </button>
+          <p className={styles.menuHelp}>
+            点地面行走，靠近人物或物件交互。WASD 行走，E 交互，Esc
+            关闭或停步；拖动查看，滚轮缩放，M 打开地图。
+          </p>
+          <p className={styles.menuHelp}>
+            手柄：左摇杆走动，右摇杆查看；LB/RB 切换人物，Y 切换旁观，A 交互，B
+            返回。
+          </p>
+        </details>
+        <div className={styles.menuFoot}>
+          {onBackground && (
+            <button
+              type="button"
+              onClick={() => {
+                setMenuOpen(false);
+                onBackground();
+              }}
+            >
+              离线生活与存档
+            </button>
+          )}
+          {backgroundStatus && <small>{backgroundStatus}</small>}
+          <Link href="/fate/world">世界设定</Link>
+          <Link href="/">返回世界</Link>
+        </div>
+      </FatePlayHud>
+    );
+  }
   return (
     <main
       ref={gameShell}
       className={`${styles.shell} ${chrome}`}
       inert={!!daily.emiya || !!daily.house}
     >
-      <header className={styles.header}>
-        <Link href="/" className={styles.brand} aria-label="返回世界">
-          <span className={styles.wordmark}>SINE FINE</span>
-          <span className={styles.brandChinese}>无终之庭</span>
-        </Link>
-        <div className={styles.location}>
-          <MapPin size={16} />
-          <span>
-            {interiorView
-              ? interiorView === 'directory'
-                ? '冬木 · 住宅'
-                : isFormalSite(interiorView)
-                  ? FORMAL_HOUSE_PLANS[interiorView].name
-                  : FATE_HOMES[interiorView].name
-              : location}
-          </span>
-          <small>{lifePeriod(daily.view.minutes)}</small>
-        </div>
-        <div className={styles.headerActions}>
-          <button
-            type="button"
-            onClick={() => setCityView((value) => !value)}
-            className={styles.aiButton}
-            aria-label={cityView ? '切换为原街道视图' : '切换为 2.5D 街区'}
-            aria-pressed={cityView}
-          >
-            <Palette size={16} />
-            <span>2.5D 街区</span>
-          </button>
-          <button
-            type="button"
-            className={styles.aiButton}
-            aria-label={scene === 'street' ? '查看冬木市地图' : '返回街区行走'}
-            aria-pressed={scene === 'map'}
-            disabled={!ready || !fate.loaded}
-            onClick={() => {
-              if (interiorView) leaveInterior();
-              toggleScene();
-            }}
-          >
-            <MapIcon size={16} />
-            <span>{scene === 'street' ? '地图' : '街区'}</span>
-          </button>
-          <button
-            type="button"
-            className={styles.aiButton}
-            onClick={() => visitInterior('directory')}
-            disabled={!ready || !fate.loaded}
-            aria-label="查看住宅"
-            aria-pressed={Boolean(interiorView)}
-          >
-            <House size={16} />
-            <span>住宅</span>
-          </button>
-          <button
-            className={styles.aiButton}
-            aria-label={observerOpen ? '收起街头旁听' : '打开街头旁听'}
-            aria-expanded={observerOpen}
-            aria-controls="street-observer"
-            onClick={() => {
-              setObserverOpen((v) => !v);
-              setLifePanel(false);
-              setAtlasOpen(false);
-            }}
-          >
-            <MessageCircle size={16} />
-            <span>旁听</span>
-          </button>
-          <details className={styles.moreMenu}>
-            <summary
-              aria-label="更多设置"
-              onKeyDown={(event) => {
-                if (event.key !== 'Escape') return;
-                const details = event.currentTarget.closest('details');
-                if (details) details.open = false;
-                event.stopPropagation();
-              }}
-            >
-              <Settings2 size={16} />
-              <span>更多</span>
-            </summary>
-            <div>
-              <Link href="/fate/world">世界设定</Link>
-              <button onClick={() => openDialog('settings')}>对话设置</button>
-              <Link href="/">返回世界</Link>
-            </div>
-          </details>
-        </div>
-      </header>
-      <LifeControls
-        walkPace={daily.walkPace}
-        onWalkPace={daily.changeWalkPace}
-        life={daily}
-        disabled={!ready || !fate.loaded}
-        open={lifePanel}
-        onToggle={() => {
-          setObserverOpen(false);
-          setAtlasOpen(false);
-          setSelectedPlace(null);
-          setLifePanel((v) => !v);
-        }}
-        verified={fate.verified}
-        onSettings={() => openDialog('settings')}
-      />
-      {!outing && (
-        <LifeReminder
-          key={mode === 'control' ? active : 'observe'}
-          life={daily}
-          controlled={mode === 'control' ? active : null}
-          onOpen={(section) => {
-            setLifeSection(section);
-            setAtlasOpen(false);
-            setSelectedPlace(null);
-            setLifePanel(true);
-          }}
-        />
-      )}
       {outing && (
         <div className={styles.outingReminder}>
           <span>
@@ -1737,10 +1947,19 @@ export default function StreetWalk({
       )}
       <div className={styles.streetBody}>
         <div className={styles.stageWrap}>
+          {!cityView && renderHud(location, renderFlatTools())}
+          {!interiorView && hint && (
+            <output className={styles.playNotice} aria-live="polite">
+              {hint}
+            </output>
+          )}
           {cityView && (
             <div className={styles.formalCity} inert={Boolean(interiorView)}>
               <FateCityArt
                 appearance="paper"
+                view={cityTab}
+                onViewChange={setCityTab}
+                hud={renderHud}
                 formal={{
                   actors,
                   active,
@@ -1753,6 +1972,8 @@ export default function StreetWalk({
                     suspended ||
                     Boolean(interiorView) ||
                     Boolean(dialog) ||
+                    menuOpen ||
+                    castOpen ||
                     lifePanel ||
                     atlasOpen ||
                     observerOpen ||
@@ -2019,71 +2240,6 @@ export default function StreetWalk({
           </div>
           {!interiorView && !cityView && (
             <>
-              <div className={styles.modeBadge}>
-                <span className={styles.liveDot} />
-                {mode === 'control' ? `正在控制 · ${current.name}` : '自由观察'}
-                <span className={styles.preview}>
-                  {lifeTime(daily.view.minutes).split(' · ')[1]}
-                </span>
-              </div>
-              {scene === 'map' && (
-                <button
-                  type="button"
-                  className={styles.mapDirectoryButton}
-                  aria-label="打开地图目录"
-                  aria-expanded={atlasOpen}
-                  onClick={() => {
-                    setLifePanel(false);
-                    setSelectedPlace(null);
-                    setAtlasOpen((open) => !open);
-                  }}
-                >
-                  <MapPin size={15} /> 地点目录
-                </button>
-              )}
-              {scene === 'street' && !selectedPlace && (
-                <div className={styles.streetPlaceBadge}>
-                  <MapPin size={15} />
-                  <span>{scenePlace.name}</span>
-                  <button
-                    type="button"
-                    onClick={() => travelToPlace(scenePlace)}
-                  >
-                    沿街前往
-                  </button>
-                  {scenePlace.kind !== 'home' && (
-                    <button
-                      type="button"
-                      onClick={() => selectPlace(scenePlace)}
-                    >
-                      到场活动
-                    </button>
-                  )}
-                  {scenePlace.kind === 'home' && (
-                    <button
-                      type="button"
-                      disabled={
-                        mode === 'control' &&
-                        !nearHomeEntrance(
-                          daily.view.positions[active],
-                          scenePlace.id as keyof typeof FATE_HOMES,
-                        )
-                      }
-                      onClick={() =>
-                        mode === 'control'
-                          ? enterInterior(
-                              scenePlace.id as keyof typeof FATE_HOMES,
-                            )
-                          : visitInterior(
-                              scenePlace.id as keyof typeof FATE_HOMES,
-                            )
-                      }
-                    >
-                      {mode === 'control' ? '进入住宅' : '观察住宅'}
-                    </button>
-                  )}
-                </div>
-              )}
               {padConnected && (
                 <output
                   className={`${styles.gamepadStatus} ${styles.gamepadConnected}`}
@@ -2136,42 +2292,6 @@ export default function StreetWalk({
                   )}
                 </div>
               )}
-              <div className={styles.cameraTools} data-game-toolbar>
-                <FateFullscreenButton />
-                <FateSoundButton />
-                <button
-                  onClick={() => setZoom((v) => v / 1.15)}
-                  disabled={zoom <= zoomLimits.min}
-                  aria-label="拉远镜头"
-                  title={zoom <= zoomLimits.min ? '已拉到最远' : '拉远镜头'}
-                >
-                  <Minus size={19} />
-                </button>
-                <button
-                  onClick={recenter}
-                  aria-label="镜头回到人物"
-                  title="镜头回到人物，保留当前缩放"
-                >
-                  <Focus size={14} />
-                </button>
-                <button
-                  type="button"
-                  className={styles.zoomReset}
-                  onClick={() => setZoom(DEFAULT_ZOOM)}
-                  aria-label="恢复默认缩放"
-                  title={`当前 ${zoomPercent}%；点击恢复 100%`}
-                >
-                  <span>{zoomPercent}%</span>
-                </button>
-                <button
-                  onClick={() => setZoom((v) => v * 1.15)}
-                  disabled={zoom >= zoomLimits.max}
-                  aria-label="拉近镜头"
-                  title={zoom >= zoomLimits.max ? '已拉到最近' : '拉近镜头'}
-                >
-                  <Plus size={19} />
-                </button>
-              </div>
               {!ready && (
                 <div className={styles.assetState}>
                   <span>{error ? '街景素材未能载入' : '正在进入街道…'}</span>
@@ -2380,95 +2500,63 @@ export default function StreetWalk({
           </div>
         ) : null}
       </div>
-      {!interiorView && (
-        <footer className={styles.footer}>
+      <FatePlayPanel
+        open={castOpen}
+        onOpenChange={setCastOpen}
+        title="选择人物"
+        wide
+      >
+        <div className={styles.pickerModes} aria-label="游玩方式">
           <button
-            className={styles.characterChoice}
-            aria-label="选择角色"
-            aria-expanded={castOpen}
-            aria-controls="street-character-picker"
-            onClick={() => setCastOpen((v) => !v)}
+            type="button"
+            aria-pressed={pickerMode === 'control'}
+            onClick={() => setPickerMode('control')}
           >
-            <span
-              className={styles.chosenPortrait}
-              style={spriteStyle(current)}
-            />
-            <span>{current.name}</span>
-            <small>切换角色</small>
+            扮演人物
           </button>
-          <div
-            ref={castList}
-            className={styles.cast}
-            id="street-character-picker"
-            hidden={!castOpen}
-            aria-label="横向浏览人物，观察模式下选择只跟随镜头"
+          <button
+            type="button"
+            aria-pressed={pickerMode === 'observe'}
+            onClick={() => setPickerMode('observe')}
           >
-            {CAST.map((person) => (
-              <button
-                key={person.id}
-                disabled={!ready}
-                onClick={() => choose(person.id)}
-                data-character-id={person.id}
-                className={`${styles.castCard} ${active === person.id ? styles.selected : ''}`}
-                aria-pressed={active === person.id}
-              >
-                <span className={styles.portrait} style={spriteStyle(person)} />
-                <span>
-                  <strong>{person.name}</strong>
-                  <small>{person.caption}</small>
-                </span>
-                {mode === 'control' && active === person.id && (
-                  <Footprints size={15} />
-                )}
-              </button>
-            ))}
-          </div>
-          <div className={styles.actions}>
+            旁观生活
+          </button>
+        </div>
+        <p className={styles.pickerHint}>
+          {pickerMode === 'control'
+            ? '选择人物后即可自由行动。开始日常，让其他居民也活动起来。'
+            : '选择想跟随的人物，看他们按自己的安排生活。'}
+        </p>
+        <div
+          ref={castList}
+          className={styles.characterGrid}
+          aria-label="冬木居民"
+        >
+          {CAST.map((person) => (
             <button
-              className={styles.observeButton}
+              key={person.id}
+              type="button"
               disabled={!ready}
-              onClick={switchMode}
+              aria-label={person.name}
+              onClick={() => {
+                if (settings.current.mode !== pickerMode) switchMode();
+                choose(person.id);
+              }}
+              data-character-id={person.id}
+              aria-pressed={active === person.id}
             >
-              {mode === 'control' ? (
-                <Eye size={18} />
-              ) : (
-                <Footprints size={18} />
-              )}
-              <span>{mode === 'control' ? '返回观察' : '进入角色'}</span>
+              <span
+                className={styles.pickerPortrait}
+                style={spriteStyle(person)}
+              />
+              <span>
+                <strong>{person.name}</strong>
+                <small>{person.caption}</small>
+              </span>
             </button>
-            <button
-              className={styles.resetButton}
-              onClick={reset}
-              aria-label="回到初始位置"
-              title="回到初始位置"
-            >
-              <RotateCcw size={17} />
-            </button>
-          </div>
-          <div className={styles.instructions}>
-            <span aria-live="polite">{hint}</span>
-            <details className={styles.help}>
-              <summary>
-                <HelpCircle size={14} />
-                操作说明
-              </summary>
-              <div>
-                <p>
-                  进入角色后，用 WASD／方向键或点地面行走；地图可点选目的地。
-                </p>
-                <p>
-                  拖动查看，滚轮／双指缩放；定位按钮回到人物，倍率按钮恢复
-                  100%。
-                </p>
-                <p>E 交互，Esc 关闭面板或停步。</p>
-                <p className={styles.helpLabel}>手柄</p>
-                <p>左摇杆走动，右摇杆查看；LB/RB 切换人物，Y 切换观察。</p>
-                <p>A 交互，B 关闭或停步，Menu 回到人物。</p>
-              </div>
-            </details>
-          </div>
-        </footer>
-      )}
+          ))}
+        </div>
+      </FatePlayPanel>
       {dialog === 'settings' ? (
         <FateAISettings onClose={closeDialog} />
       ) : dialog ? (
@@ -2496,7 +2584,8 @@ export default function StreetWalk({
             }
             onSave={daily.saveEmiya}
             onExit={leaveInterior}
-            autonomy={<FateAutonomyControls life={daily} verified={fate.verified} disabled={suspended || fate.storageBlocked} onSettings={() => openDialog('settings')} />}
+            hud={renderIndoorHud}
+            uiPaused={menuOpen}
           />,
           document.body,
         )}
@@ -2511,7 +2600,8 @@ export default function StreetWalk({
             onTalk={daily.talkHouse}
             onCare={daily.careHouse}
             onPublic={daily.publicHouse}
-            autonomy={<FateAutonomyControls life={daily} verified={fate.verified} disabled={suspended || fate.storageBlocked} onSettings={() => openDialog('settings')} />}
+            hud={renderIndoorHud}
+            uiPaused={menuOpen}
           />,
           document.body,
         )}

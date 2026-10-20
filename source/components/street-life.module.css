@@ -81,6 +81,48 @@
   color: var(--sf-ink, #344137);
   font-size: 12px;
 }
+
+.menuSettings {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  color: #56654d;
+  font-size: 12px;
+}
+.menuSettings > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.menuSettings select {
+  width: 156px;
+  max-width: 60%;
+  padding: 7px;
+  border: 1px solid #d6dccd;
+  border-radius: 7px;
+  background: #fff8;
+  color: inherit;
+}
+.menuSettings > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid #d6dccd;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.menuSettings > button[aria-pressed='true'] {
+  background: #e5ebda;
+}
+.menuSettings > p,
+.menuSettings > small {
+  margin: 0;
+  color: #849079;
+  font-size: 11px;
+}
 .toolbar button {
   display: flex;
   align-items: center;

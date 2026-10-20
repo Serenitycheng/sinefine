@@ -2,7 +2,14 @@
 /* oxlint-disable jsx-a11y/no-noninteractive-tabindex -- This application surface implements keyboard walking; controls and modal dialogs remain semantic elements. */
 
 import Link from 'next/link';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   ArrowLeft,
   Map as MapIcon,
@@ -119,9 +126,15 @@ const clamp = (value: number, min: number, max: number) =>
 export default function FateCityArt({
   appearance = 'classic',
   formal,
+  view: controlledView,
+  onViewChange,
+  hud,
 }: {
   appearance?: 'classic' | 'paper';
   formal?: FormalCityBridge;
+  view?: 'map' | 'street' | 'catalog';
+  onViewChange?: (view: 'map' | 'street' | 'catalog') => void;
+  hud?: (location: string, tools: ReactNode) => ReactNode;
 }) {
   const formalRef = useRef(formal);
   useLayoutEffect(() => {
@@ -141,7 +154,18 @@ export default function FateCityArt({
   const [scene, setScene] = useState<CityArtScene>('residential');
   const activeScene = useRef<CityArtScene>('residential');
   const places = registeredPlaces[scene];
-  const [tab, setTab] = useState<'map' | 'street' | 'catalog'>('street');
+  const [localTab, setLocalTab] = useState<'map' | 'street' | 'catalog'>(
+    'street',
+  );
+  const tab = controlledView ?? localTab;
+  const setTab = useCallback(
+    (next: 'map' | 'street' | 'catalog') => {
+      setLocalTab(next);
+      onViewChange?.(next);
+    },
+    [onViewChange],
+  );
+  const [showGuides, setShowGuides] = useState(false);
   const [mapMessage, setMapMessage] = useState(
     '点击建筑、店面或道路，从当前位置沿路前往。',
   );
@@ -803,7 +827,7 @@ export default function FateCityArt({
           const camera = cityArtCamera(activeMode.current, activeScene.current);
           const x = width / camera.width,
             y = height / camera.height;
-          setZoom(clamp(Math.max(x, y) / Math.min(x, y), 1, 3));
+          setZoom(clamp(Math.max(x, y) / Math.min(x, y), 1, 8));
           setFollowing(true);
         }
       }
@@ -826,6 +850,19 @@ export default function FateCityArt({
       last = 0;
     };
     const down = (event: KeyboardEvent) => {
+      const navigationKey = event.key.toLowerCase();
+      if (
+        !formalRef.current?.blocked &&
+        surface.current?.contains(document.activeElement) &&
+        !event.repeat &&
+        (navigationKey === 'm' ||
+          (tab !== 'street' && navigationKey === 'escape'))
+      ) {
+        event.preventDefault();
+        stop();
+        setTab(tab === 'street' ? 'map' : 'street');
+        return;
+      }
       if (tab !== 'street') return;
       if (
         formalRef.current?.blocked ||
@@ -1269,7 +1306,7 @@ export default function FateCityArt({
       window.removeEventListener('blur', blur);
       document.removeEventListener('visibilitychange', visibility);
     };
-  }, [tab, opened]);
+  }, [tab, opened, setTab]);
   useEffect(() => {
     const element = surface.current;
     if (!element || tab !== 'street') return;
@@ -1380,42 +1417,127 @@ export default function FateCityArt({
       data-city-position-actor={formal ? positionActor : 'illya'}
       data-city-control={formal?.control}
     >
-      <header className={styles.header} inert={Boolean(opened)}>
-        <div className={styles.brand}>
-          SINE FINE{' '}
-          <h1>{appearance === 'paper' ? '冬木市' : '冬木 2.5D 街区'}</h1>
-        </div>
-        <nav aria-label="冬木场景视图">
-          <button
-            type="button"
-            aria-pressed={tab === 'map'}
-            onClick={() => switchTab('map')}
+      {!formal && (
+        <header className={styles.header} inert={Boolean(opened)}>
+          <div className={styles.brand}>
+            SINE FINE{' '}
+            <h1>{appearance === 'paper' ? '冬木市' : '冬木 2.5D 街区'}</h1>
+          </div>
+          <nav aria-label="冬木场景视图">
+            <button
+              type="button"
+              aria-pressed={tab === 'map'}
+              onClick={() => switchTab('map')}
+            >
+              <MapIcon size={16} />
+              {appearance === 'paper' ? '地图' : '2D 冬木总览'}
+            </button>
+            <button
+              type="button"
+              aria-pressed={tab === 'street'}
+              onClick={() => switchTab('street')}
+            >
+              <Footprints size={16} />
+              {appearance === 'paper' ? '漫游' : '2.5D 街区'}
+            </button>
+            <button
+              type="button"
+              aria-pressed={tab === 'catalog'}
+              onClick={() => switchTab('catalog')}
+            >
+              <Palette size={16} />
+              {appearance === 'paper' ? '人物与住宅' : '人物与室内'}
+            </button>
+          </nav>
+          <Link href="/fate/street">
+            <ArrowLeft size={16} />
+            返回游戏
+          </Link>
+        </header>
+      )}
+      {hud?.(
+        CITY_ART_SCENES[scene].name,
+        <div className={styles.menuTools}>
+          <fieldset
+            className={styles.cameraModes}
+            inert={Boolean(opened)}
+            aria-label="街道取景"
           >
-            <MapIcon size={16} />
-            {appearance === 'paper' ? '地图' : '2D 冬木总览'}
-          </button>
-          <button
-            type="button"
-            aria-pressed={tab === 'street'}
-            onClick={() => switchTab('street')}
+            {CITY_ART_MODES.map((cameraMode) => (
+              <button
+                key={cameraMode}
+                type="button"
+                aria-pressed={mode === cameraMode}
+                disabled={
+                  load[viewKey(scene, cameraMode)] !== 'ready' ||
+                  Boolean(outgoing)
+                }
+                title={
+                  load[viewKey(scene, cameraMode)] === 'pending'
+                    ? '正在准备完整街景'
+                    : load[viewKey(scene, cameraMode)] === 'failed'
+                      ? '画面未能加载，请重试'
+                      : undefined
+                }
+                onClick={() => switchCamera(cameraMode)}
+              >
+                {cityArtCamera(cameraMode, scene).label}
+              </button>
+            ))}
+          </fieldset>
+          <div
+            className={styles.mapTools}
+            data-game-toolbar
+            inert={Boolean(opened) || Boolean(outgoing)}
           >
-            <Footprints size={16} />
-            {appearance === 'paper' ? '漫游' : '2.5D 街区'}
-          </button>
-          <button
-            type="button"
-            aria-pressed={tab === 'catalog'}
-            onClick={() => switchTab('catalog')}
-          >
-            <Palette size={16} />
-            {appearance === 'paper' ? '人物与住宅' : '人物与室内'}
-          </button>
-        </nav>
-        <Link href="/fate/street">
-          <ArrowLeft size={16} />
-          返回游戏
-        </Link>
-      </header>
+            <FateFullscreenButton />
+            <FateSoundButton />
+            <button
+              type="button"
+              aria-label="缩小街景"
+              disabled={Boolean(outgoing)}
+              onClick={() => zoomCamera(framing.current.zoom / 1.2)}
+            >
+              <Minus size={17} />
+            </button>
+            <output>{Math.round(zoom * 100)}%</output>
+            <button
+              type="button"
+              aria-label="放大街景"
+              disabled={Boolean(outgoing)}
+              onClick={() => zoomCamera(framing.current.zoom * 1.2)}
+            >
+              <Plus size={17} />
+            </button>
+            <button
+              type="button"
+              aria-label="显示完整街景"
+              disabled={Boolean(outgoing)}
+              title="显示完整街景（Home）"
+              onClick={resetCamera}
+            >
+              <Focus size={17} />
+            </button>
+            <button
+              type="button"
+              aria-pressed={following}
+              disabled={Boolean(outgoing)}
+              title="自动跟随，走出画面中心后平滑移动（F）"
+              onClick={toggleFollowing}
+            >
+              跟随
+            </button>
+          </div>
+          <label className={styles.guideChoice}>
+            <input
+              type="checkbox"
+              checked={showGuides}
+              onChange={(event) => setShowGuides(event.target.checked)}
+            />
+            显示小地图与路标
+          </label>
+        </div>,
+      )}
       <FateGameFrame>
         <div
           className={styles.stage}
@@ -1747,59 +1869,67 @@ export default function FateCityArt({
                   load[viewKey(scene, mode)] !== 'ready'
                 }
               />
-              <FateCityWayfinding
-                scene={scene}
-                mode={mode}
-                origin={origin}
-                scale={scale}
-                size={size}
-                places={places}
-                actorBounds={actorBounds}
-                onPlace={(place) => walkTo(place.point, place)}
-                onExit={walkConnection}
-                inert={
-                  Boolean(opened) ||
-                  Boolean(outgoing) ||
-                  load[viewKey(scene, mode)] !== 'ready'
-                }
-              />
-              <FateCityMinimap
-                point={view.point}
-                scene={scene}
-                onOpen={() => switchTab('map')}
-                inert={Boolean(opened)}
-              />
-              <div className={styles.sceneBadge}>
-                {CITY_ART_SCENES[scene].name}
-                <span>柔和初夏 · {cityArtCamera(mode, scene).label}</span>
-              </div>
-              <fieldset
-                className={styles.cameraModes}
-                inert={Boolean(opened)}
-                aria-label="街道取景"
-              >
-                {CITY_ART_MODES.map((cameraMode) => (
-                  <button
-                    key={cameraMode}
-                    type="button"
-                    aria-pressed={mode === cameraMode}
-                    disabled={
-                      load[viewKey(scene, cameraMode)] !== 'ready' ||
-                      Boolean(outgoing)
-                    }
-                    title={
-                      load[viewKey(scene, cameraMode)] === 'pending'
-                        ? '正在准备完整街景'
-                        : load[viewKey(scene, cameraMode)] === 'failed'
-                          ? '画面未能加载，请重试'
-                          : undefined
-                    }
-                    onClick={() => switchCamera(cameraMode)}
-                  >
-                    {cityArtCamera(cameraMode, scene).label}
-                  </button>
-                ))}
-              </fieldset>
+              {(!formal || showGuides) && (
+                <FateCityWayfinding
+                  scene={scene}
+                  mode={mode}
+                  origin={origin}
+                  scale={scale}
+                  size={size}
+                  places={places}
+                  actorBounds={actorBounds}
+                  onPlace={(place) => walkTo(place.point, place)}
+                  onExit={walkConnection}
+                  inert={
+                    Boolean(opened) ||
+                    Boolean(outgoing) ||
+                    load[viewKey(scene, mode)] !== 'ready'
+                  }
+                />
+              )}
+              {(!formal || showGuides) && (
+                <FateCityMinimap
+                  point={view.point}
+                  scene={scene}
+                  onOpen={() => switchTab('map')}
+                  inert={Boolean(opened)}
+                />
+              )}
+              {!formal && (
+                <div className={styles.sceneBadge}>
+                  {CITY_ART_SCENES[scene].name}
+                  <span>柔和初夏 · {cityArtCamera(mode, scene).label}</span>
+                </div>
+              )}
+              {!formal && (
+                <fieldset
+                  className={styles.cameraModes}
+                  inert={Boolean(opened)}
+                  aria-label="街道取景"
+                >
+                  {CITY_ART_MODES.map((cameraMode) => (
+                    <button
+                      key={cameraMode}
+                      type="button"
+                      aria-pressed={mode === cameraMode}
+                      disabled={
+                        load[viewKey(scene, cameraMode)] !== 'ready' ||
+                        Boolean(outgoing)
+                      }
+                      title={
+                        load[viewKey(scene, cameraMode)] === 'pending'
+                          ? '正在准备完整街景'
+                          : load[viewKey(scene, cameraMode)] === 'failed'
+                            ? '画面未能加载，请重试'
+                            : undefined
+                      }
+                      onClick={() => switchCamera(cameraMode)}
+                    >
+                      {cityArtCamera(cameraMode, scene).label}
+                    </button>
+                  ))}
+                </fieldset>
+              )}
               {load[viewKey(scene, mode)] !== 'ready' && (
                 <output className={styles.loadNotice}>
                   {load[viewKey(scene, mode)] === 'failed'
@@ -1835,49 +1965,51 @@ export default function FateCityArt({
                     其他取景未能加载，点击重试
                   </button>
                 )}
-              <div
-                className={styles.mapTools}
-                data-game-toolbar
-                inert={Boolean(opened) || Boolean(outgoing)}
-              >
-                <FateFullscreenButton />
-                <FateSoundButton />
-                <button
-                  type="button"
-                  aria-label="缩小街景"
-                  disabled={Boolean(outgoing)}
-                  onClick={() => zoomCamera(framing.current.zoom / 1.2)}
+              {!formal && (
+                <div
+                  className={styles.mapTools}
+                  data-game-toolbar
+                  inert={Boolean(opened) || Boolean(outgoing)}
                 >
-                  <Minus size={17} />
-                </button>
-                <output>{Math.round(zoom * 100)}%</output>
-                <button
-                  type="button"
-                  aria-label="放大街景"
-                  disabled={Boolean(outgoing)}
-                  onClick={() => zoomCamera(framing.current.zoom * 1.2)}
-                >
-                  <Plus size={17} />
-                </button>
-                <button
-                  type="button"
-                  aria-label="显示完整街景"
-                  disabled={Boolean(outgoing)}
-                  title="显示完整街景（Home）"
-                  onClick={resetCamera}
-                >
-                  <Focus size={17} />
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={following}
-                  disabled={Boolean(outgoing)}
-                  title="自动跟随，走出画面中心后平滑移动（F）"
-                  onClick={toggleFollowing}
-                >
-                  跟随
-                </button>
-              </div>
+                  <FateFullscreenButton />
+                  <FateSoundButton />
+                  <button
+                    type="button"
+                    aria-label="缩小街景"
+                    disabled={Boolean(outgoing)}
+                    onClick={() => zoomCamera(framing.current.zoom / 1.2)}
+                  >
+                    <Minus size={17} />
+                  </button>
+                  <output>{Math.round(zoom * 100)}%</output>
+                  <button
+                    type="button"
+                    aria-label="放大街景"
+                    disabled={Boolean(outgoing)}
+                    onClick={() => zoomCamera(framing.current.zoom * 1.2)}
+                  >
+                    <Plus size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="显示完整街景"
+                    disabled={Boolean(outgoing)}
+                    title="显示完整街景（Home）"
+                    onClick={resetCamera}
+                  >
+                    <Focus size={17} />
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={following}
+                    disabled={Boolean(outgoing)}
+                    title="自动跟随，走出画面中心后平滑移动（F）"
+                    onClick={toggleFollowing}
+                  >
+                    跟随
+                  </button>
+                </div>
+              )}
               {(nearby || formal?.interactionLabel) &&
                 !opened &&
                 (!formal || formal.control) && (
@@ -1891,61 +2023,63 @@ export default function FateCityArt({
                     <kbd>E</kbd>
                   </button>
                 )}
-              <div
-                className={styles.directionPad}
-                inert={
-                  Boolean(opened) || load[viewKey(scene, mode)] !== 'ready'
-                }
-              >
-                {[
-                  { label: '向上行走', x: 0, y: -1, icon: '↑' },
-                  { label: '向左行走', x: -1, y: 0, icon: '←' },
-                  { label: '向下行走', x: 0, y: 1, icon: '↓' },
-                  { label: '向右行走', x: 1, y: 0, icon: '→' },
-                ].map((input) => (
-                  <button
-                    key={input.label}
-                    type="button"
-                    aria-label={input.label}
-                    disabled={
-                      load[viewKey(scene, mode)] !== 'ready' ||
-                      Boolean(formal && !formal.control)
-                    }
-                    onPointerDown={(event) => {
-                      event.preventDefault();
-                      stop();
-                      setBrowsing(false);
-                      hold.current = { x: input.x, y: input.y };
-                      event.currentTarget.setPointerCapture(event.pointerId);
-                    }}
-                    onPointerUp={() => {
-                      hold.current = { x: 0, y: 0 };
-                    }}
-                    onPointerCancel={() => {
-                      hold.current = { x: 0, y: 0 };
-                    }}
-                    onLostPointerCapture={() => {
-                      hold.current = { x: 0, y: 0 };
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter' || event.key === ' ') {
+              {(!formal || formal.control) && (
+                <div
+                  className={styles.directionPad}
+                  inert={
+                    Boolean(opened) || load[viewKey(scene, mode)] !== 'ready'
+                  }
+                >
+                  {[
+                    { label: '向上行走', x: 0, y: -1, icon: '↑' },
+                    { label: '向左行走', x: -1, y: 0, icon: '←' },
+                    { label: '向下行走', x: 0, y: 1, icon: '↓' },
+                    { label: '向右行走', x: 1, y: 0, icon: '→' },
+                  ].map((input) => (
+                    <button
+                      key={input.label}
+                      type="button"
+                      aria-label={input.label}
+                      disabled={
+                        load[viewKey(scene, mode)] !== 'ready' ||
+                        Boolean(formal && !formal.control)
+                      }
+                      onPointerDown={(event) => {
                         event.preventDefault();
                         stop();
                         setBrowsing(false);
                         hold.current = { x: input.x, y: input.y };
-                      }
-                    }}
-                    onKeyUp={() => {
-                      hold.current = { x: 0, y: 0 };
-                    }}
-                    onBlur={() => {
-                      hold.current = { x: 0, y: 0 };
-                    }}
-                  >
-                    {input.icon}
-                  </button>
-                ))}
-              </div>
+                        event.currentTarget.setPointerCapture(event.pointerId);
+                      }}
+                      onPointerUp={() => {
+                        hold.current = { x: 0, y: 0 };
+                      }}
+                      onPointerCancel={() => {
+                        hold.current = { x: 0, y: 0 };
+                      }}
+                      onLostPointerCapture={() => {
+                        hold.current = { x: 0, y: 0 };
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          stop();
+                          setBrowsing(false);
+                          hold.current = { x: input.x, y: input.y };
+                        }
+                      }}
+                      onKeyUp={() => {
+                        hold.current = { x: 0, y: 0 };
+                      }}
+                      onBlur={() => {
+                        hold.current = { x: 0, y: 0 };
+                      }}
+                    >
+                      {input.icon}
+                    </button>
+                  ))}
+                </div>
+              )}
             </>
           )}
           {interior && (

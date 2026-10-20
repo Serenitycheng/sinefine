@@ -1,6 +1,7 @@
 'use client';
 /* oxlint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex, jsx-a11y/click-events-have-key-events -- This floor application supports keyboard walking through the modal's key listener and accessible destination buttons. */
 
+import type { PlayHudRenderer } from './fate-play-hud';
 import Image from 'next/image';
 import { runtimeArt } from '@/lib/fate-runtime-art';
 import { interiorOcclusionLayers } from '@/lib/fate-interior-occlusion';
@@ -139,6 +140,7 @@ export type HouseSession = {
     direction: Direction;
     action: string | null;
     suspended: boolean;
+    uiPaused?: boolean;
     walkPace: number;
     tick: (dt: number) => boolean;
     move: (
@@ -184,9 +186,11 @@ function HouseControls({
 export function FateHouseScene({
   house,
   onExit,
+  hud,
 }: {
   house: HouseSession;
   onExit: () => void;
+  hud?: PlayHudRenderer;
 }) {
   return (
     <SingleRoomInterior
@@ -194,6 +198,7 @@ export function FateHouseScene({
       scene={house.plan.rooms[house.room].scene}
       onExit={onExit}
       house={house}
+      hud={hud}
     />
   );
 }
@@ -248,10 +253,12 @@ function SingleRoomInterior({
   scene,
   onExit,
   house,
+  hud,
 }: {
   scene: CityInteriorScene;
   onExit: () => void;
   house?: HouseSession;
+  hud?: PlayHudRenderer;
 }) {
   const entry = house?.entry ?? INTERIOR_ART_ENTRY;
   const nativeRoom =
@@ -764,6 +771,13 @@ function SingleRoomInterior({
       const dt = last ? Math.min(0.05, (now - last) / 1000) : 0;
       last = now;
       const formal = session.current?.formal;
+      if (formal?.uiPaused) {
+        keys.current.clear();
+        held.current = { x: 0, y: 0 };
+        setView((old) => (old.frame ? { ...old, frame: 0 } : old));
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       if (
         formal &&
         (formal.suspended || document.hidden || !document.hasFocus())
@@ -1005,6 +1019,117 @@ function SingleRoomInterior({
     return () => cancelAnimationFrame(raf);
   }, [scene, ready]);
 
+  const cameraTools = (
+    <div className={styles.zoom} data-game-toolbar>
+      <FateFullscreenButton />
+      <FateSoundButton />
+      <button
+        type="button"
+        aria-label="缩小室内视角"
+        disabled={zoom <= 1}
+        onClick={() => setZoom((z) => Math.max(1, z - 0.25))}
+      >
+        <Minus size={17} />
+      </button>
+      <button
+        type="button"
+        onClick={() => setZoom(1)}
+        aria-label="显示完整室内"
+      >
+        {Math.round(zoom * 100)}%
+      </button>
+      <button
+        type="button"
+        aria-label="放大室内视角"
+        disabled={
+          zoom >= (house ? houseZoom(2.5, size, bodyHeight) : 2.5) - 0.001
+        }
+        onClick={() => setZoom((z) => Math.min(2.5, z + 0.25))}
+      >
+        <Plus size={17} />
+      </button>
+    </div>
+  );
+  const menuControls = (
+    <div className={styles.footerActions}>
+      {house && !house.formal && house.plan.cast.length > 1 && (
+        <div className={styles.houseTools}>
+          <label>
+            人物{' '}
+            <select
+              aria-label={`${house.plan.name}预览人物`}
+              value={house.actor}
+              onChange={(event) => {
+                stop();
+                house.onActor(event.target.value as ActorId);
+              }}
+            >
+              {house.plan.cast.map((actor) => (
+                <option key={actor.id} value={actor.id}>
+                  {actor.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+      )}
+      <details className={styles.destinations}>
+        <summary>房间与物件</summary>
+        <div className={styles.destinationList}>
+          {house && (
+            <nav
+              className={styles.spots}
+              aria-label={`${house.plan.name}房间通路`}
+            >
+              {doors
+                .filter((door) => door.id !== returnDoor.id)
+                .map((door) => (
+                  <button
+                    key={door.id}
+                    type="button"
+                    disabled={!ready}
+                    data-menu-walk
+                    onClick={() => walkTo(door.point, `door:${door.id}`)}
+                  >
+                    {door.label}
+                  </button>
+                ))}
+            </nav>
+          )}
+          <div className={styles.spots}>
+            {scene.spots.map((spot) => (
+              <button
+                key={spot.id}
+                type="button"
+                disabled={!ready}
+                data-menu-walk
+                onClick={() => walkTo(spot.point, spot.id)}
+              >
+                {spot.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => {
+                stop();
+                setMessage('已停止行走。');
+              }}
+            >
+              停下
+            </button>
+          </div>
+        </div>
+      </details>
+      {house?.formal && (
+        <HouseControls
+          render={house.formal.controls}
+          walkTo={walkTo}
+          stop={stop}
+          say={setMessage}
+        />
+      )}
+    </div>
+  );
   return (
     <dialog
       ref={shell}
@@ -1015,24 +1140,48 @@ function SingleRoomInterior({
       data-interior-id={scene.id}
       data-house-room={house?.room}
       data-house-formal={!!house?.formal}
+      data-quiet-ui={Boolean(hud)}
     >
-      <header className={styles.header}>
-        <div>
-          <h2>
-            {scene.name} <span>· {scene.room}</span>
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={() =>
-            walkTo(returnDoor.point, house ? `door:${returnDoor.id}` : 'exit')
-          }
-          disabled={!ready}
-        >
-          <DoorOpen size={17} />
-          {house && house.room !== 'hall' ? returnDoor.label : '走回出口'}
-        </button>
-      </header>
+      {hud ? (
+        hud(
+          scene.name + ' · ' + scene.room,
+          <div className={styles.menuTools}>
+            <button
+              type="button"
+              disabled={!ready}
+              data-menu-walk
+              onClick={() =>
+                walkTo(
+                  returnDoor.point,
+                  house ? 'door:' + returnDoor.id : 'exit',
+                )
+              }
+            >
+              {house && house.room !== 'hall' ? returnDoor.label : '走回出口'}
+            </button>
+            {menuControls}
+            {cameraTools}
+          </div>,
+        )
+      ) : (
+        <header className={styles.header}>
+          <div>
+            <h2>
+              {scene.name} <span>· {scene.room}</span>
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              walkTo(returnDoor.point, house ? `door:${returnDoor.id}` : 'exit')
+            }
+            disabled={!ready}
+          >
+            <DoorOpen size={17} />
+            {house && house.room !== 'hall' ? returnDoor.label : '走回出口'}
+          </button>
+        </header>
+      )}
       <FateGameFrame>
         <div
           ref={surface}
@@ -1265,6 +1414,14 @@ function SingleRoomInterior({
           {ready && (
             <div className={styles.doorGuides}>
               {doors.map((door, index) => {
+                if (
+                  hud &&
+                  Math.hypot(
+                    view.point.x - door.point.x,
+                    view.point.y - door.point.y,
+                  ) > 110
+                )
+                  return null;
                 const screen = doorScreens[index],
                   mark = doorGuides[index];
                 if (!mark) return null;
@@ -1514,35 +1671,7 @@ function SingleRoomInterior({
               )}
             </output>
           )}
-          <div className={styles.zoom} data-game-toolbar>
-            <FateFullscreenButton />
-            <FateSoundButton />
-            <button
-              type="button"
-              aria-label="缩小室内视角"
-              disabled={zoom <= 1}
-              onClick={() => setZoom((z) => Math.max(1, z - 0.25))}
-            >
-              <Minus size={17} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setZoom(1)}
-              aria-label="显示完整室内"
-            >
-              {Math.round(zoom * 100)}%
-            </button>
-            <button
-              type="button"
-              aria-label="放大室内视角"
-              disabled={
-                zoom >= (house ? houseZoom(2.5, size, bodyHeight) : 2.5) - 0.001
-              }
-              onClick={() => setZoom((z) => Math.min(2.5, z + 0.25))}
-            >
-              <Plus size={17} />
-            </button>
-          </div>
+          {!hud && cameraTools}
           {inspected?.target && (
             <FateInteriorDetail
               key={feedback.revision}
@@ -1584,82 +1713,7 @@ function SingleRoomInterior({
         </div>
       </FateGameFrame>
       <footer className={styles.footer}>
-        <div className={styles.footerActions}>
-          {house && !house.formal && house.plan.cast.length > 1 && (
-            <div className={styles.houseTools}>
-              <label>
-                人物{' '}
-                <select
-                  aria-label={`${house.plan.name}预览人物`}
-                  value={house.actor}
-                  onChange={(event) => {
-                    stop();
-                    house.onActor(event.target.value as ActorId);
-                  }}
-                >
-                  {house.plan.cast.map((actor) => (
-                    <option key={actor.id} value={actor.id}>
-                      {actor.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-          )}
-          <details className={styles.destinations}>
-            <summary>房间与物件</summary>
-            <div className={styles.destinationList}>
-              {house && (
-                <nav
-                  className={styles.spots}
-                  aria-label={`${house.plan.name}房间通路`}
-                >
-                  {doors
-                    .filter((door) => door.id !== returnDoor.id)
-                    .map((door) => (
-                      <button
-                        key={door.id}
-                        type="button"
-                        disabled={!ready}
-                        onClick={() => walkTo(door.point, `door:${door.id}`)}
-                      >
-                        {door.label}
-                      </button>
-                    ))}
-                </nav>
-              )}
-              <div className={styles.spots}>
-                {scene.spots.map((spot) => (
-                  <button
-                    key={spot.id}
-                    type="button"
-                    disabled={!ready}
-                    onClick={() => walkTo(spot.point, spot.id)}
-                  >
-                    {spot.label}
-                  </button>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => {
-                    stop();
-                    setMessage('已停止行走。');
-                  }}
-                >
-                  停下
-                </button>
-              </div>
-            </div>
-          </details>
-          {house?.formal && (
-            <HouseControls
-              render={house.formal.controls}
-              walkTo={walkTo}
-              stop={stop}
-              say={setMessage}
-            />
-          )}
-        </div>
+        {!hud && menuControls}
         <div className={styles.bottom}>
           <details className={styles.controlsHelp}>
             <summary>操作</summary>

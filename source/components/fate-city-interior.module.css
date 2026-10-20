@@ -22,6 +22,79 @@
   background: var(--house-bg, #202c28);
   color: var(--house-ink, #f0eedc);
 }
+.menuTools {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  font-size: 12px;
+  color: #5d6e52;
+}
+.menuTools > button,
+.menuTools .spots > button {
+  min-height: 36px;
+  padding: 7px 10px;
+  background: #e9ecdf;
+  border: 1px solid #d7decd;
+  border-radius: 7px;
+  color: inherit;
+  cursor: pointer;
+}
+.menuTools .zoom {
+  position: static;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  width: auto;
+  margin: 0;
+  border: none;
+  background: #e9ecdf;
+  box-shadow: none;
+}
+.menuTools .zoom button {
+  min-height: 36px;
+  color: inherit;
+}
+.menuTools .footerActions {
+  display: grid;
+  gap: 12px;
+}
+.menuTools .destinations {
+  position: static;
+}
+.menuTools .destinationList {
+  position: static;
+  width: auto;
+  max-height: none;
+  margin: 10px 0;
+  padding: 8px;
+  background: #eef0e6;
+  border: none;
+  box-shadow: none;
+}
+.menuTools .formalLife {
+  display: grid;
+  gap: 10px;
+}
+.shell[data-quiet-ui='true'][data-house-room] > .footer {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 30;
+  min-height: 0;
+  max-height: none;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.shell[data-quiet-ui='true'][data-house-room] > .footer .controlsHelp {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .shell[data-quiet-ui='true'][data-house-room] > .footer {
+    display: none;
+  }
+}
 .header {
   display: flex;
   align-items: center;

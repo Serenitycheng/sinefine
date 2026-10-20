@@ -1,4 +1,5 @@
 'use client';
+import type { PlayHudRenderer } from './fate-play-hud';
 import { FateGameFrame } from './fate-game-frame';
 import { FateFullscreenButton } from './fate-fullscreen-button';
 import { FateSoundButton } from './fate-sound-button';
@@ -231,6 +232,8 @@ export default function FateEmiyaHouse({
   residentRequest,
   actionRequest,
   suspended = false,
+  hud,
+  uiPaused = false,
 }: {
   onExit: () => void;
   life?: EmiyaLifeSession;
@@ -240,6 +243,8 @@ export default function FateEmiyaHouse({
   residentRequest?: { id: PartnerId; serial: number } | null;
   actionRequest?: { id: string; serial: number } | null;
   suspended?: boolean;
+  hud?: PlayHudRenderer;
+  uiPaused?: boolean;
 }) {
   const activities = life ? EMIYA_LIFE_ACTIVITIES : EMIYA_ACTIVITIES;
   const paused = useRef(suspended);
@@ -250,7 +255,7 @@ export default function FateEmiyaHouse({
   }, [life]);
   const [size, setSize] = useState({ width: 1000, height: 600 });
   const [zoom, setZoom] = useState(1);
-  const [mapVisible, setMapVisible] = useState(true);
+  const [mapVisible, setMapVisible] = useState(!hud);
   const [artStatus, setArtStatus] = useState<Record<string, 'ready' | 'error'>>(
     {},
   );
@@ -650,7 +655,11 @@ export default function FateEmiyaHouse({
     activity,
   });
   useLayoutEffect(() => {
-    paused.current = suspended;
+    paused.current = suspended || uiPaused;
+    if (uiPaused) {
+      keys.current.clear();
+      held.current = { x: 0, y: 0 };
+    }
     if (suspended) {
       keys.current.clear();
       held.current = { x: 0, y: 0 };
@@ -664,7 +673,7 @@ export default function FateEmiyaHouse({
         setView(snapshot(current));
       }
     }
-  }, [suspended]);
+  }, [suspended, uiPaused]);
   useLayoutEffect(() => {
     commands.current = {
       stop,
@@ -1369,6 +1378,161 @@ export default function FateEmiyaHouse({
     }
     return { left: x, top: y };
   };
+  const cameraTools = (
+    <div className={base.zoom} data-game-toolbar>
+      <FateFullscreenButton />
+      <FateSoundButton />
+      <button
+        type="button"
+        aria-label="显示室内地图"
+        onClick={() => setMapVisible((v) => !v)}
+        aria-pressed={mapVisible}
+      >
+        <MapIcon size={17} />
+      </button>
+      <button
+        type="button"
+        aria-label="缩小室内视角"
+        disabled={zoom <= 1}
+        onClick={() => zoomTo(zoom - 0.25)}
+      >
+        <Minus size={17} />
+      </button>
+      <button type="button" aria-label="显示完整室内" onClick={() => zoomTo(1)}>
+        {Math.round(zoom * 100)}%
+      </button>
+      <button
+        type="button"
+        aria-label="放大室内视角"
+        disabled={zoom >= 2.5}
+        onClick={() => zoomTo(zoom + 0.25)}
+      >
+        <Plus size={17} />
+      </button>
+    </div>
+  );
+  const menuControls = (
+    <details className={base.destinations}>
+      <summary>物件与通路</summary>
+      <div className={base.destinationList}>
+        <div className={`${base.spots} ${styles.activities}`}>
+          {activities.map((a) => (
+            <button
+              key={a.id}
+              type="button"
+              disabled={load !== 'ready'}
+              data-menu-walk
+              onClick={() => activity(a)}
+              data-house-action={a.id}
+              aria-pressed={view.activity?.id === a.id}
+            >
+              {a.label}
+            </button>
+          ))}
+          <button type="button" disabled={load !== 'ready'} onClick={interact}>
+            <DoorOpen size={14} />E · 交互
+          </button>
+          <button
+            type="button"
+            disabled={!canExit || load !== 'ready'}
+            onClick={() => {
+              stop();
+              onExit();
+            }}
+          >
+            从门口出去
+          </button>
+          <button type="button" onClick={() => stop(true)}>
+            <Square size={12} />
+            停下
+          </button>
+        </div>
+        <div className={styles.options}>
+          {lifeInteractions}
+          {!life && (
+            <Link href="/fate/emiya-life" target="_blank" rel="noreferrer">
+              试玩士郎生活
+            </Link>
+          )}
+          <button
+            type="button"
+            disabled={load !== 'ready' || !emiyaHasPaperWindow(room.id)}
+            onClick={() => {
+              const e = engine.current!;
+              if (e.closedWindows.has(room.id)) e.closedWindows.delete(room.id);
+              else e.closedWindows.add(room.id);
+              publish();
+              setMessage(
+                e.closedWindows.has(room.id)
+                  ? '纸窗合上，窗光变柔。'
+                  : '推开纸窗，庭院日光照进来。',
+              );
+            }}
+            aria-pressed={!view.closedWindows.has(room.id)}
+          >
+            <Sun size={14} />
+            {view.closedWindows.has(room.id) ? '开窗' : '合上纸窗'}
+          </button>
+          {!life && (
+            <button
+              type="button"
+              disabled={load !== 'ready' || !!life}
+              aria-pressed={view.residentOn}
+              onClick={() => {
+                const e = engine.current!;
+                if (
+                  !e.residentOn &&
+                  e.player.room === e.resident.room &&
+                  gap(e.player.point, e.resident.point) < 45
+                ) {
+                  setMessage('先离开士郎的站位，再开始观察。');
+                  return;
+                }
+                e.residentOn = !e.residentOn;
+                e.residentVisible = true;
+                if (!e.residentOn) {
+                  e.resident.frame = 0;
+                  const lastLeg = e.player.legs.at(-1),
+                    target = lastLeg?.points.at(-1);
+                  if (lastLeg && target) {
+                    const route = emiyaHouseRoute(
+                      e.player,
+                      { room: lastLeg.room, point: target },
+                      e.resident,
+                    );
+                    if (route) e.player.legs = route;
+                  }
+                }
+                publish();
+                setMessage(
+                  e.residentOn
+                    ? '观察士郎：做饭、去和室、整理笔记、缘侧休息，均沿实际通路。'
+                    : '已暂停士郎的日常演示。',
+                );
+              }}
+            >
+              <Users size={14} />
+              {view.residentOn
+                ? '暂停士郎日常'
+                : view.residentVisible
+                  ? '继续士郎日常'
+                  : '观察士郎日常'}
+            </button>
+          )}
+          {view.residentVisible && (
+            <span>
+              士郎：{EMIYA_ROOMS[view.resident.room].name} ·{' '}
+              {!view.residentOn
+                ? '暂停中'
+                : view.resident.legs.length
+                  ? '沿路前往'
+                  : EMIYA_RESIDENT_ROUTINE[view.routine].label}
+            </span>
+          )}
+        </div>
+      </div>
+    </details>
+  );
   return (
     <dialog
       ref={shell}
@@ -1378,26 +1542,46 @@ export default function FateEmiyaHouse({
       aria-label={`卫宫宅 · ${room.name}`}
       className={`${base.shell} ${styles.shell} ${chrome}`}
       data-interior-id="emiya"
+      data-quiet-ui={Boolean(hud)}
       data-house-room={room.id}
       data-house-suspended={suspended}
     >
-      <header className={base.header}>
-        <div>
-          <h2>
-            卫宫宅 <span>· {room.name}</span>
-          </h2>
-          {lifeControls}
-          {suspended && <output>正在确认正式进度，室内已暂停。</output>}
-        </div>
-        <button
-          type="button"
-          disabled={load !== 'ready'}
-          onClick={() => walkTo(EMIYA_ENTRY, { kind: 'exit' })}
-        >
-          <DoorOpen size={17} />
-          走回出口
-        </button>
-      </header>
+      {hud ? (
+        hud(
+          '卫宫宅 · ' + room.name,
+          <div className={`${base.menuTools} ${styles.menuNative}`}>
+            <button
+              type="button"
+              disabled={load !== 'ready'}
+              data-menu-walk
+              onClick={() => walkTo(EMIYA_ENTRY, { kind: 'exit' })}
+            >
+              走回出口
+            </button>
+            {lifeControls}
+            {menuControls}
+            {cameraTools}
+          </div>,
+        )
+      ) : (
+        <header className={base.header}>
+          <div>
+            <h2>
+              卫宫宅 <span>· {room.name}</span>
+            </h2>
+            {lifeControls}
+            {suspended && <output>正在确认正式进度，室内已暂停。</output>}
+          </div>
+          <button
+            type="button"
+            disabled={load !== 'ready'}
+            onClick={() => walkTo(EMIYA_ENTRY, { kind: 'exit' })}
+          >
+            <DoorOpen size={17} />
+            走回出口
+          </button>
+        </header>
+      )}
       <FateGameFrame>
         <div
           ref={surface}
@@ -1596,14 +1780,23 @@ export default function FateEmiyaHouse({
                     mealReady={view.meal}
                   />
                 ))}
-                {emiyaRoomDoors(room.id).map((door) => (
-                  <FateEmiyaDoorFrame
-                    key={door.id}
-                    room={room.id}
-                    door={door}
-                    open={view.doors.has(emiyaDoorKey(door))}
-                  />
-                ))}
+                {emiyaRoomDoors(room.id)
+                  .filter(
+                    (door) =>
+                      !hud ||
+                      Math.hypot(
+                        view.player.point.x - door.at.x,
+                        view.player.point.y - door.at.y,
+                      ) <= 110,
+                  )
+                  .map((door) => (
+                    <FateEmiyaDoorFrame
+                      key={door.id}
+                      room={room.id}
+                      door={door}
+                      open={view.doors.has(emiyaDoorKey(door))}
+                    />
+                  ))}
                 {room.pieces.map((piece) => (
                   <button
                     key={piece.id}
@@ -1792,20 +1985,25 @@ export default function FateEmiyaHouse({
                   {door.label}
                 </button>
               ))}
-              {room.id === EMIYA_ENTRY.room && (
-                <button
-                  type="button"
-                  className={styles.doorLabel}
-                  style={labelPosition(
-                    interiorProject(EMIYA_ENTRY.point, floor),
-                    95,
-                  )}
-                  onClick={() => walkTo(EMIYA_ENTRY, { kind: 'exit' })}
-                >
-                  <DoorOpen size={14} />
-                  回街道
-                </button>
-              )}
+              {room.id === EMIYA_ENTRY.room &&
+                (!hud ||
+                  Math.hypot(
+                    view.player.point.x - EMIYA_ENTRY.point.x,
+                    view.player.point.y - EMIYA_ENTRY.point.y,
+                  ) <= 110) && (
+                  <button
+                    type="button"
+                    className={styles.doorLabel}
+                    style={labelPosition(
+                      interiorProject(EMIYA_ENTRY.point, floor),
+                      95,
+                    )}
+                    onClick={() => walkTo(EMIYA_ENTRY, { kind: 'exit' })}
+                  >
+                    <DoorOpen size={14} />
+                    回街道
+                  </button>
+                )}
             </div>
           )}
           {mapVisible && (
@@ -1877,41 +2075,7 @@ export default function FateEmiyaHouse({
                 </div>
               </div>
             )}
-          <div className={base.zoom} data-game-toolbar>
-            <FateFullscreenButton />
-            <FateSoundButton />
-            <button
-              type="button"
-              aria-label="显示室内地图"
-              onClick={() => setMapVisible((v) => !v)}
-              aria-pressed={mapVisible}
-            >
-              <MapIcon size={17} />
-            </button>
-            <button
-              type="button"
-              aria-label="缩小室内视角"
-              disabled={zoom <= 1}
-              onClick={() => zoomTo(zoom - 0.25)}
-            >
-              <Minus size={17} />
-            </button>
-            <button
-              type="button"
-              aria-label="显示完整室内"
-              onClick={() => zoomTo(1)}
-            >
-              {Math.round(zoom * 100)}%
-            </button>
-            <button
-              type="button"
-              aria-label="放大室内视角"
-              disabled={zoom >= 2.5}
-              onClick={() => zoomTo(zoom + 0.25)}
-            >
-              <Plus size={17} />
-            </button>
-          </div>
+          {!hud && cameraTools}
           {inspection && inspection.room === room.id && (
             <FateInteriorDetail
               key={inspection.revision}
@@ -1986,130 +2150,7 @@ export default function FateEmiyaHouse({
         </div>
       </FateGameFrame>
       <footer className={base.footer}>
-        <details className={base.destinations}>
-          <summary>物件与通路</summary>
-          <div className={base.destinationList}>
-            <div className={`${base.spots} ${styles.activities}`}>
-              {activities.map((a) => (
-                <button
-                  key={a.id}
-                  type="button"
-                  disabled={load !== 'ready'}
-                  onClick={() => activity(a)}
-                  data-house-action={a.id}
-                  aria-pressed={view.activity?.id === a.id}
-                >
-                  {a.label}
-                </button>
-              ))}
-              <button
-                type="button"
-                disabled={load !== 'ready'}
-                onClick={interact}
-              >
-                <DoorOpen size={14} />E · 交互
-              </button>
-              <button
-                type="button"
-                disabled={!canExit || load !== 'ready'}
-                onClick={() => {
-                  stop();
-                  onExit();
-                }}
-              >
-                从门口出去
-              </button>
-              <button type="button" onClick={() => stop(true)}>
-                <Square size={12} />
-                停下
-              </button>
-            </div>
-            <div className={styles.options}>
-              {lifeInteractions}
-              {!life && (
-                <Link href="/fate/emiya-life" target="_blank" rel="noreferrer">
-                  试玩士郎生活
-                </Link>
-              )}
-              <button
-                type="button"
-                disabled={load !== 'ready' || !emiyaHasPaperWindow(room.id)}
-                onClick={() => {
-                  const e = engine.current!;
-                  if (e.closedWindows.has(room.id))
-                    e.closedWindows.delete(room.id);
-                  else e.closedWindows.add(room.id);
-                  publish();
-                  setMessage(
-                    e.closedWindows.has(room.id)
-                      ? '纸窗合上，窗光变柔。'
-                      : '推开纸窗，庭院日光照进来。',
-                  );
-                }}
-                aria-pressed={!view.closedWindows.has(room.id)}
-              >
-                <Sun size={14} />
-                {view.closedWindows.has(room.id) ? '开窗' : '合上纸窗'}
-              </button>
-              {!life && (
-                <button
-                  type="button"
-                  disabled={load !== 'ready' || !!life}
-                  aria-pressed={view.residentOn}
-                  onClick={() => {
-                    const e = engine.current!;
-                    if (
-                      !e.residentOn &&
-                      e.player.room === e.resident.room &&
-                      gap(e.player.point, e.resident.point) < 45
-                    ) {
-                      setMessage('先离开士郎的站位，再开始观察。');
-                      return;
-                    }
-                    e.residentOn = !e.residentOn;
-                    e.residentVisible = true;
-                    if (!e.residentOn) {
-                      e.resident.frame = 0;
-                      const lastLeg = e.player.legs.at(-1),
-                        target = lastLeg?.points.at(-1);
-                      if (lastLeg && target) {
-                        const route = emiyaHouseRoute(
-                          e.player,
-                          { room: lastLeg.room, point: target },
-                          e.resident,
-                        );
-                        if (route) e.player.legs = route;
-                      }
-                    }
-                    publish();
-                    setMessage(
-                      e.residentOn
-                        ? '观察士郎：做饭、去和室、整理笔记、缘侧休息，均沿实际通路。'
-                        : '已暂停士郎的日常演示。',
-                    );
-                  }}
-                >
-                  <Users size={14} />
-                  {view.residentOn
-                    ? '暂停士郎日常'
-                    : view.residentVisible
-                      ? '继续士郎日常'
-                      : '观察士郎日常'}
-                </button>
-              )}
-              {view.residentVisible && (
-                <span>
-                  士郎：{EMIYA_ROOMS[view.resident.room].name} ·{' '}
-                  {!view.residentOn
-                    ? '暂停中'
-                    : view.resident.legs.length
-                      ? '沿路前往'
-                      : EMIYA_RESIDENT_ROUTINE[view.routine].label}
-                </span>
-              )}
-            </div>
-          </div>
-        </details>
+        {!hud && menuControls}
         <div className={base.bottom}>
           <details className={base.controlsHelp}>
             <summary>操作</summary>

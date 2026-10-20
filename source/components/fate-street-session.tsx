@@ -15,10 +15,19 @@ import { FateAISettings } from './fate-ai-settings';
 import styles from './fate-street-session.module.css';
 
 export default function FateStreetSession() {
-  const { saveRevision, storageBlocked, save } = useFate();
+  const { saveRevision, storageBlocked } = useFate();
   const background = useBackgroundLife();
   const [backgroundOpen, setBackgroundOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const backgroundStatus = background.conflict
+    ? '本地与后台进度待处理'
+    : background.recoveryPending
+      ? '后台状态待确认，请打开设置重试'
+      : background.view?.session?.enabled
+        ? '云端代管中'
+        : background.suspended
+          ? '正在确认后台进度'
+          : '进度保存在本地';
   if (storageBlocked)
     return (
       <main style={{ padding: '32px 24px', lineHeight: 1.9 }}>
@@ -28,33 +37,19 @@ export default function FateStreetSession() {
     );
   return (
     <div className={styles.session}>
-      <div className={styles.statusBar}>
-        <output>
-          {background.conflict
-            ? '本地与后台进度待处理'
-            : background.recoveryPending
-              ? '后台状态待确认 · 请打开设置重试'
-              : background.view?.session?.enabled
-                ? '云端代管中 · 每 30 分钟推进'
-                : background.suspended
-                  ? '正在确认后台进度 · 本地暂歇'
-                  : '本地日常'}
-        </output>
-        <button
-          disabled={save.emiya?.active || save.house?.active}
-          title={
-            save.emiya?.active || save.house?.active
-              ? '请先走回街道，再设置后台日常。'
-              : undefined
-          }
-          onClick={() => setBackgroundOpen(true)}
-        >
-          后台日常设置
-        </button>
-      </div>
+      {(background.conflict ||
+        background.recoveryPending ||
+        background.suspended) && (
+        <div className={styles.statusBar}>
+          <output aria-live="polite">{backgroundStatus}</output>
+          <button onClick={() => setBackgroundOpen(true)}>处理进度</button>
+        </div>
+      )}
       <div className={styles.game} inert={background.suspended}>
         <StreetWalk
           key={saveRevision}
+          backgroundStatus={backgroundStatus}
+          onBackground={() => setBackgroundOpen(true)}
           suspended={background.suspended || backgroundOpen || accountOpen}
         />
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useState, type ReactNode } from 'react';
+import type { PlayHudRenderer } from './fate-play-hud';
 import { runtimeArt } from '@/lib/fate-runtime-art';
 import { FateHouseScene, type HouseSession } from './fate-city-interior';
 import { FORMAL_HOUSE_PLANS } from '@/lib/fate-formal-house-plans';
@@ -118,11 +119,15 @@ export default function FateHouseGame({
   onCare,
   onPublic,
   autonomy,
+  hud,
+  uiPaused = false,
 }: {
   session: HouseGameSession;
   suspended: boolean;
   notice: string;
   autonomy?: ReactNode;
+  hud?: PlayHudRenderer;
+  uiPaused?: boolean;
   onSave: () => void;
   onExit: () => void;
   onTalk: (id: PartnerId) => { ok: boolean; message: string };
@@ -172,6 +177,7 @@ export default function FateHouseGame({
       direction: session.direction,
       action: session.action,
       suspended,
+      uiPaused,
       walkPace: session.walkPace,
       tick: (dt) => {
         session.tick(dt);
@@ -239,21 +245,29 @@ export default function FateHouseGame({
       controls: ({ walkTo, stop, say }) => (
         <div className={styles.formalLife}>
           <div className={styles.spots}>
-            <span>
-              {lifePeriod(session.life.minutes)} ·{' '}
-              {Math.floor(session.life.minutes / 60) % 24}:
-              {String(Math.floor(session.life.minutes) % 60).padStart(2, '0')}
-            </span>
-            <button
-              type="button"
-              disabled={suspended}
-              onClick={() => {
-                session.toggleRunning();
-                redraw((n) => n + 1);
-              }}
-            >
-              {session.running ? '暂停日常' : '开始日常'}
-            </button>
+            {!hud && (
+              <>
+                {' '}
+                <span>
+                  {lifePeriod(session.life.minutes)} ·{' '}
+                  {Math.floor(session.life.minutes / 60) % 24}:
+                  {String(Math.floor(session.life.minutes) % 60).padStart(
+                    2,
+                    '0',
+                  )}
+                </span>
+                <button
+                  type="button"
+                  disabled={suspended}
+                  onClick={() => {
+                    session.toggleRunning();
+                    redraw((n) => n + 1);
+                  }}
+                >
+                  {session.running ? '暂停日常' : '开始日常'}
+                </button>
+              </>
+            )}
             {(['meal', 'rest', 'nap', 'sleep'] as HomeCareAction[])
               .filter((action) => currentRoom === session.careRoom(action))
               .map((action) => (
@@ -327,7 +341,7 @@ export default function FateHouseGame({
       ),
     },
   };
-  return <FateHouseScene house={house} onExit={onExit} />;
+  return <FateHouseScene house={house} onExit={onExit} hud={hud} />;
 }
 
 function PublicControls({

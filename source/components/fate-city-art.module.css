@@ -7,16 +7,101 @@
   font-family: var(--font-sans), sans-serif;
 }
 .shell.embedded {
+  position: relative;
   height: 100%;
   min-height: 0;
   width: 100%;
 }
+
+.menuTools {
+  display: grid;
+  gap: 12px;
+  color: #607153;
+}
+.embedded .atlas .mapTools {
+  top: 84px;
+  color: #5d6e52;
+  background: #faf8f0ef;
+  border-color: #fff8;
+  backdrop-filter: blur(12px);
+}
+.embedded .directory {
+  top: 84px;
+  bottom: auto;
+  max-height: calc(100% - 108px);
+  background: #f8f6eef2;
+  color: #46533e;
+  border: 1px solid #fff8;
+  box-shadow: 0 6px 24px #283d2714;
+}
+.embedded .directory :is(p, label, summary, .eyebrow) {
+  color: #76836b;
+}
+.embedded .directory select,
+.embedded .directory button {
+  color: #5d6e52;
+  background: #e9ecdf;
+  border-color: #d6dccd;
+}
+.menuTools .cameraModes,
+.menuTools .mapTools {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 4px;
+  border: 0;
+  border-radius: 8px;
+  background: #e9ecdf;
+  box-shadow: none;
+  color: inherit;
+}
+.menuTools button {
+  min-height: 36px;
+  min-width: 32px;
+  color: inherit;
+  cursor: pointer;
+}
+.menuTools .cameraModes button {
+  flex: 1;
+  padding: 6px 8px;
+  font-size: 11px;
+}
+.menuTools .cameraModes button[aria-pressed='true'] {
+  background: #fffaf0;
+  color: #43583f;
+}
+.menuTools .mapTools output {
+  align-self: center;
+  color: inherit;
+  font-size: 10px;
+}
+.guideChoice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+}
+.guideChoice input {
+  accent-color: #607153;
+}
+@media (hover: hover) and (pointer: fine) {
+  .embedded .directionPad {
+    display: none;
+  }
+}
 .embedded > footer {
   display: none;
 }
-.embedded > header { min-height: 36px; padding: 3px 10px; }
+.embedded > header {
+  min-height: 36px;
+  padding: 3px 10px;
+}
 .embedded > header > .brand,
-.embedded > header > a { display: none; }
+.embedded > header > a {
+  display: none;
+}
 .residentRetry {
   position: absolute;
   z-index: 25;
@@ -25,7 +110,7 @@
   border: 1px solid #cbd3c3;
   border-radius: 7px;
   padding: 6px 10px;
-  transform: translate(-50%,-100%);
+  transform: translate(-50%, -100%);
 }
 .paper {
   height: 100dvh;

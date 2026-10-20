@@ -1,4 +1,5 @@
 .shell {
+  position: relative;
   --ui-paper: #f6f3eb;
   --ui-panel: #efeee5;
   --ui-ink: #344137;
@@ -14,6 +15,225 @@
   color-scheme: light;
   font-family: Arial, 'Microsoft YaHei', sans-serif;
   overflow: hidden;
+}
+
+.hudPortrait,
+.pickerPortrait {
+  display: block;
+  flex: none;
+  width: 32px;
+  height: 36px;
+  background-repeat: no-repeat;
+}
+.playNotice {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 35;
+  max-width: min(560px, calc(100% - 32px));
+  width: max-content;
+  padding: 10px 16px;
+  border-radius: 10px;
+  color: #516149;
+  background: #faf8f0eb;
+  box-shadow: 0 2px 16px #283d2714;
+  font-size: 11px;
+  line-height: 1.8;
+  pointer-events: none;
+}
+.menuNav {
+  display: grid;
+  margin: 0 -8px 14px;
+}
+.menuNav button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 46px;
+  padding: 10px;
+  border-radius: 9px;
+  text-align: left;
+  cursor: pointer;
+}
+.menuNav button > span {
+  flex: 1;
+}
+.menuNav button > svg {
+  color: #78866c;
+  flex: none;
+}
+.menuNav button:hover {
+  background: #e9ecdf;
+}
+.menuSection {
+  border-top: 1px solid #dce1d3;
+  padding: 12px 0;
+}
+.menuSection > summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 28px;
+}
+.menuSection > summary::after {
+  content: '+';
+  color: #829075;
+  font-size: 17px;
+}
+.menuSection[open] > summary::after {
+  content: '−';
+}
+.viewChoice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 16px 0;
+  font-size: 12px;
+}
+.viewChoice select {
+  max-width: 170px;
+  border: 1px solid #d6dccd;
+  border-radius: 7px;
+  padding: 7px;
+  background: #fff8;
+  color: inherit;
+}
+.menuTextButton {
+  display: block;
+  margin: 12px 0;
+  padding: 8px 0;
+  color: #6b795f;
+  cursor: pointer;
+  font-size: 12px;
+}
+.saveProgress {
+  width: 100%;
+  margin-bottom: 16px;
+  padding: 10px;
+  border-radius: 9px;
+  color: #faf7ed;
+  background: #526b4a;
+  cursor: pointer;
+}
+.menuCamera .cameraTools {
+  position: static;
+  display: flex;
+  flex-wrap: wrap;
+  padding: 5px;
+  margin: 12px 0;
+  background: #e9ecdf;
+  box-shadow: none;
+  border: none;
+}
+.menuCamera .cameraTools button {
+  color: #607153;
+  min-height: 36px;
+}
+.menuHelp {
+  color: #7c8575;
+  font-size: 11px;
+  line-height: 1.9;
+  margin-top: 8px;
+}
+.menuFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  border-top: 1px solid #dce1d3;
+  padding-top: 16px;
+  color: #6e7c62;
+  font-size: 11px;
+}
+.menuFoot button {
+  cursor: pointer;
+}
+.menuFoot small {
+  flex-basis: 100%;
+  color: #929a87;
+  font-size: 10px;
+}
+.pickerModes {
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+  padding: 4px;
+  border-radius: 10px;
+  background: #e9ecdf;
+}
+.pickerModes button {
+  min-height: 36px;
+  padding: 6px 16px;
+  border-radius: 7px;
+  color: #7d886f;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pickerModes button[aria-pressed='true'] {
+  background: #fffaf0;
+  color: #43583f;
+  box-shadow: 0 1px 5px #33412e0a;
+}
+.pickerHint {
+  margin: 14px 0;
+  color: #7c8772;
+  font-size: 11px;
+}
+.characterGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.characterGrid button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: 64px;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+}
+.characterGrid button:hover,
+.characterGrid button[aria-pressed='true'] {
+  border-color: #d8dfcc;
+  background: #e9eddf;
+}
+.characterGrid button > span:last-child {
+  min-width: 0;
+}
+.characterGrid strong,
+.characterGrid small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 400;
+}
+.characterGrid small {
+  color: #929a87;
+  font-size: 9px;
+  margin-top: 2px;
+}
+@media (max-width: 600px) {
+  .hudPortrait {
+    width: 24px;
+    height: 30px;
+  }
+  .characterGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .characterGrid button {
+    gap: 5px;
+    padding: 6px;
+  }
 }
 .header {
   height: 48px;
@@ -240,7 +460,9 @@
   border: 1px solid #cbd3c3;
   border-radius: 9px;
 }
-.cityInteraction kbd { margin-left: 8px; }
+.cityInteraction kbd {
+  margin-left: 8px;
+}
 .streetBody {
   display: flex;
   flex: 1;
@@ -1185,11 +1407,11 @@
 .streetBody > aside,
 .observerDrawer {
   position: absolute;
-  top: 10px;
-  right: 10px;
-  bottom: 10px;
+  top: 84px;
+  right: 18px;
+  bottom: 16px;
   z-index: 30;
-  width: min(360px, calc(100% - 20px));
+  width: min(360px, calc(100% - 36px));
   border: 1px solid var(--ui-line);
   border-radius: 12px;
   box-shadow: 0 10px 36px #24352b26;

@@ -1,5 +1,6 @@
 'use client';
 
+import type { PlayHudRenderer } from './fate-play-hud';
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { fatePerson } from '@/lib/fate-cast';
@@ -100,6 +101,8 @@ export function FateEmiyaLifeScene({
   formal = false,
   suspended = false,
   autonomy,
+  hud,
+  uiPaused = false,
 }: {
   session: EmiyaLifeSession;
   notice: string;
@@ -108,6 +111,8 @@ export function FateEmiyaLifeScene({
   formal?: boolean;
   suspended?: boolean;
   autonomy?: ReactNode;
+  hud?: PlayHudRenderer;
+  uiPaused?: boolean;
 }) {
   const [selected, setSelected] = useState<PartnerId | null>(null);
   const [householdOpen, setHouseholdOpen] = useState(false);
@@ -126,6 +131,8 @@ export function FateEmiyaLifeScene({
   return (
     <FateEmiyaHouse
       life={session}
+      hud={hud}
+      uiPaused={uiPaused}
       suspended={suspended}
       onResidentSelect={selectResident}
       residentRequest={residentRequest}
@@ -162,6 +169,7 @@ export function FateEmiyaLifeScene({
             notice={notice}
             onSave={onSave}
             formal={formal}
+            showPlayback={!hud}
           />
           {autonomy}
         </>
@@ -393,11 +401,13 @@ function EmiyaLifeControls({
   notice,
   onSave,
   formal = false,
+  showPlayback = true,
 }: {
   session: EmiyaLifeSession;
   notice: string;
   onSave: () => void;
   formal?: boolean;
+  showPlayback?: boolean;
 }) {
   const [, refresh] = useState(0);
   useEffect(() => {
@@ -406,7 +416,9 @@ function EmiyaLifeControls({
   }, []);
   const person = session.life.people.shirou;
   return (
-    <details className={styles.lifeDetails}>
+    <details
+      className={`${styles.lifeDetails} ${!showPlayback ? styles.menuLife : ''}`}
+    >
       <summary aria-label="日常与保存" data-life-minute={session.life.minutes}>
         {lifeTime(session.life.minutes).split(' · ')[1]} · 日常与保存
       </summary>
@@ -416,15 +428,17 @@ function EmiyaLifeControls({
           精力 {Math.round(person.energy)}
         </p>
         <div className={styles.lifeButtons}>
-          <button
-            type="button"
-            onClick={() => {
-              session.toggleRunning();
-              refresh((value) => value + 1);
-            }}
-          >
-            {session.running ? '暂停日常' : '继续日常'}
-          </button>
+          {showPlayback && (
+            <button
+              type="button"
+              onClick={() => {
+                session.toggleRunning();
+                refresh((value) => value + 1);
+              }}
+            >
+              {session.running ? '暂停日常' : '继续日常'}
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {
