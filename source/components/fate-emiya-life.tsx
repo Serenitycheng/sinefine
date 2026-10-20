@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { fatePerson } from '@/lib/fate-cast';
 import { lifeTime } from '@/lib/fate-life';
@@ -99,6 +99,7 @@ export function FateEmiyaLifeScene({
   onExit,
   formal = false,
   suspended = false,
+  autonomy,
 }: {
   session: EmiyaLifeSession;
   notice: string;
@@ -106,6 +107,7 @@ export function FateEmiyaLifeScene({
   onExit: () => void;
   formal?: boolean;
   suspended?: boolean;
+  autonomy?: ReactNode;
 }) {
   const [selected, setSelected] = useState<PartnerId | null>(null);
   const [householdOpen, setHouseholdOpen] = useState(false);
@@ -154,12 +156,15 @@ export function FateEmiyaLifeScene({
       }
       onExit={onExit}
       lifeControls={
-        <EmiyaLifeControls
-          session={session}
-          notice={notice}
-          onSave={onSave}
-          formal={formal}
-        />
+        <>
+          <EmiyaLifeControls
+            session={session}
+            notice={notice}
+            onSave={onSave}
+            formal={formal}
+          />
+          {autonomy}
+        </>
       }
     />
   );

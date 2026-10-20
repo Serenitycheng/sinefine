@@ -688,6 +688,7 @@ export function advanceDailyLife(
     clockRate?: number;
     motionRate?: number;
     controlledCare?: PlayerCare;
+    encounterAllowed?: (first: PartnerId, second: PartnerId) => boolean;
   },
 ): LifeEvent | null {
   const seconds = Number.isFinite(dt) ? clamp(dt, 0, 0.05) : 0;
@@ -1013,6 +1014,8 @@ export function advanceDailyLife(
     .map((_, i) => pairs[(life.encounters + i) % pairs.length])
     .sort((a, b) => priority(b) - priority(a));
   for (const [first, second] of ordered) {
+    if (options.encounterAllowed && !options.encounterAllowed(first, second))
+      continue;
     const a = actors.find((actor) => actor.id === first)!,
       b = actors.find((actor) => actor.id === second)!;
     const key = encounterKey(first, second);

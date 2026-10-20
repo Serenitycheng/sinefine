@@ -1060,11 +1060,10 @@ const authored: Record<ShopBuildingId, Shop> = {
           detail: '翻开桌上的维修手册。',
           pose: 'read',
           facing: 'left',
-          behind: ['desk'],
           contact: [81.5, 81],
           seat: [81.5, 59.5],
           scale: 1.7,
-          inFrontOf: ['chair'],
+          inFrontOf: ['chair', 'desk'],
         },
         {
           id: 'radio',

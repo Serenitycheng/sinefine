@@ -8,6 +8,7 @@ import {
   interiorYieldRoute,
 } from './fate-interior-traffic';
 import { houseWalkDistance } from './fate-house-walk';
+import { indoorEncounterAllowed } from './fate-life-autonomy';
 import { EMIYA_ENTRY, type EmiyaRoomId } from './fate-emiya-house';
 import { WAVER_ROOMS } from './fate-waver-house';
 import { TEMPLE_ROOMS } from './fate-temple-house';
@@ -733,7 +734,17 @@ export class HouseGameSession {
     }
     return null;
   }
+  autonomyPaused = false;
+  canEncounter(first: PartnerId, second: PartnerId) {
+    return indoorEncounterAllowed(
+      first,
+      second,
+      (id) => this.personInside(id),
+      this.bodies,
+    );
+  }
   tick(dt: number) {
+    if (this.autonomyPaused) return null;
     const seconds = Number.isFinite(dt) ? Math.max(0, Math.min(0.05, dt)) : 0;
     this.elapsed += seconds;
     const encounter = advanceDailyLife(this.life, this.actors, seconds, {
@@ -742,6 +753,7 @@ export class HouseGameSession {
       clockRate: clockRate(this.clockSpeed),
       motionRate: this.walkPace,
       controlled: this.controlled,
+      encounterAllowed: (a, b) => this.canEncounter(a, b),
     });
     this.syncIndoor();
     const present = this.residents().filter(

@@ -929,6 +929,10 @@ function SingleRoomInterior({
             (a) => a.id === id,
           );
         if (action) {
+          if (action.facing) {
+            facing.current = action.facing;
+            bodyDirection.current = action.facing;
+          }
           currentPose.current = action;
           setPose(action);
           formal?.move(position.current, facing.current, action.id);
@@ -1185,6 +1189,7 @@ function SingleRoomInterior({
                   <div
                     key={`${pose?.id ?? 'stand'}:${feedback.revision}`}
                     className={styles.gesture}
+                    data-body-art={model?.materialVersion}
                     data-gesture={
                       pose
                         ? 'settle'

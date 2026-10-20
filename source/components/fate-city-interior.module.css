@@ -128,6 +128,11 @@
 .gesture[data-gesture='settle'] {
   animation: settle 180ms ease-out both;
 }
+/* Authored poses already contain the gesture. Tilting their whole body pivots
+   the feet off the ground; fading a seated body makes it briefly transparent. */
+.gesture[data-body-art='body-v2'] {
+  animation: none;
+}
 @keyframes glance {
   35%,
   65% {

@@ -90,8 +90,8 @@ void test('all 21 identities use a registered chair pose or an honest standing i
       );
       const desk = room.scene.furniture.find((f) => f.id === 'desk')!;
       assert.ok(
-        v.layer < desk.footprint.y + desk.footprint.height,
-        'legs belong behind the desk',
+        v.layer > desk.footprint.y + desk.footprint.height,
+        'the chair faces the free floor, so its occupant is in front of the desk',
       );
     }
 });

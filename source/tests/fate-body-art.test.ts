@@ -8,6 +8,45 @@ import {
   houseResidentSprite,
 } from '../lib/fate-house-sprites';
 import { seatedSpriteForAction } from '../lib/fate-seated-sprites';
+import { houseGaitFrame } from '../lib/fate-house-walk';
+
+void test('small corrections at a view boundary do not flicker, including the angle wrap', () => {
+  const delta = (degrees: number) => ({
+    x: -Math.sin((degrees * Math.PI) / 180),
+    y: Math.cos((degrees * Math.PI) / 180),
+  });
+  let facing = bodyFacing(delta(20), 'down');
+  for (const angle of [23, 21, 26, 22, 29]) {
+    facing = bodyFacing(delta(angle), facing);
+    assert.equal(facing, 'down');
+  }
+  facing = bodyFacing(delta(32), facing);
+  assert.equal(facing, 'down-left');
+  for (const angle of [23, 21, 26, 22]) {
+    facing = bodyFacing(delta(angle), facing);
+    assert.equal(facing, 'down-left');
+  }
+  assert.equal(bodyFacing(delta(180), facing), 'up');
+  assert.equal(bodyFacing(delta(-179), 'up'), 'up');
+  assert.equal(bodyFacing(delta(179), 'up'), 'up');
+});
+
+void test('formal body rigs interpolate between the old six key poses while legacy atlases keep integer crops', () => {
+  for (const id of STREET_PARTNERS) {
+    const a = houseGaitFrame(id, 31.01, true);
+    const b = houseGaitFrame(id, 31.11, true);
+    assert.notEqual(a, Math.floor(a));
+    assert.notEqual(a, b);
+    const first = bodyArtSprite(id, 'left', a)!;
+    const next = bodyArtSprite(id, 'left', b)!;
+    assert.notDeepEqual(first.rig!.layers, next.rig!.layers);
+    assert.equal(first.anchorX, next.anchorX);
+    assert.equal(first.anchorY, next.anchorY);
+    assert.equal(first.scale, next.scale);
+    assert.equal(houseGaitFrame(id, 31.11, false), 0);
+  }
+  assert.ok(Number.isInteger(houseGaitFrame(undefined, 31.11, true, 5)));
+});
 
 void test('opposite chair poses use authored views instead of mirroring asymmetrical clothing', () => {
   const left = bodyArtSprite('diarmuid', 'down', 0, 'adult', 'read')!;

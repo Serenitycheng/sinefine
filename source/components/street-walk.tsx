@@ -73,6 +73,7 @@ import { fatePerson, isPartner, type PartnerId } from '@/lib/fate-cast';
 import { FateAISettings, FateConversation } from './fate-conversation';
 import { useFate } from './fate-provider';
 import { useStreetLife } from './use-street-life';
+import { FateAutonomyControls } from './fate-autonomy-controls';
 import { LifeControls, LifePanel, type LifeSection } from './street-life-panel';
 import { StreetObserver } from './street-observer';
 import { lifePeriod, lifeStatus, lifeTime } from '@/lib/fate-life';
@@ -2488,13 +2489,14 @@ export default function StreetWalk({
           <FateEmiyaLifeScene
             session={daily.emiya}
             formal
-            suspended={suspended || fate.storageBlocked}
+            suspended={suspended || fate.storageBlocked || Boolean(dialog)}
             notice={
               fate.storageNotice ||
               (fate.persistent ? '进度保存在正式存档中。' : '本页进度待保存。')
             }
             onSave={daily.saveEmiya}
             onExit={leaveInterior}
+            autonomy={<FateAutonomyControls life={daily} verified={fate.verified} disabled={suspended || fate.storageBlocked} onSettings={() => openDialog('settings')} />}
           />,
           document.body,
         )}
@@ -2502,13 +2504,14 @@ export default function StreetWalk({
         createPortal(
           <FateHouseGame
             session={daily.house}
-            suspended={suspended || fate.storageBlocked}
+            suspended={suspended || fate.storageBlocked || Boolean(dialog)}
             notice={fate.storageNotice}
             onSave={daily.saveHouse}
             onExit={leaveInterior}
             onTalk={daily.talkHouse}
             onCare={daily.careHouse}
             onPublic={daily.publicHouse}
+            autonomy={<FateAutonomyControls life={daily} verified={fate.verified} disabled={suspended || fate.storageBlocked} onSettings={() => openDialog('settings')} />}
           />,
           document.body,
         )}

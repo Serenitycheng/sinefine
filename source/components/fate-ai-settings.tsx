@@ -51,7 +51,7 @@ export function FateAISettings({ onClose }: { onClose: () => void }) {
         if (!open) onClose();
       }}
     >
-      <DialogContent className={styles.settings} style={{ maxWidth: 540 }}>
+      <DialogContent className={styles.settings} style={{ maxWidth: 540, zIndex: 200 }}>
         <div className={styles.kicker}>
           <KeyRound size={17} /> 账号与连接
         </div>

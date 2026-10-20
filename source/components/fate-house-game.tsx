@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { runtimeArt } from '@/lib/fate-runtime-art';
 import { FateHouseScene, type HouseSession } from './fate-city-interior';
 import { FORMAL_HOUSE_PLANS } from '@/lib/fate-formal-house-plans';
@@ -117,10 +117,12 @@ export default function FateHouseGame({
   onTalk,
   onCare,
   onPublic,
+  autonomy,
 }: {
   session: HouseGameSession;
   suspended: boolean;
   notice: string;
+  autonomy?: ReactNode;
   onSave: () => void;
   onExit: () => void;
   onTalk: (id: PartnerId) => { ok: boolean; message: string };
@@ -271,6 +273,7 @@ export default function FateHouseGame({
               保存
             </button>
           </div>
+          {autonomy}
           <PublicControls
             session={session}
             disabled={suspended}

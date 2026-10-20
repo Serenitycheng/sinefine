@@ -9,6 +9,7 @@ import {
 } from './fate-life';
 import { createStreetActors, type Actor } from './street';
 import { nearestIndoorPoint } from './fate-indoor-map';
+import { indoorEncounterAllowed } from './fate-life-autonomy';
 import { emiyaActivityDistance } from './fate-emiya-access';
 import { interiorResidents, interiorResidentPoint } from './fate-interior';
 import { recordOnsiteConversation } from './fate-interaction';
@@ -186,14 +187,25 @@ export class EmiyaLifeSession {
       };
     }
   }
+  autonomyPaused = false;
+  canEncounter(first: PartnerId, second: PartnerId) {
+    return indoorEncounterAllowed(
+      first,
+      second,
+      (id) => occupiedHome(this.life, id) === 'emiya',
+      this.house.all(),
+    );
+  }
   tick(dt: number, location: EmiyaLocation, _meal: boolean) {
     this.move(location, this.meal);
+    if (this.autonomyPaused) return false;
     advanceDailyLife(this.life, this.actors, dt, {
       running: this.running,
       speed: 1,
       clockRate: clockRate(this.clockSpeed),
       motionRate: this.walkPace,
       controlled: 'shirou',
+      encounterAllowed: (a, b) => this.canEncounter(a, b),
     });
     return this.stepHouse(dt, this.running);
   }

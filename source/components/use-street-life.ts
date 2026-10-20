@@ -7,6 +7,7 @@ import {
   type RefObject,
 } from 'react';
 import { useFate } from './fate-provider';
+import { LifeAutonomyEvents } from '@/lib/fate-life-autonomy';
 import {
   advanceDailyLife,
   applyLifePlan,
@@ -93,6 +94,7 @@ export function useStreetLife(
   const ctx = useRef(fate),
     opts = useRef(options);
   const life = useRef(createDailyLife());
+  const autonomyEvents = useRef(new LifeAutonomyEvents());
   const engineRevision = useRef(fate.saveRevision);
   const initialized = useRef(false);
   const emiyaRef = useRef<EmiyaGameSession | null>(null);
@@ -155,6 +157,7 @@ export function useStreetLife(
     if (!initialized.current) return;
     if (emiyaRef.current) {
       const next = emiyaRef.current.gameSave();
+      life.current = emiyaRef.current.life;
       setView(next.life);
       ctx.current.saveEmiya(next.life, next.emiya, engineRevision.current);
       sincePublish.current = 0;
@@ -176,6 +179,8 @@ export function useStreetLife(
   const cancel = useCallback(() => {
     request.current?.abort();
     request.current = null;
+    if (emiyaRef.current) emiyaRef.current.autonomyPaused = false;
+    if (houseRef.current) houseRef.current.autonomyPaused = false;
     setBusy(false);
     setPendingDialogue(null);
   }, []);
@@ -186,6 +191,7 @@ export function useStreetLife(
     queueMicrotask(() => {
       if (!alive || initialized.current) return;
       life.current = saved ? structuredClone(saved) : createDailyLife();
+      autonomyEvents.current.reset(life.current);
       initialized.current = true;
       const house = ctx.current.save.emiya;
       if (house?.active) {
@@ -288,11 +294,15 @@ export function useStreetLife(
   }, [cancel, publish, saveLatest]);
   const remember = useCallback((event: LifeEvent) => {
     if (!event.dialogue) return;
-    ctx.current.append({
-      id: `life-${event.id}`,
-      ...event.dialogue,
-      createdAt: new Date().toISOString(),
-    });
+    ctx.current.append(
+      {
+        id: `life-${event.id}`,
+        ...event.dialogue,
+        createdAt: new Date().toISOString(),
+      },
+      undefined,
+      engineRevision.current,
+    );
   }, []);
 
   const generate = useCallback(
@@ -301,11 +311,21 @@ export function useStreetLife(
       const current = ctx.current,
         cfg = config.current,
         opt = opts.current;
+      const owner = emiyaRef.current ?? houseRef.current;
+      const world = owner?.life ?? life.current;
+      const worldActors = owner?.actors ?? actors.current;
+      const revision = engineRevision.current;
+      if (
+        current.storageBlocked ||
+        current.saveRevision !== revision ||
+        !opt.ready
+      )
+        return;
       // Encounters get the first call and at least three quarters of the budget.
       // Local habits keep ordinary life moving between a few AI choices.
       if (
         event.decision &&
-        (life.current.encounters === 0 ||
+        (world.encounters === 0 ||
           cfg.decisionsUsed >= Math.floor(cfg.limit / 4))
       )
         return;
@@ -329,6 +349,9 @@ export function useStreetLife(
         event.dialogue?.speaker ?? (target === 'illya' ? 'shirou' : 'illya');
       const controller = new AbortController();
       request.current = controller;
+      if (owner) owner.autonomyPaused = true;
+      const nextId = world.nextId;
+      const minute = world.minutes;
       cfg.lastCall = Date.now();
       cfg.used++;
       if (event.decision) cfg.decisionsUsed++;
@@ -366,20 +389,20 @@ export function useStreetLife(
             worldNote: current.save.worldNote,
             characterNotes: current.save.characterNotes,
             relationshipNotes: current.save.relationshipNotes,
-            waverStage: life.current.waverStage,
-            housing: life.current.housing,
+            waverStage: world.waverStage,
+            housing: world.housing,
             scene: lifeScene(
-              snapshotLife(life.current, actors.current),
+              snapshotLife(world, worldActors),
               target,
               isPartner(speaker) ? speaker : undefined,
             ),
-            ...(event.decision ? { needs: life.current.people[target] } : {}),
+            ...(event.decision ? { needs: world.people[target] } : {}),
             recent: [
               ...new Map(
                 [
-                  ...recentLifeEvents(life.current, target),
+                  ...recentLifeEvents(world, target),
                   ...(isPartner(speaker)
-                    ? recentLifeEvents(life.current, speaker)
+                    ? recentLifeEvents(world, speaker)
                     : []),
                 ]
                   .filter((e) => e.id !== event.id)
@@ -398,30 +421,33 @@ export function useStreetLife(
           plan?: unknown;
           tokens?: number;
         };
-        if (controller.signal.aborted) return;
+        if (
+          controller.signal.aborted ||
+          request.current !== controller ||
+          ctx.current.storageBlocked ||
+          ctx.current.saveRevision !== revision ||
+          (emiyaRef.current ?? houseRef.current) !== owner ||
+          (owner?.life ?? life.current) !== world ||
+          world.nextId !== nextId ||
+          world.minutes !== minute
+        )
+          return;
         if (!response.ok)
           throw new Error(data.error || '自主 AI 暂时没有回应。');
         if (event.decision) {
           if (
             !applyLifePlan(
-              life.current,
-              actors.current,
+              world,
+              worldActors,
               event.id,
               parseLifePlan(data.plan),
             )
           )
             setNotice('状态已经变化，人物继续当前安排。');
         } else {
-          const original = life.current.events.find((e) => e.id === event.id);
+          const original = world.events.find((e) => e.id === event.id);
           if (!original?.dialogue) throw new Error('没有找到这次相遇记录。');
-          if (
-            !commitSocialDialogue(
-              life.current,
-              event.id,
-              data.turns,
-              data.effects,
-            )
-          )
+          if (!commitSocialDialogue(world, event.id, data.turns, data.effects))
             throw new Error('这段相处已更新，保留当前记录。');
           remember(original);
         }
@@ -437,6 +463,7 @@ export function useStreetLife(
         }
       } finally {
         if (request.current === controller) {
+          if (owner) owner.autonomyPaused = false;
           request.current = null;
           setBusy(false);
           setPendingDialogue(null);
@@ -446,11 +473,31 @@ export function useStreetLife(
     [actors, publish, remember],
   );
 
+  const processAutonomy = useCallback(() => {
+    const { encounters, candidate } = autonomyEvents.current.take(life.current);
+    for (const event of encounters) remember(event);
+    if (candidate) void generate(candidate);
+  }, [generate, remember]);
+
   const advance = useCallback(
     (dt: number) => {
       if (!initialized.current) return;
       if (emiyaRef.current || houseRef.current) {
-        // The house owns movement and the daily clock. This loop only persists it.
+        // Indoor engines own the clock; drain their new events without ticking twice.
+        const session = (emiyaRef.current ?? houseRef.current)!;
+        life.current = session.life;
+        if (config.current.running !== session.running) {
+          config.current.running = session.running;
+          setRunning(session.running);
+        }
+        if (
+          (!session.running ||
+            opts.current.overlay ||
+            ctx.current.storageBlocked) &&
+          request.current
+        )
+          cancel();
+        processAutonomy();
         sincePublish.current += dt;
         if (sincePublish.current >= 1) publish();
         return;
@@ -458,7 +505,7 @@ export function useStreetLife(
       const opt = opts.current,
         cfg = config.current;
       const before = life.current.nextId;
-      const encounter = advanceDailyLife(life.current, actors.current, dt, {
+      advanceDailyLife(life.current, actors.current, dt, {
         running:
           cfg.running &&
           opt.ready &&
@@ -471,25 +518,20 @@ export function useStreetLife(
         motionRate: cfg.walkPace,
         controlled: opt.mode === 'control' ? opt.active : null,
       });
-      if (encounter) remember(encounter);
-      const planned = life.current.events.filter(
-        (e) => e.id >= before && e.decision,
-      );
-      const selectedPlan =
-        planned[life.current.encounters % (planned.length || 1)];
-      if (encounter || selectedPlan)
-        void generate((encounter ?? selectedPlan)!);
+      processAutonomy();
       sincePublish.current += dt;
       if (life.current.nextId !== before || sincePublish.current >= 1)
         publish();
     },
-    [actors, generate, publish, remember],
+    [actors, cancel, processAutonomy, publish],
   );
 
   function toggleRunning() {
     const next = !config.current.running;
     if (next) staggerFirstDepartures();
     config.current.running = next;
+    if (emiyaRef.current) emiyaRef.current.running = next;
+    if (houseRef.current) houseRef.current.running = next;
     setRunning(next);
     if (!next) cancel();
     publish();
@@ -531,6 +573,8 @@ export function useStreetLife(
     if (value && !config.current.running) {
       staggerFirstDepartures();
       config.current.running = true;
+      if (emiyaRef.current) emiyaRef.current.running = true;
+      if (houseRef.current) houseRef.current.running = true;
       setRunning(true);
       publish();
     }
@@ -583,6 +627,8 @@ export function useStreetLife(
       session.walkPace = config.current.walkPace;
       session.running = config.current.running;
       emiyaRef.current = session;
+      life.current = session.life;
+      autonomyEvents.current.reset(session.life);
       setEmiya(session);
       publish();
       return true;
@@ -592,6 +638,7 @@ export function useStreetLife(
   const leaveEmiya = useCallback(() => {
     const session = emiyaRef.current;
     if (!session) return null;
+    cancel();
     const running = session.running;
     const next = session.release();
     life.current = next.life;
@@ -607,7 +654,7 @@ export function useStreetLife(
     setView(next.life);
     ctx.current.saveEmiya(next.life, next.emiya, engineRevision.current);
     return session.street;
-  }, [actors]);
+  }, [actors, cancel]);
   const enterHouse = useCallback(
     (street: HouseStreetReturn, destination?: HouseSiteId) => {
       const opt = opts.current;
@@ -651,6 +698,7 @@ export function useStreetLife(
       actor.path = [];
       life.current = session.life;
       houseRef.current = session;
+      autonomyEvents.current.reset(session.life);
       setHouse(session);
       setView(next.life);
       return true;
@@ -665,6 +713,7 @@ export function useStreetLife(
       engineRevision.current !== ctx.current.saveRevision
     )
       return null;
+    cancel();
     const running = session.running,
       next = session.release();
     if (
@@ -690,7 +739,7 @@ export function useStreetLife(
     setHouse(null);
     setView(next.life);
     return session.street;
-  }, [actors]);
+  }, [actors, cancel]);
   const talkHouse = useCallback((id: PartnerId) => {
     const session = houseRef.current;
     if (

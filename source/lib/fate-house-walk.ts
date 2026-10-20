@@ -37,7 +37,9 @@ export function houseGaitFrame(
         ? 175 * ILLYA_DISPLAY_SCALE
         : 220 * CHARACTER_WORLD_SCALE;
   const phase = ((Math.max(0, distance) / cycle) * frames) % frames;
-  return 1 + (actor === 'kiritsugu' ? phase : Math.floor(phase));
+  // Formal six-phase bodies are deformable rigs, so preserve the fraction.
+  // The legacy five-cell atlas still needs an integer crop index.
+  return 1 + (frames === 6 || actor === 'kiritsugu' ? phase : Math.floor(phase));
 }
 
 /** Ground distance drives the gait, including user pace changes and collisions. */
